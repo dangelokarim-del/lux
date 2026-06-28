@@ -7,68 +7,59 @@ import { DashboardPreview } from "./DashboardPreview";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
+function Up({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease, delay }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export function Hero() {
   return (
-    <section className="relative overflow-hidden px-5 pt-40 sm:pt-48">
-      {/* backdrop */}
-      <div className="bg-grid mask-fade-b pointer-events-none absolute inset-0 -z-20 opacity-60" />
-      <div className="pointer-events-none absolute left-1/2 top-24 -z-10 h-[460px] w-[820px] -translate-x-1/2 glow-accent blur-3xl opacity-70" />
+    <section className="relative overflow-hidden px-5 pt-44 sm:pt-52">
+      {/* calm, neutral backdrop — no colored wash */}
+      <div className="bg-grid mask-fade-b pointer-events-none absolute inset-0 -z-20 opacity-40" />
+      <div className="glow-soft pointer-events-none absolute left-1/2 top-20 -z-10 h-[520px] w-[900px] -translate-x-1/2 blur-3xl" />
 
-      <div className="mx-auto max-w-4xl text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease }}
-          className="mx-auto mb-7 inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.02] px-3.5 py-1.5"
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-          <span className="text-[12px] text-ink-2">Private beta · Marbella</span>
-        </motion.div>
+      <div className="mx-auto max-w-5xl text-center">
+        <Up>
+          <Wordmark className="text-[clamp(3.5rem,15vw,9rem)] leading-none" />
+        </Up>
 
-        <motion.div
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease, delay: 0.05 }}
-        >
-          <Wordmark className="text-[15vw] sm:text-[110px]" />
-        </motion.div>
+        <Up delay={0.1}>
+          <h1 className="mt-10 text-balance text-4xl font-semibold leading-[0.98] tracking-[-0.04em] text-ink sm:text-6xl">
+            Luxury. Automated.
+          </h1>
+        </Up>
 
-        <motion.p
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease, delay: 0.15 }}
-          className="mt-6 text-2xl font-medium tracking-tight text-ink sm:text-3xl"
-        >
-          Luxury. Automated.
-        </motion.p>
+        <Up delay={0.18}>
+          <p className="mx-auto mt-6 max-w-xl text-balance text-lg text-ink-2 sm:text-xl">
+            The AI Operating System for Luxury Hospitality.
+          </p>
+        </Up>
 
-        <motion.p
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease, delay: 0.22 }}
-          className="mx-auto mt-4 max-w-xl text-balance text-[17px] leading-relaxed text-ink-2"
-        >
-          The AI Operating System for luxury hospitality. Every guest request
-          becomes an organized operation.
-        </motion.p>
+        <Up delay={0.24}>
+          <p className="mx-auto mt-2 max-w-md text-balance text-[15px] text-ink-3">
+            Every guest request becomes an organized operation.
+          </p>
+        </Up>
 
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease, delay: 0.3 }}
-          className="mt-9 flex items-center justify-center gap-3"
-        >
-          <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
-            Book a Demo
-          </Link>
-          <a href="#dashboard" className={buttonVariants({ variant: "secondary", size: "lg" })}>
-            See the product
-          </a>
-        </motion.div>
+        <Up delay={0.32}>
+          <div className="mt-10">
+            <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
+              Book a Demo
+            </Link>
+          </div>
+        </Up>
       </div>
 
-      <div className="mx-auto mt-20 max-w-6xl pb-24">
-        <DashboardPreview />
+      <div className="mx-auto mt-24 max-w-6xl pb-28 sm:mt-28">
+        <DashboardPreview tilt />
       </div>
     </section>
   );

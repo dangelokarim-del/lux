@@ -18,7 +18,6 @@ export function Nav() {
         </div>
 
         <nav className="hidden items-center gap-8 rounded-full border border-line bg-black/40 px-7 py-2.5 text-[13px] text-ink-2 backdrop-blur-xl md:flex">
-          <a href="#problem" className="transition-colors hover:text-ink">Problem</a>
           <a href="#flow" className="transition-colors hover:text-ink">How it works</a>
           <a href="#dashboard" className="transition-colors hover:text-ink">Product</a>
         </nav>

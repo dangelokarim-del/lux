@@ -137,13 +137,27 @@
     background-size: 38px 38px;
   }
 
-  /* soft electric glow */
+  /* soft electric glow — use sparingly */
   .glow-accent {
     background: radial-gradient(
       circle at center,
       rgba(46, 125, 255, 0.22),
       transparent 60%
     );
+  }
+
+  /* neutral ambient light — premium, calm depth without color */
+  .glow-soft {
+    background: radial-gradient(
+      ellipse at center,
+      rgba(255, 255, 255, 0.07),
+      transparent 65%
+    );
+  }
+
+  .mask-fade-t {
+    -webkit-mask-image: linear-gradient(to top, #000 60%, transparent);
+    mask-image: linear-gradient(to top, #000 60%, transparent);
   }
 
   .mask-fade-b {
