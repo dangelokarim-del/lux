@@ -1,21 +1,15 @@
-import { VillaStateTag } from "@/components/ui/Badge";
+import { Card, CardHeader, VillaStateTag } from "@/components/ui";
 import type { Villa } from "@/lib/types";
 
 export function VillaOverview({ data }: { data: Villa[] }) {
   return (
-    <div className="panel overflow-hidden">
-      <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
-        <h3 className="text-[14px] font-medium">Villa overview</h3>
-        <span className="text-[12px] text-ink-3">{data.length} properties</span>
-      </div>
+    <Card>
+      <CardHeader title="Villa overview" meta={`${data.length} properties`} />
       <div className="grid sm:grid-cols-2">
-        {data.map((v, i) => (
+        {data.map((v) => (
           <div
             key={v.id}
-            className="flex items-center justify-between border-b border-line px-5 py-3.5 transition-colors hover:bg-white/[0.02] sm:[&:nth-last-child(-n+1)]:border-b-0 sm:odd:border-r"
-            style={{
-              borderBottomWidth: i >= data.length - 2 ? undefined : undefined,
-            }}
+            className="flex items-center justify-between border-b border-line px-5 py-3.5 transition-colors hover:bg-white/[0.02] sm:odd:border-r"
           >
             <div>
               <div className="text-[13px] font-medium">{v.name}</div>
@@ -30,6 +24,6 @@ export function VillaOverview({ data }: { data: Villa[] }) {
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

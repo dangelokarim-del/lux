@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Logo } from "@/components/ui/Logo";
+import { Logo, Wordmark, Card, Field, Input, Button } from "@/components/ui";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,45 +33,29 @@ export default function LoginPage() {
         className="w-full max-w-[380px]"
       >
         <div className="text-center">
-          <div className="eyebrow">Welcome back</div>
-          <h1 className="mt-4 text-3xl font-semibold tracking-[-0.03em]">
-            Sign in to LUXA
-          </h1>
-          <p className="mt-2 text-[14px] text-ink-2">
-            Luxury. Automated.
-          </p>
+          <Wordmark className="text-3xl" />
+          <h1 className="mt-6 text-2xl font-semibold tracking-[-0.03em]">Sign in</h1>
+          <p className="mt-2 text-[14px] text-ink-2">Luxury. Automated.</p>
         </div>
 
-        <form onSubmit={onSubmit} className="panel mt-8 space-y-4 p-6">
-          <div>
-            <label className="mb-1.5 block text-[12px] text-ink-2">Email</label>
-            <input
-              type="email"
-              required
-              defaultValue="manager@luxa.app"
-              className="w-full rounded-[10px] border border-line-2 bg-bg-elev px-3.5 py-2.5 text-[14px] text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-accent"
-              placeholder="you@villa.com"
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-[12px] text-ink-2">Password</label>
-            <input
-              type="password"
-              required
-              defaultValue="demo1234"
-              className="w-full rounded-[10px] border border-line-2 bg-bg-elev px-3.5 py-2.5 text-[14px] text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-accent"
-              placeholder="••••••••"
-            />
-          </div>
+        <Card className="mt-8">
+          <form onSubmit={onSubmit} className="space-y-4 p-6">
+            <Field label="Email" htmlFor="email">
+              <Input id="email" type="email" required defaultValue="manager@luxa.app" placeholder="you@villa.com" />
+            </Field>
+            <Field label="Password" htmlFor="password">
+              <Input id="password" type="password" required defaultValue="demo1234" placeholder="••••••••" />
+            </Field>
 
-          <button type="submit" disabled={loading} className="btn-accent w-full py-3 text-[14px]">
-            {loading ? "Signing in…" : "Sign in"}
-          </button>
+            <Button type="submit" loading={loading} size="lg" className="w-full">
+              {loading ? "Signing in…" : "Sign in"}
+            </Button>
 
-          <p className="text-center text-[12px] text-ink-3">
-            Demo access — any credentials open the dashboard.
-          </p>
-        </form>
+            <p className="text-center text-[12px] text-ink-3">
+              Demo access — any credentials open the dashboard.
+            </p>
+          </form>
+        </Card>
 
         <p className="mt-6 text-center text-[13px] text-ink-3">
           Don&apos;t have access?{" "}

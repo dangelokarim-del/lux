@@ -1,4 +1,5 @@
 import { MessageCircle, Mail, Phone, Smartphone } from "lucide-react";
+import { Card, CardHeader, Row } from "@/components/ui";
 import type { GuestRequest } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -11,19 +12,13 @@ const channelIcon = {
 
 export function RecentRequests({ data }: { data: GuestRequest[] }) {
   return (
-    <div className="panel overflow-hidden">
-      <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
-        <h3 className="text-[14px] font-medium">Recent guest requests</h3>
-        <span className="text-[12px] text-ink-3">Live</span>
-      </div>
+    <Card>
+      <CardHeader title="Recent guest requests" meta="Live" />
       <div>
         {data.map((r) => {
           const Icon = channelIcon[r.channel];
           return (
-            <div
-              key={r.id}
-              className="flex gap-3.5 border-b border-line px-5 py-4 transition-colors last:border-0 hover:bg-white/[0.02]"
-            >
+            <Row key={r.id} className="flex gap-3.5">
               <div
                 className={cn(
                   "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full border",
@@ -46,15 +41,15 @@ export function RecentRequests({ data }: { data: GuestRequest[] }) {
                   &ldquo;{r.message}&rdquo;
                 </p>
                 {!r.resolved && (
-                  <button className="mt-2 text-[12px] font-medium text-accent transition-opacity hover:opacity-80">
+                  <button className="focus-ring mt-2 rounded text-[12px] font-medium text-accent transition-opacity hover:opacity-80">
                     Create task →
                   </button>
                 )}
               </div>
-            </div>
+            </Row>
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 }

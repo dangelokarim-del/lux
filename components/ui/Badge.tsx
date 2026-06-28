@@ -1,56 +1,70 @@
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
-import type { TaskStatus, Priority, VillaState } from "@/lib/types";
+import { tones, type Tone } from "@/lib/tone";
+import type { TaskStatus, VillaState } from "@/lib/types";
 
-const statusStyles: Record<TaskStatus, string> = {
-  New: "text-ink-2 border-line-2",
-  Pending: "text-warn border-[rgba(245,181,61,0.25)] bg-[rgba(245,181,61,0.07)]",
-  Confirmed: "text-accent border-[rgba(46,125,255,0.3)] bg-accent-soft",
-  "In Progress": "text-ink border-line-2 bg-[rgba(255,255,255,0.05)]",
-  Completed: "text-ok border-[rgba(74,212,138,0.25)] bg-[rgba(74,212,138,0.07)]",
-};
+const badgeBase =
+  "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium leading-none whitespace-nowrap";
 
-export function StatusBadge({ status }: { status: TaskStatus }) {
+const sizes = cva("", {
+  variants: {
+    size: {
+      sm: "px-2 py-0.5 text-[10px]",
+      md: "px-2.5 py-1 text-[11px]",
+    },
+  },
+  defaultVariants: { size: "md" },
+});
+
+export interface BadgeProps extends VariantProps<typeof sizes> {
+  tone?: Tone;
+  /** soft = tinted fill, outline = border only */
+  variant?: "soft" | "outline";
+  className?: string;
+  children: React.ReactNode;
+}
+
+export function Badge({ tone = "neutral", variant = "soft", size, className, children }: BadgeProps) {
+  const t = tones[tone];
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium leading-none",
-        statusStyles[status]
+        badgeBase,
+        sizes({ size }),
+        t.text,
+        t.border,
+        variant === "soft" && t.bg,
+        className
       )}
     >
-      {status}
+      {children}
     </span>
   );
 }
 
-export function PriorityTag({ priority }: { priority: Priority }) {
-  if (priority === "Normal") {
-    return <span className="text-[12px] text-ink-3">Normal</span>;
-  }
-  const isUrgent = priority === "Urgent";
-  return (
-    <span className="inline-flex items-center gap-1.5 text-[12px] font-medium">
-      <span
-        className={cn(
-          "h-1.5 w-1.5 rounded-full",
-          isUrgent ? "bg-urgent" : "bg-warn"
-        )}
-      />
-      <span className={isUrgent ? "text-urgent" : "text-warn"}>{priority}</span>
-    </span>
-  );
+/* ---- domain mappers ---- */
+
+const taskStatusTone: Record<TaskStatus, Tone> = {
+  New: "muted",
+  Pending: "warn",
+  Confirmed: "accent",
+  "In Progress": "neutral",
+  Completed: "ok",
+};
+
+export function StatusBadge({ status }: { status: TaskStatus }) {
+  return <Badge tone={taskStatusTone[status]}>{status}</Badge>;
 }
 
-const villaStateStyles: Record<VillaState, string> = {
-  Occupied: "text-ok",
-  Arriving: "text-accent",
-  Cleaning: "text-warn",
-  Vacant: "text-ink-3",
+const villaStateTone: Record<VillaState, Tone> = {
+  Occupied: "ok",
+  Arriving: "accent",
+  Cleaning: "warn",
+  Vacant: "muted",
 };
 
 export function VillaStateTag({ state }: { state: VillaState }) {
-  return (
-    <span className={cn("text-[12px] font-medium", villaStateStyles[state])}>
-      {state}
-    </span>
-  );
+  return <span className={cn("text-[12px] font-medium", tones[villaStateTone[state]].text)}>{state}</span>;
 }
+
+export { PriorityTag } from "./StatusPill";

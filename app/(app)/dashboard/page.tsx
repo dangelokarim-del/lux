@@ -1,5 +1,5 @@
 import { Topbar } from "@/components/app/Topbar";
-import { StatCard } from "@/components/app/StatCard";
+import { StatCard } from "@/components/ui";
 import { TaskTable } from "@/components/app/TaskTable";
 import { RecentRequests } from "@/components/app/RecentRequests";
 import { TeamStatus } from "@/components/app/TeamStatus";

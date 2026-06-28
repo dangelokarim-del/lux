@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Logo } from "@/components/ui/Logo";
+import { Logo, buttonVariants } from "@/components/ui";
 
 export function Nav() {
   return (
@@ -27,7 +27,7 @@ export function Nav() {
           <Link href="/login" className="hidden text-[13px] text-ink-2 transition-colors hover:text-ink sm:block">
             Sign in
           </Link>
-          <Link href="/login" className="btn-accent px-4 py-2 text-[13px]">
+          <Link href="/login" className={buttonVariants({ variant: "accent", size: "sm" })}>
             Book a Demo
           </Link>
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Logo } from "@/components/ui/Logo";
+import { Logo } from "@/components/ui";
 
 const miniStats = [
   { label: "Open", value: "14" },

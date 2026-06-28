@@ -1,6 +1,5 @@
 import { Topbar } from "@/components/app/Topbar";
-import { Avatar } from "@/components/ui/Avatar";
-import { PresenceDot } from "@/components/ui/StatusDot";
+import { Card, Avatar, PresenceTag } from "@/components/ui";
 import { team } from "@/lib/data";
 
 export default function TeamPage() {
@@ -12,13 +11,10 @@ export default function TeamPage() {
       <div className="p-5 sm:p-7">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {team.map((m) => (
-            <div key={m.id} className="panel panel-hover p-5">
+            <Card key={m.id} hover className="p-5">
               <div className="flex items-start justify-between">
                 <Avatar name={m.name} size={48} />
-                <div className="flex items-center gap-2 text-[12px] text-ink-2">
-                  <PresenceDot presence={m.presence} />
-                  {m.presence}
-                </div>
+                <PresenceTag presence={m.presence} />
               </div>
               <div className="mt-4 text-[15px] font-medium">{m.name}</div>
               <div className="text-[13px] text-ink-3">{m.role}</div>
@@ -29,7 +25,7 @@ export default function TeamPage() {
                   <span className="font-medium text-ink">{m.load}</span> open tasks
                 </span>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       </div>

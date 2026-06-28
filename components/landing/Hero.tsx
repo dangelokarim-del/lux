@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Wordmark, buttonVariants } from "@/components/ui";
 import { DashboardPreview } from "./DashboardPreview";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -24,14 +25,13 @@ export function Hero() {
           <span className="text-[12px] text-ink-2">Private beta · Marbella</span>
         </motion.div>
 
-        <motion.h1
+        <motion.div
           initial={{ opacity: 0, y: 22 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease, delay: 0.05 }}
-          className="chrome text-balance text-[15vw] font-semibold leading-[0.9] tracking-[-0.05em] sm:text-[120px]"
         >
-          LUXA
-        </motion.h1>
+          <Wordmark className="text-[15vw] sm:text-[110px]" />
+        </motion.div>
 
         <motion.p
           initial={{ opacity: 0, y: 18 }}
@@ -58,10 +58,10 @@ export function Hero() {
           transition={{ duration: 0.7, ease, delay: 0.3 }}
           className="mt-9 flex items-center justify-center gap-3"
         >
-          <Link href="/login" className="btn-accent px-6 py-3 text-[15px]">
+          <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
             Book a Demo
           </Link>
-          <a href="#dashboard" className="btn-ghost px-6 py-3 text-[15px]">
+          <a href="#dashboard" className={buttonVariants({ variant: "secondary", size: "lg" })}>
             See the product
           </a>
         </motion.div>

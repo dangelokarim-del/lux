@@ -28,7 +28,21 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
+  --radius-control: 10px;
   --radius-card: 16px;
+  --radius-pill: 9999px;
+
+  /* premium shadows — soft, deep, never harsh */
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 24px 60px -36px rgba(0, 0, 0, 0.85);
+  --shadow-pop: 0 30px 80px -40px rgba(0, 0, 0, 0.92);
+  --shadow-accent: 0 0 0 1px rgba(46, 125, 255, 0.5),
+    0 8px 30px -8px rgba(46, 125, 255, 0.55);
+  --shadow-accent-hover: 0 0 0 1px rgba(46, 125, 255, 0.7),
+    0 12px 40px -8px rgba(46, 125, 255, 0.7);
+
+  /* shared easing — one motion language */
+  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @layer base {
@@ -111,38 +125,6 @@
       rgba(255, 255, 255, 0.02)
     );
   }
-
-  /* the one accent button */
-  .btn-accent {
-    background: var(--color-accent);
-    color: #fff;
-    border-radius: 10px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    box-shadow: 0 0 0 1px rgba(46, 125, 255, 0.5),
-      0 8px 30px -8px rgba(46, 125, 255, 0.55);
-    transition: transform 0.2s ease, box-shadow 0.3s ease, filter 0.2s ease;
-  }
-  .btn-accent:hover {
-    filter: brightness(1.08);
-    box-shadow: 0 0 0 1px rgba(46, 125, 255, 0.7),
-      0 12px 40px -8px rgba(46, 125, 255, 0.7);
-  }
-  .btn-accent:active {
-    transform: translateY(1px);
-  }
-
-  .btn-ghost {
-    border: 1px solid var(--color-line-2);
-    color: var(--color-ink);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.02);
-    transition: background 0.25s ease, border-color 0.25s ease;
-  }
-  .btn-ghost:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.24);
-  }
 }
 
 @layer utilities {
@@ -171,5 +153,38 @@
 
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* consistent focus ring for interactive elements */
+  .focus-ring {
+    outline: none;
+  }
+  .focus-ring:focus-visible {
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px rgba(46, 125, 255, 0.6);
+  }
+
+  /* loading shimmer */
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.06),
+      transparent
+    );
+    animation: shimmer 1.6s infinite;
+  }
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
   }
 }

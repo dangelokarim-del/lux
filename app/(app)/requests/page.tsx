@@ -1,5 +1,6 @@
 import { Topbar } from "@/components/app/Topbar";
 import { RecentRequests } from "@/components/app/RecentRequests";
+import { Card } from "@/components/ui";
 import { requests } from "@/lib/data";
 
 export default function RequestsPage() {
@@ -11,7 +12,7 @@ export default function RequestsPage() {
       <div className="p-5 sm:p-7">
         <div className="mx-auto max-w-2xl">
           {/* incoming banner — shows the AI capture promise */}
-          <div className="panel mb-6 flex items-center gap-4 p-5">
+          <Card className="mb-6 flex items-center gap-4 p-5">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[rgba(46,125,255,0.3)] bg-accent-soft">
               <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
             </div>
@@ -21,7 +22,7 @@ export default function RequestsPage() {
                 WhatsApp, email and calls are captured and structured automatically.
               </div>
             </div>
-          </div>
+          </Card>
 
           <RecentRequests data={requests} />
         </div>

@@ -1,15 +1,16 @@
 import { cn } from "@/lib/utils";
+import { Card } from "./Card";
 
-type Tone = "default" | "urgent" | "ok" | "accent";
+type StatTone = "default" | "urgent" | "ok" | "accent";
 
-const valueTone: Record<Tone, string> = {
+const valueTone: Record<StatTone, string> = {
   default: "text-ink",
   urgent: "text-urgent",
   ok: "text-ok",
   accent: "text-ink",
 };
 
-const deltaTone: Record<Tone, string> = {
+const deltaTone: Record<StatTone, string> = {
   default: "text-ink-3",
   urgent: "text-urgent",
   ok: "text-ok",
@@ -24,11 +25,11 @@ export function StatCard({
 }: {
   label: string;
   value: number | string;
-  delta: string;
-  tone?: Tone;
+  delta?: string;
+  tone?: StatTone;
 }) {
   return (
-    <div className="panel panel-hover relative overflow-hidden p-5">
+    <Card hover className="relative p-5">
       {tone === "accent" && (
         <div className="glow-accent pointer-events-none absolute -right-6 -top-8 h-24 w-24 opacity-70 blur-xl" />
       )}
@@ -36,7 +37,7 @@ export function StatCard({
       <div className={cn("mt-3 text-4xl font-semibold tracking-tight tabular-nums", valueTone[tone])}>
         {value}
       </div>
-      <div className={cn("mt-2 text-[12px]", deltaTone[tone])}>{delta}</div>
-    </div>
+      {delta && <div className={cn("mt-2 text-[12px]", deltaTone[tone])}>{delta}</div>}
+    </Card>
   );
 }

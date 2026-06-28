@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui";
 import { Reveal } from "./Reveal";
 
 const features = [
@@ -30,7 +31,7 @@ export function ProductSection() {
               </p>
             </Reveal>
             <Reveal delay={0.15}>
-              <Link href="/dashboard" className="btn-accent mt-8 inline-flex px-6 py-3 text-[15px]">
+              <Link href="/dashboard" className={`${buttonVariants({ variant: "accent", size: "lg" })} mt-8`}>
                 Open live demo
               </Link>
             </Reveal>

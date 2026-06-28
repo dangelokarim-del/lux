@@ -2,31 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  ListChecks,
-  Building2,
-  Users,
-  MessageSquareText,
-  type LucideIcon,
-} from "lucide-react";
-import { Logo } from "@/components/ui/Logo";
+import { Logo } from "@/components/ui";
 import { cn } from "@/lib/utils";
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  badge?: number;
-}
-
-const items: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/tasks", label: "Tasks", icon: ListChecks, badge: 14 },
-  { href: "/villas", label: "Villas", icon: Building2 },
-  { href: "/team", label: "Team", icon: Users },
-  { href: "/requests", label: "Guest Requests", icon: MessageSquareText, badge: 2 },
-];
+import { navItems } from "./nav-items";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -44,15 +22,16 @@ export function Sidebar() {
           Workspace
         </div>
         <nav className="space-y-0.5">
-          {items.map((item) => {
+          {navItems.map((item) => {
             const active = pathname === item.href;
             const Icon = item.icon;
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group flex items-center gap-3 rounded-[10px] px-3 py-2 text-[14px] transition-colors",
+                  "group flex items-center gap-3 rounded-[var(--radius-control)] px-3 py-2 text-[14px] transition-colors",
                   active
                     ? "bg-white/[0.06] text-ink"
                     : "text-ink-2 hover:bg-white/[0.03] hover:text-ink"

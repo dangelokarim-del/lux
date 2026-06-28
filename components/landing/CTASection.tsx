@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui";
 import { Reveal } from "./Reveal";
 
 export function CTASection() {
@@ -19,10 +20,10 @@ export function CTASection() {
         </Reveal>
         <Reveal delay={0.14}>
           <div className="mt-9 flex items-center justify-center gap-3">
-            <Link href="/login" className="btn-accent px-7 py-3.5 text-[15px]">
+            <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
               Book a Demo
             </Link>
-            <Link href="/dashboard" className="btn-ghost px-7 py-3.5 text-[15px]">
+            <Link href="/dashboard" className={buttonVariants({ variant: "secondary", size: "lg" })}>
               Explore the dashboard
             </Link>
           </div>
