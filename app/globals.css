@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ */
+/*  LUXA design system — pure black, white type, one electric accent   */
+/* ------------------------------------------------------------------ */
+
+@theme {
+  --color-bg: #000000;
+  --color-bg-elev: #08080a;
+
+  --color-ink: #ffffff;
+  --color-ink-2: rgba(255, 255, 255, 0.62);
+  --color-ink-3: rgba(255, 255, 255, 0.40);
+  --color-ink-4: rgba(255, 255, 255, 0.24);
+
+  --color-line: rgba(255, 255, 255, 0.08);
+  --color-line-2: rgba(255, 255, 255, 0.14);
+
+  /* the single accent — electric blue, used sparingly */
+  --color-accent: #2e7dff;
+  --color-accent-soft: rgba(46, 125, 255, 0.16);
+
+  /* semantic status hues (muted, never loud) */
+  --color-urgent: #ff5c5c;
+  --color-warn: #f5b53d;
+  --color-ok: #4ad48a;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-card: 16px;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    letter-spacing: -0.011em;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: #fff;
+  }
+
+  /* slim, dark scrollbars */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    border: 3px solid #000;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.16);
+  }
+}
+
+@layer components {
+  /* tiny uppercase mono label — the Linear signature */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+  }
+
+  /* silver → grey chrome text */
+  .chrome {
+    background: linear-gradient(180deg, #ffffff 0%, #ffffff 35%, #8b8b92 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* faint hairline panel */
+  .panel {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.035),
+      rgba(255, 255, 255, 0.012)
+    );
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+  }
+
+  .panel-hover {
+    transition: border-color 0.3s ease, background 0.3s ease;
+  }
+  .panel-hover:hover {
+    border-color: var(--color-line-2);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.05),
+      rgba(255, 255, 255, 0.02)
+    );
+  }
+
+  /* the one accent button */
+  .btn-accent {
+    background: var(--color-accent);
+    color: #fff;
+    border-radius: 10px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    box-shadow: 0 0 0 1px rgba(46, 125, 255, 0.5),
+      0 8px 30px -8px rgba(46, 125, 255, 0.55);
+    transition: transform 0.2s ease, box-shadow 0.3s ease, filter 0.2s ease;
+  }
+  .btn-accent:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 0 0 1px rgba(46, 125, 255, 0.7),
+      0 12px 40px -8px rgba(46, 125, 255, 0.7);
+  }
+  .btn-accent:active {
+    transform: translateY(1px);
+  }
+
+  .btn-ghost {
+    border: 1px solid var(--color-line-2);
+    color: var(--color-ink);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    transition: background 0.25s ease, border-color 0.25s ease;
+  }
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.24);
+  }
+}
+
+@layer utilities {
+  /* dotted grid backdrop */
+  .bg-grid {
+    background-image: radial-gradient(
+      rgba(255, 255, 255, 0.06) 1px,
+      transparent 1px
+    );
+    background-size: 38px 38px;
+  }
+
+  /* soft electric glow */
+  .glow-accent {
+    background: radial-gradient(
+      circle at center,
+      rgba(46, 125, 255, 0.22),
+      transparent 60%
+    );
+  }
+
+  .mask-fade-b {
+    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+    mask-image: linear-gradient(to bottom, #000 55%, transparent);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}

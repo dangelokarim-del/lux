@@ -1,0 +1,54 @@
+import { Topbar } from "@/components/app/Topbar";
+import { VillaStateTag } from "@/components/ui/Badge";
+import { villas } from "@/lib/data";
+
+export default function VillasPage() {
+  return (
+    <>
+      <Topbar title="Villas" subtitle={`${villas.length} properties · Marbella`} />
+      <div className="p-5 sm:p-7">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {villas.map((v) => (
+            <div key={v.id} className="panel panel-hover overflow-hidden">
+              {/* abstract header — no stock photos */}
+              <div className="relative h-28 overflow-hidden border-b border-line bg-bg-elev">
+                <div className="bg-grid absolute inset-0 opacity-50" />
+                <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/[0.03] blur-xl" />
+                <div className="absolute bottom-3 left-4 font-mono text-[11px] text-ink-4">
+                  {v.id}
+                </div>
+                <div className="absolute right-4 top-3">
+                  <VillaStateTag state={v.state} />
+                </div>
+              </div>
+
+              <div className="p-5">
+                <div className="text-[16px] font-medium">{v.name}</div>
+                <div className="text-[13px] text-ink-3">{v.area}</div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-line bg-white/[0.02] px-3 py-2.5">
+                    <div className="text-[11px] uppercase tracking-wider text-ink-4">
+                      Guests
+                    </div>
+                    <div className="mt-0.5 text-[18px] font-semibold tabular-nums">
+                      {v.guests}
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-line bg-white/[0.02] px-3 py-2.5">
+                    <div className="text-[11px] uppercase tracking-wider text-ink-4">
+                      Open tasks
+                    </div>
+                    <div className="mt-0.5 text-[18px] font-semibold tabular-nums">
+                      {v.openTasks}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
