@@ -91,7 +91,7 @@ export function Hero() {
                 transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
               >
                 <div className="origin-top shadow-[var(--shadow-float)] sm:[transform:perspective(2000px)_rotateX(7deg)]">
-                  <ProductDashboard />
+                  <ProductDashboard animated />
                 </div>
               </motion.div>
             </motion.div>
