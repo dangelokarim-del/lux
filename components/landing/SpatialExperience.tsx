@@ -39,7 +39,7 @@ const CAPTIONS = [
  * ------------------------------------------------------------------ */
 
 /* ---- the villa environment (dark, calm, expensive) ---- */
-function VillaSpace({ dolly }: { dolly: MotionValue<number> }) {
+export function VillaSpace({ dolly }: { dolly: MotionValue<number> }) {
   const reduce = useReducedMotion();
   const scale = useTransform(dolly, [0, 1], [1.04, 1.16]);
   const y = useTransform(dolly, [0, 1], ["0%", "-3%"]);

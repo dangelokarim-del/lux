@@ -1,5 +1,5 @@
 import { SiteHeader } from "@/components/landing/SiteHeader";
-import { Hero } from "@/components/landing/Hero";
+import { SplineHero } from "@/components/landing/SplineHero";
 import { Statement } from "@/components/landing/Statement";
 import { ProductFlow } from "@/components/landing/ProductFlow";
 import { SpatialExperience } from "@/components/landing/SpatialExperience";
@@ -21,8 +21,8 @@ export default function LandingPage() {
       <main className="relative min-h-screen text-white antialiased">
         <SiteHeader />
 
-        {/* 1 — Hero with floating dashboard */}
-        <Hero />
+        {/* 1 — Fullscreen Spline hero (the visual identity) */}
+        <SplineHero />
 
         {/* 2 — Problem */}
         <Statement eyebrow="The problem">
