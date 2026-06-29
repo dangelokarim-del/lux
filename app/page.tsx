@@ -2,7 +2,7 @@ import { SiteHeader } from "@/components/landing/SiteHeader";
 import { Hero } from "@/components/landing/Hero";
 import { Statement } from "@/components/landing/Statement";
 import { ProductFlow } from "@/components/landing/ProductFlow";
-import { DashboardShowcase } from "@/components/landing/DashboardShowcase";
+import { SpatialPenthouse } from "@/components/landing/SpatialPenthouse";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { SiteFooter } from "@/components/landing/SiteFooter";
 import { Atmosphere } from "@/components/landing/anim/Atmosphere";
@@ -34,8 +34,8 @@ export default function LandingPage() {
         {/* 3 — Product flow */}
         <ProductFlow />
 
-        {/* 4 — Dashboard showcase */}
-        <DashboardShowcase />
+        {/* 4 — Spatial product showcase (Vision Pro penthouse) */}
+        <SpatialPenthouse />
 
         {/* 5 — Payoff statement */}
         <Statement>
