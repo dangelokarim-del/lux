@@ -5,13 +5,20 @@ import { ProductFlow } from "@/components/landing/ProductFlow";
 import { DashboardShowcase } from "@/components/landing/DashboardShowcase";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { SiteFooter } from "@/components/landing/SiteFooter";
+import { Atmosphere } from "@/components/landing/anim/Atmosphere";
 
 export default function LandingPage() {
   return (
     <>
-      <div aria-hidden className="fixed inset-0 -z-50 bg-[#050505]" />
+      {/* cinematic base: subtle radial graphite-blue centre fading to near-black */}
+      <div
+        aria-hidden
+        className="fixed inset-0 -z-50"
+        style={{ background: "radial-gradient(135% 100% at 50% 12%, #101828 0%, #0a0e17 38%, #050608 78%)" }}
+      />
+      <Atmosphere />
 
-      <main className="relative min-h-screen bg-[#050505] text-white antialiased">
+      <main className="relative min-h-screen text-white antialiased">
         <SiteHeader />
 
         {/* 1 — Hero with floating dashboard */}

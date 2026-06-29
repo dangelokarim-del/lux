@@ -1,7 +1,16 @@
 "use client";
 
 import { useId } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
+
+/* the four letterforms, in reveal order */
+const LETTER_D = [
+  "M108 56 V196 Q108 216 128 216 H214", // L
+  "M372 56 V146 C372 192 399 216 430 216 C461 216 488 192 488 146 V56", // U
+  "M660 56 L780 216 M780 56 L660 216", // X
+  "M1000 56 L940 216 M1000 56 L1060 216", // A
+] as const;
 
 /**
  * The LUXA wordmark — handcrafted brushed-aluminium letterforms.
@@ -18,15 +27,29 @@ import { cn } from "@/lib/utils";
 export function LuxaMark({
   className,
   animated = true,
+  intro = false,
   title = "LUXA",
 }: {
   className?: string;
   animated?: boolean;
+  /** reveal each letter individually (L → LU → LUX → LUXA) on mount */
+  intro?: boolean;
   title?: string;
 }) {
   const raw = useId().replace(/:/g, "");
   const id = (k: string) => `${raw}-${k}`;
   const letters = `#${id("letters")}`;
+  const reduce = useReducedMotion();
+
+  // one letter's full chrome finish (chrome body + specular + bevel light/shade)
+  const Finish = ({ d }: { d: string }) => (
+    <>
+      <path d={d} stroke={`url(#${id("chrome")})`} />
+      <path d={d} stroke="#ffffff" strokeWidth="4" opacity="0.26" />
+      <path d={d} stroke={`url(#${id("tophi")})`} />
+      <path d={d} stroke={`url(#${id("botsh")})`} />
+    </>
+  );
 
   return (
     <svg
@@ -102,22 +125,53 @@ export function LuxaMark({
         </mask>
       </defs>
 
-      {/* chrome body */}
-      <use href={letters} stroke={`url(#${id("chrome")})`} />
-      {/* centred specular shine — the polished tube */}
-      <use href={letters} stroke="#ffffff" strokeWidth="4" opacity="0.26" />
-      {/* bevel: top light, bottom shade */}
-      <use href={letters} stroke={`url(#${id("tophi")})`} />
-      <use href={letters} stroke={`url(#${id("botsh")})`} />
+      {intro ? (
+        /* per-letter reveal — each letter fades + lifts in sequence */
+        <g fill="none" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round">
+          {LETTER_D.map((d, n) => (
+            <motion.g
+              key={n}
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: reduce ? 0.5 : 0.85, delay: reduce ? 0 : n * 0.17, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <Finish d={d} />
+              {n === 2 && (
+                <>
+                  <circle cx="720" cy="136" r="18" fill={`url(#${id("xglow")})`} filter={`url(#${id("soft")})`} stroke="none" />
+                  <ellipse cx="720" cy="136" rx="2.4" ry="15" fill="#ffffff" opacity="0.85" filter={`url(#${id("soft")})`} stroke="none" />
+                  <circle cx="720" cy="136" r="3" fill="#ffffff" opacity="0.95" stroke="none" />
+                </>
+              )}
+              {n === 3 && (
+                <>
+                  <circle cx="1098" cy="206" r="8" fill="#2E7DFF" opacity="0.22" filter={`url(#${id("soft")})`} stroke="none" />
+                  <circle cx="1098" cy="206" r="5" fill={`url(#${id("dot")})`} stroke="none" />
+                </>
+              )}
+            </motion.g>
+          ))}
+        </g>
+      ) : (
+        <>
+          {/* chrome body */}
+          <use href={letters} stroke={`url(#${id("chrome")})`} />
+          {/* centred specular shine — the polished tube */}
+          <use href={letters} stroke="#ffffff" strokeWidth="4" opacity="0.26" />
+          {/* bevel: top light, bottom shade */}
+          <use href={letters} stroke={`url(#${id("tophi")})`} />
+          <use href={letters} stroke={`url(#${id("botsh")})`} />
 
-      {/* X intersection — contained light + vertical lens streak */}
-      <circle cx="720" cy="136" r="18" fill={`url(#${id("xglow")})`} filter={`url(#${id("soft")})`} />
-      <ellipse cx="720" cy="136" rx="2.4" ry="15" fill="#ffffff" opacity="0.85" filter={`url(#${id("soft")})`} />
-      <circle cx="720" cy="136" r="3" fill="#ffffff" opacity="0.95" />
+          {/* X intersection — contained light + vertical lens streak */}
+          <circle cx="720" cy="136" r="18" fill={`url(#${id("xglow")})`} filter={`url(#${id("soft")})`} />
+          <ellipse cx="720" cy="136" rx="2.4" ry="15" fill="#ffffff" opacity="0.85" filter={`url(#${id("soft")})`} />
+          <circle cx="720" cy="136" r="3" fill="#ffffff" opacity="0.95" />
 
-      {/* A dot — muted blue */}
-      <circle cx="1098" cy="206" r="8" fill="#2E7DFF" opacity="0.22" filter={`url(#${id("soft")})`} />
-      <circle cx="1098" cy="206" r="5" fill={`url(#${id("dot")})`} />
+          {/* A dot — muted blue */}
+          <circle cx="1098" cy="206" r="8" fill="#2E7DFF" opacity="0.22" filter={`url(#${id("soft")})`} />
+          <circle cx="1098" cy="206" r="5" fill={`url(#${id("dot")})`} />
+        </>
+      )}
 
       {/* extremely slow metallic reflection, clipped to the chrome */}
       {animated && (

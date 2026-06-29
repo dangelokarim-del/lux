@@ -38,12 +38,13 @@ const DUR: Record<Step, number> = {
 
 type Tone = "accent" | "urgent" | "warn" | "muted" | "active";
 
+/* palette: graphite + white + one electric blue only — no orange, no green */
 const pillMap: Record<Tone, string> = {
-  accent: "text-[#7fb0ff] bg-[#2E7DFF]/12 border-[#2E7DFF]/25",
-  urgent: "text-[#ff8a8a] bg-[#ff5c5c]/10 border-[#ff5c5c]/18",
-  warn: "text-[#f0c074] bg-[#f5b53d]/10 border-[#f5b53d]/16",
+  accent: "text-[#8fbcff] bg-[#2E7DFF]/12 border-[#2E7DFF]/25",
+  urgent: "text-white/85 bg-white/[0.07] border-white/[0.16]",
+  warn: "text-white/55 bg-white/[0.04] border-white/[0.09]",
   muted: "text-white/50 bg-white/[0.04] border-white/[0.08]",
-  active: "text-white/85 bg-white/[0.07] border-white/15",
+  active: "text-[#8fbcff] bg-[#2E7DFF]/12 border-[#2E7DFF]/22",
 };
 
 function StatusPill({ tone, children }: { tone: Tone; children: React.ReactNode }) {
@@ -83,7 +84,7 @@ const activity = [
   { icon: Phone, who: "Ms. Laurent", note: "Airport transfer arranged", time: "18m" },
 ];
 
-const extracted = ["AC issue", "Master bedroom", "Maintenance", "High priority", "Villa Ocean"];
+const extracted = ["AC Issue", "Master Bedroom", "Maintenance", "High Priority"];
 
 /* ---------- intake card — small, suspended glass ---------- */
 
@@ -91,28 +92,28 @@ function IntakeCard({ reached }: { reached: (k: Step) => boolean }) {
   return (
     <motion.div
       key="intake"
-      initial={{ opacity: 0, y: -10, x: "-50%", scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, x: "-50%", scale: 1 }}
-      exit={{ opacity: 0, y: 30, x: "-50%", scale: 0.97 }}
-      transition={{ duration: 0.8, ease }}
-      className="pointer-events-none absolute left-1/2 top-[70px] z-30 w-[215px] max-w-[78%]"
+      initial={{ opacity: 0, x: "-30%", y: -6, scale: 0.97 }}
+      animate={{ opacity: 1, x: "-50%", y: 0, scale: 1 }}
+      exit={{ opacity: 0, x: "-42%", scale: 0.97 }}
+      transition={{ duration: 0.9, ease }}
+      className="pointer-events-none absolute left-1/2 top-[58px] z-30 w-[232px] max-w-[72%]"
     >
       {/* gentle suspension float */}
       <motion.div
         animate={{ y: [0, -3, 0] }}
         transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
-        className="rounded-[22px] border border-white/[0.07] bg-white/[0.04] p-3 backdrop-blur-2xl shadow-[0_22px_60px_-34px_rgba(0,0,0,0.7)]"
+        className="rounded-[20px] border border-white/[0.08] bg-white/[0.05] p-3 backdrop-blur-2xl shadow-[0_26px_70px_-34px_rgba(0,0,0,0.8)]"
       >
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-[8.5px] font-medium uppercase tracking-[0.16em] text-white/40">
-            <span className="h-1 w-1 rounded-full bg-[#25D366]" />
+          <span className="flex items-center gap-1.5 text-[8.5px] font-medium uppercase tracking-[0.16em] text-white/45">
+            <span className="h-1 w-1 rounded-full bg-white/55" />
             WhatsApp
           </span>
           <span className="text-[9px] text-white/25">Villa Ocean</span>
         </div>
 
-        <div className="mt-2 rounded-2xl rounded-tl-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-2 text-[11px] leading-snug text-white/80">
-          Hi, the AC is not working in the master bedroom.
+        <div className="mt-2 rounded-2xl rounded-tr-md border border-white/[0.06] bg-white/[0.03] px-2.5 py-2 text-[11px] leading-snug text-white/85">
+          Hi, the AC isn&apos;t working in the master bedroom.
         </div>
 
         <AnimatePresence>
@@ -125,17 +126,21 @@ function IntakeCard({ reached }: { reached: (k: Step) => boolean }) {
               transition={{ duration: 0.4 }}
               className="mt-2.5"
             >
-              <div className="mb-1.5 text-[8px] font-medium uppercase tracking-[0.18em] text-white/25">Extracted</div>
+              <div className="mb-1.5 flex items-center gap-1.5 text-[8px] font-medium uppercase tracking-[0.18em] text-[#8fbcff]/70">
+                <span className="h-[3px] w-[3px] rounded-full bg-[#2E7DFF]" />
+                AI extracted
+              </div>
               <div className="flex flex-wrap gap-1">
                 {extracted.map((c, idx) => (
                   <motion.span
                     key={c}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.05 + idx * 0.22, duration: 0.5, ease }}
-                    className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-[3px] text-[9.5px] font-medium text-white/70 backdrop-blur-sm"
+                    initial={{ opacity: 0, y: 6, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.92 }}
+                    transition={{ delay: 0.06 + idx * 0.16, duration: 0.55, ease }}
+                    className="inline-flex items-center gap-1 rounded-full border border-[#2E7DFF]/20 bg-[#2E7DFF]/[0.07] px-2 py-[3px] text-[9.5px] font-medium text-white/80 backdrop-blur-sm"
                   >
-                    <span className="h-[3px] w-[3px] rounded-full bg-white/30" />
+                    <span className="h-[3px] w-[3px] rounded-full bg-[#2E7DFF]/80" />
                     {c}
                   </motion.span>
                 ))}
@@ -150,11 +155,19 @@ function IntakeCard({ reached }: { reached: (k: Step) => boolean }) {
 
 /* ---------- dashboard ---------- */
 
-export function ProductDashboard({ animated = false }: { animated?: boolean }) {
+export function ProductDashboard({ animated = false, introDelay = 0 }: { animated?: boolean; introDelay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { margin: "-12%" });
   const reduce = useReducedMotion();
   const [i, setI] = useState(0);
+  const [armed, setArmed] = useState(false);
+
+  // hold the workflow until the hero has revealed the dashboard
+  useEffect(() => {
+    if (!animated || reduce || !inView) return;
+    const t = setTimeout(() => setArmed(true), introDelay);
+    return () => clearTimeout(t);
+  }, [animated, reduce, inView, introDelay]);
 
   useEffect(() => {
     if (!animated) return;
@@ -162,20 +175,23 @@ export function ProductDashboard({ animated = false }: { animated?: boolean }) {
       setI(SEQ.indexOf("inprogress"));
       return;
     }
-    if (!inView) return;
+    if (!inView || !armed) return;
     const id = setTimeout(() => setI((p) => (p + 1) % SEQ.length), DUR[SEQ[i]]);
     return () => clearTimeout(id);
-  }, [animated, reduce, inView, i]);
+  }, [animated, reduce, inView, armed, i]);
 
   const idx = (k: Step) => SEQ.indexOf(k);
   const reached = (k: Step) => i >= idx(k);
 
   const open = animated && reached("created") ? 15 : 14;
+  const urgent = animated && reached("created") ? 3 : 2;
+  const fast = animated && reached("assigned"); // avg response 2m → 37s
 
   const taskLabel = reached("inprogress") ? "In Progress" : reached("assigned") ? "Assigned" : "New";
   const taskTone: Tone = reached("inprogress") ? "active" : reached("assigned") ? "accent" : "muted";
   const showTask = animated && reached("created");
   const showCard = animated && !reduce && reached("message") && i <= idx("created");
+  const showLink = animated && !reduce && reached("extract") && i <= idx("created");
   const baseRows = animated ? ANIM_BASE_ROWS : STATIC_ROWS;
 
   const StatValue = ({ v, accent }: { v: number; accent?: boolean }) => (
@@ -186,13 +202,31 @@ export function ProductDashboard({ animated = false }: { animated?: boolean }) {
 
   const stats: { label: string; v: number; accent?: boolean }[] = [
     { label: "Open requests", v: open },
-    { label: "Urgent", v: 2, accent: true },
+    { label: "Urgent", v: urgent, accent: true },
     { label: "Resolved today", v: 28 },
     { label: "Arrivals", v: 6 },
   ];
 
   return (
-    <div ref={ref} className="glass edge-light relative w-full overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#0b0b0e]/70">
+    <div ref={ref} className="glass edge-light relative w-full overflow-hidden rounded-[28px] border border-white/[0.07] bg-[#0b0b0e]/70 shadow-[var(--shadow-dash)]">
+      {/* glowing blue line — WhatsApp → AI → dashboard */}
+      {showLink && (
+        <svg className="pointer-events-none absolute inset-0 z-[25] h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <motion.path
+            d="M 50 22 C 48 38, 46 48, 44 60"
+            fill="none"
+            stroke="#2E7DFF"
+            strokeWidth={0.5}
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+            pathLength={1}
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: [0, 0.7, 0.7, 0] }}
+            transition={{ pathLength: { duration: 1, ease }, opacity: { duration: 1.8, ease, times: [0, 0.2, 0.7, 1] } }}
+            style={{ filter: "drop-shadow(0 0 2px rgba(46,125,255,0.5))" }}
+          />
+        </svg>
+      )}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(155deg,rgba(255,255,255,0.06),transparent_28%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_70%_at_50%_-15%,rgba(46,125,255,0.06),transparent_55%)]" />
@@ -403,11 +437,34 @@ export function ProductDashboard({ animated = false }: { animated?: boolean }) {
 
           <div className="edge-light mt-7 rounded-2xl border border-white/[0.05] bg-white/[0.025] p-4">
             <div className="text-[10px] uppercase tracking-[0.15em] text-white/30">Avg. response</div>
-            <div className="mt-2 flex items-baseline gap-1.5">
-              <span className="text-[26px] font-semibold leading-none tracking-tight text-white tabular-nums">
-                <CountUp to={2} pad={1} />
-              </span>
-              <span className="text-[13px] text-white/40">min</span>
+            <div className="relative mt-2 flex h-[26px] items-baseline tabular-nums">
+              <AnimatePresence initial={false} mode="popLayout">
+                {fast ? (
+                  <motion.span
+                    key="fast"
+                    initial={{ opacity: 0, y: 8, filter: "blur(4px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={{ duration: 0.6, ease }}
+                    className="flex items-baseline gap-1.5"
+                  >
+                    <span className="text-[26px] font-semibold leading-none tracking-tight text-[#8fbcff]">37</span>
+                    <span className="text-[13px] text-white/40">s</span>
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="slow"
+                    initial={false}
+                    exit={{ opacity: 0, y: -8, filter: "blur(4px)" }}
+                    transition={{ duration: 0.6, ease }}
+                    className="flex items-baseline gap-1.5"
+                  >
+                    <span className="text-[26px] font-semibold leading-none tracking-tight text-white">
+                      <CountUp to={2} pad={1} />
+                    </span>
+                    <span className="text-[13px] text-white/40">min</span>
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </aside>
