@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Logo } from "@/components/ui";
+import { LuxaMark } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { navItems } from "./nav-items";
 
@@ -12,8 +12,8 @@ export function Sidebar() {
   return (
     <aside className="hidden w-[244px] shrink-0 flex-col border-r border-line bg-bg lg:flex">
       <div className="flex h-16 items-center px-5">
-        <Link href="/">
-          <Logo />
+        <Link href="/" aria-label="LUXA">
+          <LuxaMark className="h-[22px] w-auto" />
         </Link>
       </div>
 
