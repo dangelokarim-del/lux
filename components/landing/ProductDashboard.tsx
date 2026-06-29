@@ -171,6 +171,7 @@ export function ProductDashboard({ animated = false }: { animated?: boolean }) {
   const reached = (k: Step) => i >= idx(k);
 
   const open = animated && reached("created") ? 15 : 14;
+  const urgent = animated && reached("created") ? 3 : 2;
 
   const taskLabel = reached("inprogress") ? "In Progress" : reached("assigned") ? "Assigned" : "New";
   const taskTone: Tone = reached("inprogress") ? "active" : reached("assigned") ? "accent" : "muted";
@@ -186,7 +187,7 @@ export function ProductDashboard({ animated = false }: { animated?: boolean }) {
 
   const stats: { label: string; v: number; accent?: boolean }[] = [
     { label: "Open requests", v: open },
-    { label: "Urgent", v: 2, accent: true },
+    { label: "Urgent", v: urgent, accent: true },
     { label: "Resolved today", v: 28 },
     { label: "Arrivals", v: 6 },
   ];
