@@ -29,10 +29,10 @@ export function DashboardShowcase() {
         >
           <div
             aria-hidden
-            className="pointer-events-none absolute -inset-x-8 -top-6 bottom-0 -z-10 opacity-60 blur-3xl"
-            style={{ background: "radial-gradient(50% 50% at 50% 30%, rgba(46,125,255,0.12), transparent 70%)" }}
+            className="pointer-events-none absolute -inset-x-12 -top-10 bottom-4 -z-10 opacity-70 blur-3xl"
+            style={{ background: "radial-gradient(55% 55% at 50% 32%, rgba(46,125,255,0.13), transparent 72%)" }}
           />
-          <div className="shadow-[0_70px_160px_-50px_rgba(0,0,0,0.95)]">
+          <div className="shadow-[var(--shadow-float)]">
             <ProductDashboard />
           </div>
         </motion.div>

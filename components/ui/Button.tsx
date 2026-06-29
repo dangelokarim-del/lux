@@ -9,7 +9,7 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         accent:
-          "rounded-[var(--radius-control)] bg-accent text-white shadow-[var(--shadow-accent)] hover:shadow-[var(--shadow-accent-hover)] hover:brightness-110",
+          "rounded-[var(--radius-control)] bg-[linear-gradient(180deg,#3d87ff_0%,#2e7dff_100%)] text-white shadow-[var(--shadow-accent)] hover:shadow-[var(--shadow-accent-hover)] hover:brightness-[1.05]",
         secondary:
           "rounded-[var(--radius-control)] border border-line-2 bg-white/[0.02] text-ink hover:bg-white/[0.06] hover:border-white/20",
         ghost:

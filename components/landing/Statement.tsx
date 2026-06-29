@@ -28,11 +28,11 @@ export function Statement({
           </motion.div>
         )}
         <motion.h2
-          initial={reduce ? { opacity: 0 } : { opacity: 0, y: 26 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={reduce ? { opacity: 0 } : { opacity: 0, y: 28, filter: "blur(8px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="text-balance text-[clamp(2.5rem,8vw,6rem)] font-semibold leading-[0.96] tracking-[-0.045em] text-white"
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          className="text-balance text-[clamp(2.5rem,8vw,6rem)] font-semibold leading-[0.96] tracking-[-0.05em] text-white"
         >
           {children}
         </motion.h2>

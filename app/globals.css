@@ -32,14 +32,19 @@
   --radius-card: 16px;
   --radius-pill: 9999px;
 
-  /* premium shadows — soft, deep, never harsh */
+  /* premium shadows — soft, deep, layered, never harsh */
   --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
     0 24px 60px -36px rgba(0, 0, 0, 0.85);
   --shadow-pop: 0 30px 80px -40px rgba(0, 0, 0, 0.92);
-  --shadow-accent: 0 0 0 1px rgba(46, 125, 255, 0.5),
-    0 8px 30px -8px rgba(46, 125, 255, 0.55);
-  --shadow-accent-hover: 0 0 0 1px rgba(46, 125, 255, 0.7),
-    0 12px 40px -8px rgba(46, 125, 255, 0.7);
+  --shadow-float: 0 50px 130px -40px rgba(0, 0, 0, 0.95),
+    0 18px 50px -30px rgba(0, 0, 0, 0.8);
+  /* accent button: top specular highlight + hairline + soft glow */
+  --shadow-accent: inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 0 0 1px rgba(46, 125, 255, 0.45),
+    0 10px 34px -10px rgba(46, 125, 255, 0.6);
+  --shadow-accent-hover: inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 0 0 1px rgba(46, 125, 255, 0.65),
+    0 18px 48px -10px rgba(46, 125, 255, 0.78);
 
   /* shared easing — one motion language */
   --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
@@ -97,10 +102,27 @@
 
   /* silver → grey chrome text */
   .chrome {
-    background: linear-gradient(180deg, #ffffff 0%, #ffffff 35%, #8b8b92 100%);
+    background: linear-gradient(176deg, #ffffff 0%, #f4f5f8 38%, #9b9ba4 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  /* frosted translucent surface — Vision Pro glass */
+  .glass {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.055),
+      rgba(255, 255, 255, 0.022)
+    );
+    backdrop-filter: blur(26px) saturate(135%);
+    -webkit-backdrop-filter: blur(26px) saturate(135%);
+  }
+
+  /* top inner specular highlight + faint inner ring */
+  .edge-light {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.035);
   }
 
   /* faint hairline panel */
@@ -153,6 +175,24 @@
       rgba(255, 255, 255, 0.07),
       transparent 65%
     );
+  }
+
+  /* soft top spotlight — deliberate, colorless lighting */
+  .spotlight {
+    background: radial-gradient(
+      58% 56% at 50% 0%,
+      rgba(255, 255, 255, 0.07),
+      transparent 70%
+    );
+  }
+
+  /* gentle hover elevation */
+  .lift {
+    transition: transform 0.4s var(--ease-premium), background 0.4s ease,
+      border-color 0.4s ease, box-shadow 0.4s ease;
+  }
+  .lift:hover {
+    transform: translateY(-2px);
   }
 
   .mask-fade-t {

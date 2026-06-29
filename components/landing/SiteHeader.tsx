@@ -11,11 +11,20 @@ const links = [
   { label: "About", href: "#footer" },
 ];
 
+function NavLink({ label, href }: { label: string; href: string }) {
+  return (
+    <a href={href} className="group relative py-1 text-white/55 transition-colors duration-300 hover:text-white">
+      {label}
+      <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left scale-x-0 bg-white/60 transition-transform duration-300 ease-[var(--ease-premium)] group-hover:scale-x-100" />
+    </a>
+  );
+}
+
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 64);
+    const onScroll = () => setScrolled(window.scrollY > 48);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -24,25 +33,23 @@ export function SiteHeader() {
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-colors duration-300",
-        scrolled ? "border-b border-white/[0.06] bg-[#050505]/80 backdrop-blur-xl" : "border-b border-transparent"
+        "fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-[var(--ease-premium)]",
+        scrolled ? "border-b border-white/[0.06] bg-[#070708]/70 backdrop-blur-2xl saturate-150" : "border-b border-transparent"
       )}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
-        <Link href="/">
+      <div className="mx-auto flex h-[68px] max-w-6xl items-center justify-between px-5 sm:px-8">
+        <Link href="/" className="transition-opacity duration-300 hover:opacity-80">
           <Logo />
         </Link>
 
-        <nav className="hidden items-center gap-9 text-[14px] text-white/55 md:flex">
+        <nav className="hidden items-center gap-10 text-[14px] md:flex">
           {links.map((l) => (
-            <a key={l.label} href={l.href} className="transition-colors hover:text-white">
-              {l.label}
-            </a>
+            <NavLink key={l.label} {...l} />
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
-          <Link href="/login" className="hidden text-[14px] text-white/55 transition-colors hover:text-white sm:block">
+        <div className="flex items-center gap-4">
+          <Link href="/login" className="hidden text-[14px] text-white/55 transition-colors duration-300 hover:text-white sm:block">
             Sign in
           </Link>
           <Link href="/login" className={buttonVariants({ variant: "accent", size: "sm" })}>

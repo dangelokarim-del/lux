@@ -29,13 +29,13 @@ export function Wordmark({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "chrome inline-flex items-baseline font-semibold leading-none tracking-[0.22em]",
+        "inline-flex items-baseline font-semibold leading-none tracking-[0.2em] [filter:drop-shadow(0_2px_24px_rgba(255,255,255,0.07))]",
         className
       )}
       aria-label="LUXA"
     >
-      LUXA
-      <span className="ml-[0.12em] inline-block h-[0.12em] w-[0.12em] translate-y-[-0.04em] rounded-full bg-accent align-baseline shadow-[0_0_12px_2px_rgba(46,125,255,0.7)]" />
+      <span className="chrome">LUXA</span>
+      <span className="ml-[0.14em] inline-block h-[0.11em] w-[0.11em] translate-y-[-0.02em] rounded-full bg-accent align-baseline shadow-[0_0_10px_2px_rgba(46,125,255,0.65),0_0_28px_6px_rgba(46,125,255,0.35)]" />
     </span>
   );
 }
