@@ -178,6 +178,39 @@ export function SpatialExperience() {
             </motion.div>
           </div>
 
+          {/* electric-blue AI path tracing from the request to the master-bedroom window */}
+          <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <motion.path
+              d="M 50 45 C 55 39, 60 33, 63 28"
+              fill="none"
+              stroke="#2E7DFF"
+              strokeWidth={0.4}
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+              pathLength={1}
+              style={{ filter: "drop-shadow(0 0 2px rgba(46,125,255,0.5))", strokeDasharray: 1 }}
+              animate={{ strokeDashoffset: beat >= 2 ? 0 : 1, opacity: beat === 2 || beat === 3 ? 0.85 : 0 }}
+              transition={{ strokeDashoffset: { duration: 1, ease }, opacity: { duration: 0.6 } }}
+            />
+          </svg>
+          {/* the located room marker */}
+          <motion.div
+            className="pointer-events-none absolute"
+            style={{ left: "63%", top: "28%" }}
+            animate={{ opacity: beat === 2 || beat === 3 ? 1 : 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="relative block h-2 w-2 -translate-x-1/2 -translate-y-1/2">
+              {!reduce && (
+                <motion.span className="absolute inset-0 rounded-full bg-[#2E7DFF]" animate={{ scale: [1, 2.8], opacity: [0.5, 0] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }} />
+              )}
+              <span className="absolute inset-0 rounded-full bg-[#2E7DFF] shadow-[0_0_10px_2px_rgba(46,125,255,0.55)]" />
+            </span>
+            <span className="absolute left-3 top-0 -translate-y-1/2 whitespace-nowrap rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/[0.08] px-2 py-0.5 text-[9px] font-medium text-[#8fbcff] backdrop-blur-sm">
+              Master Bedroom
+            </span>
+          </motion.div>
+
           {/* request → task occupy the same spatial slot (the request becomes the task) */}
           <motion.div className="absolute left-1/2 top-1/2 w-[320px] max-w-[84%] -translate-x-1/2 -translate-y-1/2" style={{ y: driftNear }}>
             {/* request (WhatsApp) */}
