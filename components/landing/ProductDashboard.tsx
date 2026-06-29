@@ -155,19 +155,21 @@ function IntakeCard({ reached }: { reached: (k: Step) => boolean }) {
 
 /* ---------- dashboard ---------- */
 
-export function ProductDashboard({ animated = false, introDelay = 0 }: { animated?: boolean; introDelay?: number }) {
+export function ProductDashboard({ animated = false, introDelay = 0, eager = false }: { animated?: boolean; introDelay?: number; eager?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { margin: "-12%" });
   const reduce = useReducedMotion();
   const [i, setI] = useState(0);
   const [armed, setArmed] = useState(false);
 
-  // hold the workflow until the hero has revealed the dashboard
+  // `eager` (hero, above the fold) runs on load; otherwise wait until in view
+  const live = eager || inView;
+
   useEffect(() => {
-    if (!animated || reduce || !inView) return;
+    if (!animated || reduce || !live) return;
     const t = setTimeout(() => setArmed(true), introDelay);
     return () => clearTimeout(t);
-  }, [animated, reduce, inView, introDelay]);
+  }, [animated, reduce, live, introDelay]);
 
   useEffect(() => {
     if (!animated) return;
@@ -175,10 +177,10 @@ export function ProductDashboard({ animated = false, introDelay = 0 }: { animate
       setI(SEQ.indexOf("inprogress"));
       return;
     }
-    if (!inView || !armed) return;
+    if (!live || !armed) return;
     const id = setTimeout(() => setI((p) => (p + 1) % SEQ.length), DUR[SEQ[i]]);
     return () => clearTimeout(id);
-  }, [animated, reduce, inView, armed, i]);
+  }, [animated, reduce, live, armed, i]);
 
   const idx = (k: Step) => SEQ.indexOf(k);
   const reached = (k: Step) => i >= idx(k);

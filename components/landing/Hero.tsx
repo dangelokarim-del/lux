@@ -87,8 +87,9 @@ export function Hero() {
         </Rise>
       </div>
 
-      {/* floating dashboard — fades up on the timeline at 2.0s */}
-      <ParallaxScene className="mx-auto mt-28 max-w-6xl pb-32 sm:mt-36">
+      {/* floating dashboard — peeks above the fold (top tucked under the CTA),
+          the rest below; reveals + runs on load */}
+      <ParallaxScene className="mx-auto mt-[-14px] max-w-6xl pb-32 sm:mt-[-6px]">
         <div className="relative" style={{ perspective: 2000 }}>
           {/* grounding light beneath */}
           <div
@@ -100,18 +101,17 @@ export function Hero() {
           <ParallaxLayer depth={18}>
             <motion.div
               initial={reduce ? { opacity: 0 } : { opacity: 0, y: 80, scale: 0.965 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 1.6, ease }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 1.6, ease, delay: reduce ? 0 : 1.4 }}
               className="[transform-style:preserve-3d]"
             >
               {/* slow continuous float */}
               <motion.div
                 animate={reduce ? undefined : { y: [0, -9, 0] }}
-                transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+                transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 3 }}
               >
                 <div className="origin-top shadow-[var(--shadow-dash)] sm:[transform:perspective(2000px)_rotateX(7deg)]">
-                  <ProductDashboard animated introDelay={700} />
+                  <ProductDashboard animated eager introDelay={2000} />
                 </div>
               </motion.div>
             </motion.div>
