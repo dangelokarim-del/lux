@@ -12,3 +12,4 @@ export { EmptyState } from "./EmptyState";
 export { Spinner, Skeleton, SkeletonText, LoadingState } from "./Loading";
 export { Avatar } from "./Avatar";
 export { Logo, Wordmark } from "./Logo";
+export { LuxaMark } from "./LuxaMark";

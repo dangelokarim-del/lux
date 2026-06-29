@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Logo, buttonVariants } from "@/components/ui";
+import { LuxaMark, buttonVariants } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { Magnetic } from "./anim/Magnetic";
 
@@ -39,8 +39,8 @@ export function SiteHeader() {
       )}
     >
       <div className="mx-auto flex h-[68px] max-w-6xl items-center justify-between px-5 sm:px-8">
-        <Link href="/" className="transition-opacity duration-300 hover:opacity-80">
-          <Logo />
+        <Link href="/" aria-label="LUXA" className="transition-opacity duration-300 hover:opacity-80">
+          <LuxaMark className="h-[26px] w-auto" />
         </Link>
 
         <nav className="hidden items-center gap-10 text-[14px] md:flex">

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "@/components/ui";
+import { LuxaMark } from "@/components/ui";
 
 const cols = [
   { title: "Product", items: ["Overview", "Operations", "Requests", "Analytics"] },
@@ -12,7 +12,9 @@ export function SiteFooter() {
     <footer id="footer" className="border-t border-white/[0.06] px-5 py-16">
       <div className="mx-auto grid max-w-6xl gap-12 sm:grid-cols-[1.5fr_1fr_1fr_1fr]">
         <div>
-          <Logo />
+          <Link href="/" aria-label="LUXA" className="inline-block transition-opacity duration-300 hover:opacity-80">
+            <LuxaMark className="h-[24px] w-auto" />
+          </Link>
           <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-white/40">
             The AI Operating System for luxury hospitality. Designed in Marbella.
           </p>

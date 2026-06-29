@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Logo, Wordmark, Card, Field, Input, Button } from "@/components/ui";
+import { LuxaMark, Card, Field, Input, Button } from "@/components/ui";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,8 +22,8 @@ export default function LoginPage() {
       <div className="bg-grid mask-fade-b pointer-events-none absolute inset-0 -z-20 opacity-50" />
       <div className="pointer-events-none absolute left-1/2 top-1/3 -z-10 h-[360px] w-[620px] -translate-x-1/2 glow-accent blur-3xl opacity-60" />
 
-      <Link href="/" className="absolute left-6 top-6">
-        <Logo />
+      <Link href="/" aria-label="LUXA" className="absolute left-6 top-6">
+        <LuxaMark className="h-[24px] w-auto" />
       </Link>
 
       <motion.div
@@ -33,8 +33,8 @@ export default function LoginPage() {
         className="w-full max-w-[380px]"
       >
         <div className="text-center">
-          <Wordmark className="text-3xl" />
-          <h1 className="mt-6 text-2xl font-semibold tracking-[-0.03em]">Sign in</h1>
+          <LuxaMark className="mx-auto w-[160px]" />
+          <h1 className="mt-7 text-2xl font-semibold tracking-[-0.03em]">Sign in</h1>
           <p className="mt-2 text-[14px] text-ink-2">Luxury. Automated.</p>
         </div>
 

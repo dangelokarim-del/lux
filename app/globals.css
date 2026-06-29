@@ -241,4 +241,26 @@
       transform: translateX(100%);
     }
   }
+
+  /* slow reflection that sweeps across the LUXA wordmark */
+  .luxa-sheen {
+    animation: luxaSheen 11s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  @keyframes luxaSheen {
+    0% {
+      transform: translateX(-380px);
+    }
+    55% {
+      transform: translateX(1340px);
+    }
+    100% {
+      transform: translateX(1340px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .luxa-sheen {
+      animation: none;
+      opacity: 0;
+    }
+  }
 }

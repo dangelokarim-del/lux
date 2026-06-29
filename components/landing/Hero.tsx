@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { Wordmark, buttonVariants } from "@/components/ui";
+import { LuxaMark, buttonVariants } from "@/components/ui";
 import { ProductDashboard } from "./ProductDashboard";
 import { ParallaxScene, ParallaxLayer } from "./anim/Parallax";
 import { CursorGlow } from "./anim/CursorGlow";
@@ -41,7 +41,7 @@ export function Hero() {
 
       <div className="mx-auto max-w-4xl text-center">
         <Rise blur={4}>
-          <Wordmark className="text-[clamp(3rem,12vw,7.5rem)] leading-none" />
+          <LuxaMark className="mx-auto w-[min(580px,84vw)]" />
         </Rise>
 
         <Rise delay={0.16} blur={10}>
