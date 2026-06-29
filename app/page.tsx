@@ -1,5 +1,4 @@
 import { SiteHeader } from "@/components/landing/SiteHeader";
-import { SplineHero } from "@/components/landing/SplineHero";
 import { Statement } from "@/components/landing/Statement";
 import { ProductFlow } from "@/components/landing/ProductFlow";
 import { SpatialExperience } from "@/components/landing/SpatialExperience";
@@ -21,8 +20,10 @@ export default function LandingPage() {
       <main className="relative min-h-screen text-white antialiased">
         <SiteHeader />
 
-        {/* 1 — Fullscreen Spline hero (the visual identity) */}
-        <SplineHero />
+        {/* 1 — THE HOMEPAGE: one continuous Vision Pro cinematic. The page opens
+            inside the villa with the LUXA identity, then the whole story unfolds
+            in a single scroll until the building becomes the operating system. */}
+        <SpatialExperience />
 
         {/* 2 — Problem */}
         <Statement eyebrow="The problem">
@@ -34,17 +35,14 @@ export default function LandingPage() {
         {/* 3 — Product flow */}
         <ProductFlow />
 
-        {/* 4 — Spatial cinematic experience (Vision Pro villa) */}
-        <SpatialExperience />
-
-        {/* 5 — Payoff statement */}
+        {/* 4 — Payoff statement */}
         <Statement>
           Every request.
           <br />
           <span className="chrome">Under control.</span>
         </Statement>
 
-        {/* 6 — Final CTA */}
+        {/* 5 — Final CTA */}
         <FinalCTA />
 
         <SiteFooter />

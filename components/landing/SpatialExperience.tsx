@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   motion,
   AnimatePresence,
@@ -11,7 +12,10 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { LuxaMark } from "@/components/ui/LuxaMark";
+import { buttonVariants } from "@/components/ui";
 import { LiveNumber } from "./anim/LiveNumber";
+import { Magnetic } from "./anim/Magnetic";
+import { ParallaxScene, ParallaxLayer } from "./anim/Parallax";
 import { SplineStage } from "./SplineStage";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -31,15 +35,31 @@ const CAPTIONS = [
   "",
 ];
 
+/* mount-entrance for the opening brand identity (independent of scroll) */
+function Rise({ children, delay = 0, blur = 7 }: { children: React.ReactNode; delay?: number; blur?: number }) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 18, filter: `blur(${blur}px)` }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 1.2, ease, delay }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 /* ------------------------------------------------------------------ *
- *  SPATIAL EXPERIENCE — the emotional climax. A silent Marbella villa
- *  (one room lit) receives a request; an electric-blue AI signal enters
- *  and travels, waking each room in turn; the architecture transforms —
- *  concrete to aluminium, walls to frosted panels, structural lines to
- *  dashboard frames — and the LUXA operating system materialises exactly
- *  where the rooms were. Then it stays alive. The building is running LUXA.
- *  Frosted glass + brushed aluminium + soft white light; electric blue is
- *  AI intelligence only. No neon, no particles, no hologram clichés.
+ *  SPATIAL EXPERIENCE — this IS the homepage. The page opens INSIDE a
+ *  silent Marbella villa at dusk, the LUXA identity living in the room.
+ *  As you scroll it becomes one continuous Apple-keynote sequence with no
+ *  cuts: the brand dissolves, a WhatsApp request arrives, an electric-blue
+ *  AI signal enters and travels, waking each room in turn; the architecture
+ *  transforms — concrete to aluminium, walls to frosted panels, structural
+ *  lines to dashboard frames — and the LUXA operating system materialises
+ *  exactly where the rooms were. Then it stays alive. The building is
+ *  running LUXA. Frosted glass + brushed aluminium + soft white light;
+ *  electric blue is AI intelligence only. No neon, no particles, no clichés.
  * ------------------------------------------------------------------ */
 
 export function VillaSpace({ dolly }: { dolly: MotionValue<number> }) {
@@ -293,6 +313,14 @@ export function SpatialExperience() {
   const camRotY = useTransform(p, [0.5, 0.9], [0, 1.6]);
   const camRotX = useTransform(p, [0.5, 0.85], [1.6, 0]);
 
+  // opening brand identity — lives in the villa, dissolves as the story begins
+  const introOpacity = useTransform(p, [0, 0.07], [1, 0]);
+  const introBlur = useTransform(p, [0, 0.06], ["blur(0px)", "blur(10px)"]);
+  const introY = useTransform(p, [0, 0.08], ["0px", "-46px"]);
+  const introScale = useTransform(p, [0, 0.08], [1, 0.985]);
+  // the floating interface only emerges once the brand has dissolved
+  const osReveal = useTransform(p, [0.05, 0.14], [0, 1]);
+
   const requestShow = beat >= 1 && beat <= 3;
   const chipsShow = beat === 2 || beat === 3;
   const brand = beat >= 6;
@@ -307,7 +335,7 @@ export function SpatialExperience() {
 
         {/* camera-rigged architecture → operating system */}
         <div className="absolute inset-0" style={{ perspective: 2400 }}>
-          <motion.div className="absolute inset-0" style={{ rotateX: camRotX, rotateY: camRotY, scale: camScale, transformStyle: "preserve-3d" }}>
+          <motion.div className="absolute inset-0" style={{ rotateX: camRotX, rotateY: camRotY, scale: camScale, opacity: osReveal, transformStyle: "preserve-3d" }}>
             <ArchitectureOS wake={wake} cool={cool} assemble={assemble} alive={alive} />
           </motion.div>
         </div>
@@ -324,11 +352,11 @@ export function SpatialExperience() {
                   Luxury. <span className="text-white/45">Automated.</span>
                 </div>
               </motion.div>
-            ) : (
+            ) : beat >= 1 ? (
               <motion.div key={beat} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease }} className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/45">
                 {CAPTIONS[beat]}
               </motion.div>
-            )}
+            ) : null}
           </div>
 
           {/* electric-blue AI signal entering the villa, toward the first room */}
@@ -380,9 +408,51 @@ export function SpatialExperience() {
           </motion.div>
         </div>
 
+        {/* OPENING — the LUXA identity living inside the villa (this is the hero).
+            Mount-animates in, then dissolves into the story as you begin to scroll. */}
+        <motion.div
+          className="absolute inset-0 z-20"
+          style={{ opacity: introOpacity, filter: introBlur, y: introY, scale: introScale, pointerEvents: beat === 0 ? "auto" : "none" }}
+        >
+          <ParallaxScene className="absolute inset-0">
+            <div className="pointer-events-none absolute inset-x-0 top-[25%] flex flex-col items-center px-5 text-center">
+              <ParallaxLayer depth={14} className="flex flex-col items-center">
+                <Rise delay={0.35} blur={6}>
+                  <span className="mb-7 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.22em] text-white/40">
+                    <span className="h-1 w-1 rounded-full bg-[#2E7DFF]" /> Villa Ocean · Marbella
+                  </span>
+                </Rise>
+                <Rise delay={0.5} blur={5}>
+                  <LuxaMark className="mx-auto w-[min(320px,54vw)]" />
+                </Rise>
+                <Rise delay={0.7} blur={10}>
+                  <h1 className="mt-9 text-balance text-[clamp(2.6rem,7vw,5rem)] font-semibold leading-[0.95] tracking-[-0.045em] text-white">
+                    Luxury. <span className="text-white/55">Automated.</span>
+                  </h1>
+                </Rise>
+                <Rise delay={0.9}>
+                  <p className="mx-auto mt-6 max-w-xl text-balance text-[15px] leading-relaxed text-white/60 sm:text-lg">
+                    The AI Operating System for Luxury Hospitality.
+                  </p>
+                </Rise>
+                <Rise delay={1.1}>
+                  <div className="pointer-events-auto mt-9">
+                    <Magnetic className="inline-block" strength={0.3}>
+                      <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
+                        Book a Demo
+                      </Link>
+                    </Magnetic>
+                  </div>
+                </Rise>
+              </ParallaxLayer>
+            </div>
+          </ParallaxScene>
+        </motion.div>
+
         {/* scroll cue */}
-        <motion.div className="absolute bottom-7 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.22em] text-white/30" animate={{ opacity: beat === 0 ? 1 : 0 }} transition={{ duration: 0.6 }}>
+        <motion.div className="absolute bottom-7 left-1/2 z-20 -translate-x-1/2 flex flex-col items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-white/30" animate={{ opacity: beat === 0 ? 1 : 0 }} transition={{ duration: 0.6 }}>
           Scroll
+          <motion.span className="h-6 w-px bg-gradient-to-b from-white/40 to-transparent" animate={reduce ? undefined : { scaleY: [0.4, 1, 0.4], opacity: [0.3, 0.7, 0.3] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} style={{ transformOrigin: "top" }} />
         </motion.div>
       </div>
     </section>
