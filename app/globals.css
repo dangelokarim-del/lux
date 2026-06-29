@@ -244,17 +244,17 @@
 
   /* slow reflection that sweeps across the LUXA wordmark */
   .luxa-sheen {
-    animation: luxaSheen 11s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    animation: luxaSheen 10s cubic-bezier(0.45, 0, 0.2, 1) infinite;
   }
   @keyframes luxaSheen {
     0% {
-      transform: translateX(-380px);
+      transform: translateX(-320px);
     }
-    55% {
-      transform: translateX(1340px);
+    35% {
+      transform: translateX(1320px);
     }
     100% {
-      transform: translateX(1340px);
+      transform: translateX(1320px);
     }
   }
   @media (prefers-reduced-motion: reduce) {
