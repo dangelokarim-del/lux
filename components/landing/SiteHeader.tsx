@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Logo, buttonVariants } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { Magnetic } from "./anim/Magnetic";
 
 const links = [
   { label: "Product", href: "#product" },
@@ -52,9 +53,11 @@ export function SiteHeader() {
           <Link href="/login" className="hidden text-[14px] text-white/55 transition-colors duration-300 hover:text-white sm:block">
             Sign in
           </Link>
-          <Link href="/login" className={buttonVariants({ variant: "accent", size: "sm" })}>
-            Book a Demo
-          </Link>
+          <Magnetic className="inline-block" strength={0.2}>
+            <Link href="/login" className={buttonVariants({ variant: "accent", size: "sm" })}>
+              Book a Demo
+            </Link>
+          </Magnetic>
         </div>
       </div>
     </header>

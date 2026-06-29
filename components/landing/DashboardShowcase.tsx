@@ -2,11 +2,13 @@
 
 import { motion } from "framer-motion";
 import { ProductDashboard } from "./ProductDashboard";
+import { CursorGlow } from "./anim/CursorGlow";
 
 export function DashboardShowcase() {
   return (
     <section id="product" className="relative px-5 py-32 sm:py-40">
-      <div className="mx-auto max-w-6xl">
+      <CursorGlow size={620} color="rgba(255,255,255,0.045)" />
+      <div className="relative mx-auto max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -32,7 +34,7 @@ export function DashboardShowcase() {
             className="pointer-events-none absolute -inset-x-12 -top-10 bottom-4 -z-10 opacity-70 blur-3xl"
             style={{ background: "radial-gradient(55% 55% at 50% 32%, rgba(46,125,255,0.13), transparent 72%)" }}
           />
-          <div className="shadow-[var(--shadow-float)]">
+          <div className="shadow-[var(--shadow-float)] transition-transform duration-700 ease-[var(--ease-premium)] hover:-translate-y-1.5">
             <ProductDashboard />
           </div>
         </motion.div>

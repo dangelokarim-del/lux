@@ -5,6 +5,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Wordmark, buttonVariants } from "@/components/ui";
 import { ProductDashboard } from "./ProductDashboard";
 import { ParallaxScene, ParallaxLayer } from "./anim/Parallax";
+import { CursorGlow } from "./anim/CursorGlow";
+import { Magnetic } from "./anim/Magnetic";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -34,6 +36,8 @@ export function Hero() {
         className="pointer-events-none absolute inset-0 -z-10"
         style={{ background: "radial-gradient(120% 90% at 50% 22%, transparent 55%, rgba(0,0,0,0.55))" }}
       />
+      {/* soft light that follows the cursor */}
+      <CursorGlow className="-z-10" size={560} color="rgba(255,255,255,0.05)" />
 
       <div className="mx-auto max-w-4xl text-center">
         <Rise blur={4}>
@@ -60,9 +64,11 @@ export function Hero() {
 
         <Rise delay={0.46}>
           <div className="mt-12">
-            <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
-              Book a Demo
-            </Link>
+            <Magnetic className="inline-block" strength={0.3}>
+              <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
+                Book a Demo
+              </Link>
+            </Magnetic>
           </div>
         </Rise>
       </div>

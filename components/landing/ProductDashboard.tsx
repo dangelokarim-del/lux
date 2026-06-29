@@ -240,6 +240,18 @@ export function ProductDashboard({ animated = false }: { animated?: boolean }) {
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(155deg,rgba(255,255,255,0.06),transparent_28%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_70%_at_50%_-15%,rgba(46,125,255,0.06),transparent_55%)]" />
 
+      {/* slow glass reflection sweep */}
+      {!reduce && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 z-20 w-1/2"
+          style={{ background: "linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.05) 50%, transparent 62%)" }}
+          initial={{ x: "-160%" }}
+          animate={{ x: "320%" }}
+          transition={{ duration: 7, repeat: Infinity, repeatDelay: 7, ease: "easeInOut" }}
+        />
+      )}
+
       {/* signature workflow intake */}
       <AnimatePresence>{showCard && <IntakeCard reached={reached} is={is} />}</AnimatePresence>
 

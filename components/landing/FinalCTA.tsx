@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { buttonVariants } from "@/components/ui";
+import { CursorGlow } from "./anim/CursorGlow";
+import { Magnetic } from "./anim/Magnetic";
 
 export function FinalCTA() {
   return (
@@ -14,7 +16,8 @@ export function FinalCTA() {
         className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[380px] w-[700px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 opacity-75 blur-3xl"
         style={{ background: "radial-gradient(closest-side, rgba(46,125,255,0.16), transparent 70%)" }}
       />
-      <div className="mx-auto max-w-3xl text-center">
+      <CursorGlow size={520} color="rgba(46,125,255,0.05)" />
+      <div className="relative mx-auto max-w-3xl text-center">
         <motion.h2
           initial={{ opacity: 0, y: 26, filter: "blur(8px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -32,9 +35,11 @@ export function FinalCTA() {
           transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
           className="mt-12"
         >
-          <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
-            Book a Demo
-          </Link>
+          <Magnetic className="inline-block" strength={0.3}>
+            <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
+              Book a Demo
+            </Link>
+          </Magnetic>
           <p className="mt-5 text-[13px] text-white/35">A 20-minute private walkthrough.</p>
         </motion.div>
       </div>
