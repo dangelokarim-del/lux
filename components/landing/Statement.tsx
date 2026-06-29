@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { ShinyText } from "./anim/ShinyText";
 
 /** Full-bleed editorial statement. Pure typography, maximal whitespace. */
 export function Statement({
@@ -22,9 +23,9 @@ export function Statement({
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.6 }}
-            className="mb-9 text-[11px] font-medium uppercase tracking-[0.2em] text-white/30"
+            className="mb-9 text-[11px] font-medium uppercase tracking-[0.2em]"
           >
-            {eyebrow}
+            <ShinyText>{eyebrow}</ShinyText>
           </motion.div>
         )}
         <motion.h2

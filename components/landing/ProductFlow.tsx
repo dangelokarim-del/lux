@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { ShinyText } from "./anim/ShinyText";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -31,7 +32,9 @@ export function ProductFlow() {
           transition={{ duration: 0.7, ease }}
           className="mb-20 text-center"
         >
-          <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-white/30">How it works</div>
+          <div className="text-[11px] font-medium uppercase tracking-[0.2em]">
+            <ShinyText>How it works</ShinyText>
+          </div>
           <h2 className="mt-6 text-balance text-4xl font-semibold leading-[1.02] tracking-[-0.035em] text-white sm:text-5xl">
             One message in.
             <br />

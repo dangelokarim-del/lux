@@ -248,6 +248,39 @@
     }
   }
 
+  /* React Bits — Shiny Text: a slow metallic highlight sweeps across the type,
+     same language as the LUXA wordmark sheen. Static under reduced-motion. */
+  .shiny-text {
+    background: linear-gradient(
+      110deg,
+      rgba(255, 255, 255, 0.32) 38%,
+      rgba(255, 255, 255, 0.92) 50%,
+      rgba(255, 255, 255, 0.32) 62%
+    );
+    background-size: 240% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: shinyText 7s cubic-bezier(0.6, 0, 0.2, 1) infinite;
+  }
+  @keyframes shinyText {
+    0% {
+      background-position: 180% 0;
+    }
+    55%,
+    100% {
+      background-position: -60% 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .shiny-text {
+      animation: none;
+      -webkit-text-fill-color: rgba(255, 255, 255, 0.34);
+      color: rgba(255, 255, 255, 0.34);
+    }
+  }
+
   /* slow reflection that sweeps across the LUXA wordmark */
   .luxa-sheen {
     animation: luxaSheen 12s cubic-bezier(0.45, 0, 0.2, 1) infinite;
