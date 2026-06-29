@@ -5,16 +5,11 @@ import { ProductFlow } from "@/components/landing/ProductFlow";
 import { DashboardShowcase } from "@/components/landing/DashboardShowcase";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { SiteFooter } from "@/components/landing/SiteFooter";
-import { IntroProvider } from "@/components/landing/intro/IntroContext";
-import { CinematicIntro } from "@/components/landing/intro/CinematicIntro";
 
 export default function LandingPage() {
   return (
-    <IntroProvider>
+    <>
       <div aria-hidden className="fixed inset-0 -z-50 bg-[#050505]" />
-
-      {/* cinematic opening film — plays once, then rests on the product */}
-      <CinematicIntro />
 
       <main className="relative min-h-screen bg-[#050505] text-white antialiased">
         <SiteHeader />
@@ -47,6 +42,6 @@ export default function LandingPage() {
 
         <SiteFooter />
       </main>
-    </IntroProvider>
+    </>
   );
 }

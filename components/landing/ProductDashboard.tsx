@@ -34,11 +34,6 @@ const DUR: Record<Step, number> = {
   hold: 1200,
 };
 
-/* one-shot timeline for the cinematic intro (no intake card; the film already
-   showed the message + extraction). Resolves through to "In Progress". */
-const FILM_SEQ = ["idle", "created", "assigned", "inprogress", "rest"] as const;
-const FILM_DUR = [800, 1000, 1100, 1200, 999999];
-
 /* ---------- atoms ---------- */
 
 type Tone = "accent" | "urgent" | "warn" | "muted" | "active";
@@ -155,55 +150,43 @@ function IntakeCard({ reached }: { reached: (k: Step) => boolean }) {
 
 /* ---------- dashboard ---------- */
 
-export function ProductDashboard({ animated = false, intro = false }: { animated?: boolean; intro?: boolean }) {
+export function ProductDashboard({ animated = false }: { animated?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { margin: "-12%" });
   const reduce = useReducedMotion();
   const [i, setI] = useState(0);
 
-  const live = animated || intro;
-  const seq: readonly string[] = intro ? FILM_SEQ : SEQ;
-
   useEffect(() => {
-    if (!live) return;
+    if (!animated) return;
     if (reduce) {
-      setI(intro ? FILM_SEQ.indexOf("assigned") : SEQ.indexOf("inprogress"));
+      setI(SEQ.indexOf("inprogress"));
       return;
     }
     if (!inView) return;
-    if (intro && i >= FILM_SEQ.length - 1) return; // settle, no loop
-    const d = intro ? FILM_DUR[i] : DUR[SEQ[i]];
-    const id = setTimeout(
-      () => setI((p) => (intro ? Math.min(p + 1, FILM_SEQ.length - 1) : (p + 1) % SEQ.length)),
-      d
-    );
+    const id = setTimeout(() => setI((p) => (p + 1) % SEQ.length), DUR[SEQ[i]]);
     return () => clearTimeout(id);
-  }, [live, intro, reduce, inView, i]);
+  }, [animated, reduce, inView, i]);
 
-  const idx = (k: string) => seq.indexOf(k);
-  const reached = (k: string) => {
-    const j = seq.indexOf(k);
-    return j >= 0 && i >= j;
-  };
+  const idx = (k: Step) => SEQ.indexOf(k);
+  const reached = (k: Step) => i >= idx(k);
 
-  const open = live && reached("created") ? 15 : 14;
-  const urgent = live && reached("created") ? 3 : 2;
+  const open = animated && reached("created") ? 15 : 14;
 
   const taskLabel = reached("inprogress") ? "In Progress" : reached("assigned") ? "Assigned" : "New";
   const taskTone: Tone = reached("inprogress") ? "active" : reached("assigned") ? "accent" : "muted";
-  const showTask = live && reached("created");
-  const showCard = animated && !intro && !reduce && reached("message") && i <= idx("created");
-  const baseRows = live ? ANIM_BASE_ROWS : STATIC_ROWS;
+  const showTask = animated && reached("created");
+  const showCard = animated && !reduce && reached("message") && i <= idx("created");
+  const baseRows = animated ? ANIM_BASE_ROWS : STATIC_ROWS;
 
   const StatValue = ({ v, accent }: { v: number; accent?: boolean }) => (
     <span className={accent ? "text-[#6ba5ff]" : "text-white"}>
-      {live ? <LiveNumber value={v} pad={2} /> : <CountUp to={v} pad={2} />}
+      {animated ? <LiveNumber value={v} pad={2} /> : <CountUp to={v} pad={2} />}
     </span>
   );
 
   const stats: { label: string; v: number; accent?: boolean }[] = [
     { label: "Open requests", v: open },
-    { label: "Urgent", v: urgent, accent: true },
+    { label: "Urgent", v: 2, accent: true },
     { label: "Resolved today", v: 28 },
     { label: "Arrivals", v: 6 },
   ];

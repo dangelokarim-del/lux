@@ -7,17 +7,16 @@ import { ProductDashboard } from "./ProductDashboard";
 import { ParallaxScene, ParallaxLayer } from "./anim/Parallax";
 import { CursorGlow } from "./anim/CursorGlow";
 import { Magnetic } from "./anim/Magnetic";
-import { useIntro } from "./intro/IntroContext";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
-/** Slow, premium fade + rise + blur-in. Holds hidden until `play`. */
-function Rise({ children, delay = 0, blur = 6, play = true }: { children: React.ReactNode; delay?: number; blur?: number; play?: boolean }) {
+/** Slow, premium fade + rise + blur-in. */
+function Rise({ children, delay = 0, blur = 6 }: { children: React.ReactNode; delay?: number; blur?: number }) {
   const reduce = useReducedMotion();
   return (
     <motion.div
       initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24, filter: `blur(${blur}px)` }}
-      animate={play ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={{ duration: 1.1, ease, delay }}
     >
       {children}
@@ -27,7 +26,6 @@ function Rise({ children, delay = 0, blur = 6, play = true }: { children: React.
 
 export function Hero() {
   const reduce = useReducedMotion();
-  const { done } = useIntro();
 
   return (
     <section className="relative px-5 pt-44 sm:pt-56">
@@ -42,29 +40,29 @@ export function Hero() {
       <CursorGlow className="-z-10" size={560} color="rgba(255,255,255,0.05)" />
 
       <div className="mx-auto max-w-4xl text-center">
-        <Rise blur={4} play={done}>
+        <Rise blur={4}>
           <LuxaMark className="mx-auto w-[min(580px,84vw)]" />
         </Rise>
 
-        <Rise delay={0.16} blur={10} play={done}>
+        <Rise delay={0.16} blur={10}>
           <h1 className="mt-14 text-balance text-[clamp(2.75rem,9vw,5.5rem)] font-semibold leading-[0.94] tracking-[-0.05em] text-white">
             Luxury. Automated.
           </h1>
         </Rise>
 
-        <Rise delay={0.28} play={done}>
+        <Rise delay={0.28}>
           <p className="mx-auto mt-8 max-w-xl text-balance text-lg leading-relaxed text-white/65 sm:text-xl">
             The AI Operating System for Luxury Hospitality.
           </p>
         </Rise>
 
-        <Rise delay={0.36} play={done}>
+        <Rise delay={0.36}>
           <p className="mx-auto mt-3.5 max-w-md text-balance text-[15px] leading-relaxed text-white/35">
             The quiet infrastructure behind the world&apos;s most exclusive villas.
           </p>
         </Rise>
 
-        <Rise delay={0.46} play={done}>
+        <Rise delay={0.46}>
           <div className="mt-12">
             <Magnetic className="inline-block" strength={0.3}>
               <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
