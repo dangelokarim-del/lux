@@ -1,51 +1,51 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
-import { buttonVariants } from "@/components/ui";
+import { LuxaMark } from "@/components/ui/LuxaMark";
 import { useIntro } from "./IntroContext";
-import { Villa } from "./Villa";
+import { VillaStage } from "./VillaStage";
 import { ProductDashboard } from "../ProductDashboard";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * clamp(t);
-const q = (v: number) => Math.round(v * 20) / 20; // quantize to 0.05 — fewer re-renders
+const q = (v: number) => Math.round(v * 20) / 20; // quantize → fewer re-renders
 
 /* ------------------------------------------------------------------ *
- *  CINEMATIC HERO — fully coded (no video). One free-running clock
- *  drives a 10s story: dark screen → villa silhouette → lights on →
- *  WhatsApp → AI precision line → entity chips → dissolve to dashboard
- *  → task created + stats → "Luxury. Automated." → hand off to the site.
+ *  CINEMATIC HERO — a directed 8-second opening, no audio.
  *
- *  Every beat is a timestamp in SCENE; all motion is derived continuously
- *  from the clock via clamp()/lerp(), so the sequence is deterministic and
- *  trivially re-timed. Respect for prefers-reduced-motion is handled one
- *  level up in IntroContext (reduced-motion users never see this).
+ *  Real Three.js villa (VillaStage) as the hero for the first ~70%, then
+ *  the architecture cools and resolves into the live dashboard. One free-
+ *  running clock drives every beat; prefers-reduced-motion skips the whole
+ *  thing (IntroContext). Palette: #090909 base · one 3000K warm · one
+ *  electric blue · charcoal/white/beige.
+ *
+ *  Story:  villa → guest message → AI understands → becomes software →
+ *          task already handled → "Luxury. Automated."
  * ------------------------------------------------------------------ */
 const SCENE = {
-  villa: 0.6, // silhouette begins to appear (before this: dark screen)
-  lights: 2.0, // warm interior lights turn on
-  notifyIn: 3.0, // WhatsApp glass card slides in
-  notifyOut: 6.3, // …and leaves
-  detect: 4.6, // blue precision line travels to the master-bedroom window
-  chips: 5.4, // AI entity chips surface
-  dissolve: 6.8, // villa dissolves into the dashboard
-  dashboard: 7.9, // dashboard fully sharp; task created + stats run
-  reveal: 9.4, // brand reveal over the dimmed dashboard
-  end: 11.0, // hand off to the resting product hero
-  // the master-bedroom window the line + chips point at (percent of the stage)
-  window: { x: 58.2, y: 31.4 },
+  villa: 0.15, // silhouette eases out of black
+  lights: 0.5, // warm interior turns on, bay by bay
+  notifyIn: 1.2, // WhatsApp glass card slides in
+  notifyOut: 4.4, // …leaves as the dissolve begins
+  detect: 2.5, // blue AI line leaves the notification
+  flag: 3.2, // master-bedroom window receives the blue frame
+  chips: 3.3, // four chips fade in, one after another
+  dissolve: 4.5, // architecture begins resolving into the dashboard
+  dashboard: 6.5, // dashboard fully sharp; task already exists
+  reveal: 8.0, // LUXA end frame fades in
+  end: 9.0, // hold 1s, then hand off to the live homepage
+  // master-bedroom window position on screen (percent) — the 3D upper-right volume
+  window: { x: 65, y: 34 },
 };
 
-/* chips positioned relative to the lit window */
+/* exactly four chips, surfaced relative to the window */
 const CHIPS = [
-  { label: "AC Issue", dx: 4, dy: -8.5 },
-  { label: "Master Bedroom", dx: 12.5, dy: -3.5 },
-  { label: "Maintenance", dx: 5.5, dy: 4.5 },
-  { label: "High Priority", dx: 15, dy: 9.5 },
-  { label: "Villa Ocean", dx: 1.5, dy: 13.5 },
+  { label: "AC Issue", dx: 3, dy: -7 },
+  { label: "Master Bedroom", dx: 11, dy: -1.5 },
+  { label: "Maintenance", dx: 4.5, dy: 5.5 },
+  { label: "High Priority", dx: 13, dy: 11 },
 ];
 
 export function CinematicIntro() {
@@ -54,33 +54,29 @@ export function CinematicIntro() {
   const [showSkip, setShowSkip] = useState(false);
   const [debug, setDebug] = useState(false);
 
-  // the dashboard is heavy — memoize the element so the clock can re-render
-  // the overlays at 60fps without re-rendering the dashboard subtree.
+  // memoize the heavy dashboard so the 60fps clock can't re-render its subtree
   const dashEl = useMemo(() => <ProductDashboard animated intro />, []);
 
-  // ?debug=1 prints the live timeline clock so beats can be re-timed by eye.
   useEffect(() => {
     try {
       setDebug(new URLSearchParams(window.location.search).get("debug") === "1");
     } catch {}
   }, []);
 
-  // reveal the Skip control 1s in
   useEffect(() => {
     if (shouldRun !== true) return;
     const t = setTimeout(() => setShowSkip(true), 1000);
     return () => clearTimeout(t);
   }, [shouldRun]);
 
-  // master clock — a single free-running timeline
+  // master clock — absolute wall-time so the film always lasts exactly SCENE.end
+  // seconds and merely drops frames on slow hardware (rather than dragging out).
   useEffect(() => {
     if (shouldRun !== true) return;
     let raf = 0;
-    let last = performance.now();
+    const t0 = performance.now();
     const tick = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-      setClock((c) => Math.min(c + dt, SCENE.end));
+      setClock(Math.min((now - t0) / 1000, SCENE.end));
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -91,7 +87,6 @@ export function CinematicIntro() {
     if (shouldRun === true && clock >= SCENE.end) finish();
   }, [clock, shouldRun, finish]);
 
-  // lock scroll during the sequence
   useEffect(() => {
     if (shouldRun !== true || done) return;
     const prev = document.body.style.overflow;
@@ -105,50 +100,51 @@ export function CinematicIntro() {
 
   const after = (t: number) => clock >= t;
 
-  // ---- villa stage drivers (story) ----
-  const entrance = clamp((clock - SCENE.villa) / 1.2); // silhouette reveal
-  const lights = clamp((clock - SCENE.lights) / 1.1); // interior lights on
-  const flag = clamp((clock - SCENE.detect) / 0.6); // window selected
+  // ---- villa stage drivers (the story) ----
+  const entrance = clamp((clock - SCENE.villa) / 1.0);
+  const lights = clamp((clock - SCENE.lights) / 0.9);
+  const flag = clamp((clock - SCENE.flag) / 0.5);
 
-  // ---- camera + dissolve ----
+  // ---- camera + dissolve (gentle — no excessive blur, no flash) ----
   const drift = clamp((clock - SCENE.villa) / (SCENE.dissolve - SCENE.villa));
   const diss = clamp((clock - SCENE.dissolve) / (SCENE.dashboard - SCENE.dissolve));
   const onReveal = after(SCENE.reveal);
 
-  const stageScale = lerp(1, 1.08, drift) * lerp(1, 2.2, diss);
-  const stageBlur = lerp(0, 16, diss);
-  const stageOpacity = 1 - clamp((clock - (SCENE.dashboard - 0.4)) / 0.8);
+  const stageScale = lerp(1, 1.04, drift) * lerp(1, 1.12, diss);
+  const stageBlur = lerp(0, 6, diss);
+  const stageOpacity = 1 - clamp((clock - (SCENE.dashboard - 0.5)) / 0.9);
   const rootOpacity = 1 - clamp((clock - (SCENE.end - 0.7)) / 0.7);
 
   // ---- overlays ----
   const win = SCENE.window;
-  const lineD = `M 50 25 Q ${(50 + win.x) / 2} ${(25 + win.y) / 2 - 2} ${win.x} ${win.y}`;
-  const lineDraw = clamp((clock - SCENE.detect) / 0.9);
-  const showNotify = clock >= SCENE.notifyIn && clock < SCENE.notifyOut && clock < SCENE.dissolve;
+  const lineD = `M 50 24 Q ${(50 + win.x) / 2} ${(24 + win.y) / 2 - 2} ${win.x} ${win.y}`;
+  const lineDraw = clamp((clock - SCENE.detect) / 1.0);
+  const showNotify = clock >= SCENE.notifyIn && clock < SCENE.notifyOut;
   const showChips = clock >= SCENE.chips && clock < SCENE.dissolve;
+  const showLine = after(SCENE.detect) && clock < SCENE.dissolve;
 
   return (
-    <div className="fixed inset-0 z-[200] overflow-hidden bg-black" style={{ opacity: rootOpacity }}>
-      {/* ---- background stage: the coded villa scene ---- */}
+    <div className="fixed inset-0 z-[200] overflow-hidden" style={{ background: "#090909", opacity: rootOpacity }}>
+      {/* ---- background stage: the real 3D villa ---- */}
       <div
         className="absolute inset-0"
         style={{
           transformOrigin: `${win.x}% ${win.y}%`,
           transform: `scale(${stageScale})`,
-          filter: `blur(${stageBlur}px)`,
+          filter: stageBlur > 0.1 ? `blur(${stageBlur}px)` : undefined,
           opacity: stageOpacity,
         }}
       >
-        <Villa entrance={q(entrance)} lights={q(lights)} flag={q(flag)} />
+        <VillaStage entrance={q(entrance)} lights={q(lights)} flag={q(flag)} cool={q(diss)} />
       </div>
 
-      {/* ---- WhatsApp notification ---- */}
+      {/* ---- WhatsApp notification (small, premium glass) ---- */}
       <motion.div
-        className="pointer-events-none absolute left-1/2 top-[20%] w-[290px] max-w-[80%] -translate-x-1/2"
-        animate={{ opacity: showNotify ? 1 : 0, y: showNotify ? 0 : -12, scale: showNotify ? 1 : 0.97 }}
-        transition={{ duration: 0.8, ease }}
+        className="pointer-events-none absolute left-1/2 top-[18%] w-[262px] max-w-[78%] -translate-x-1/2"
+        animate={{ opacity: showNotify ? 1 : 0, y: showNotify ? 0 : -10, scale: showNotify ? 1 : 0.98 }}
+        transition={{ duration: 0.9, ease }}
       >
-        <div className="rounded-[18px] border border-white/[0.08] bg-white/[0.05] p-3 backdrop-blur-2xl shadow-[0_24px_70px_-34px_rgba(0,0,0,0.8)]">
+        <div className="rounded-[18px] border border-white/[0.08] bg-white/[0.04] p-3 backdrop-blur-2xl shadow-[0_24px_70px_-34px_rgba(0,0,0,0.85)]">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-[8.5px] font-medium uppercase tracking-[0.16em] text-white/45">
               <span className="h-1 w-1 rounded-full bg-[#25D366]" />
@@ -162,90 +158,78 @@ export function CinematicIntro() {
         </div>
       </motion.div>
 
-      {/* ---- electric-blue precision line to the window ---- */}
+      {/* ---- electric-blue AI line (thin, intelligent — not flashy) ---- */}
       <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
         <path
           d={lineD}
           fill="none"
           stroke="#2E7DFF"
-          strokeWidth={1.4}
+          strokeWidth={1.1}
           strokeLinecap="round"
           vectorEffect="non-scaling-stroke"
           pathLength={1}
           style={{
-            filter: "drop-shadow(0 0 3px rgba(46,125,255,0.55))",
+            filter: "drop-shadow(0 0 2px rgba(46,125,255,0.45))",
             strokeDasharray: 1,
             strokeDashoffset: 1 - lineDraw,
-            opacity: after(SCENE.detect) && clock < SCENE.dissolve ? 0.9 : 0,
-            transition: "opacity 0.5s ease",
+            opacity: showLine ? 0.85 : 0,
+            transition: "opacity 0.6s ease",
           }}
         />
       </svg>
 
-      {/* ---- AI entity chips ---- */}
+      {/* ---- four AI entity chips ---- */}
       {CHIPS.map((c, idx) => (
         <motion.span
           key={c.label}
-          className="pointer-events-none absolute -translate-x-1/2 rounded-full border border-white/[0.1] bg-white/[0.06] px-2.5 py-1 text-[10px] font-medium text-white/75 backdrop-blur-xl"
+          className="pointer-events-none absolute -translate-x-1/2 rounded-full border border-white/[0.1] bg-white/[0.06] px-2.5 py-1 text-[10px] font-medium text-white/80 backdrop-blur-xl"
           style={{ left: `${win.x + c.dx}%`, top: `${win.y + c.dy}%` }}
-          animate={{ opacity: showChips ? 1 : 0, y: showChips ? 0 : after(SCENE.dissolve) ? -10 : 8, scale: showChips ? 1 : 0.96 }}
-          transition={{ duration: 0.7, delay: showChips ? idx * 0.16 : 0, ease }}
+          animate={{ opacity: showChips ? 1 : 0, y: showChips ? 0 : after(SCENE.dissolve) ? -8 : 6, scale: showChips ? 1 : 0.97 }}
+          transition={{ duration: 0.8, delay: showChips ? idx * 0.22 : 0, ease }}
         >
           {c.label}
         </motion.span>
       ))}
 
-      {/* ---- dashboard glass-dissolves in ---- */}
+      {/* ---- dashboard resolves in (architecture → software) ---- */}
       {after(SCENE.dissolve - 0.15) && (
         <div
           className="absolute left-1/2 top-1/2 w-[min(1000px,93vw)] -translate-x-1/2 -translate-y-1/2"
           style={{
-            opacity: onReveal ? 0.32 : diss,
-            filter: `blur(${onReveal ? 7 : lerp(22, 0, diss)}px)`,
-            transform: `translate(-50%,-50%) scale(${onReveal ? 0.97 : lerp(1.05, 1, diss)})`,
+            opacity: onReveal ? 0.3 : diss,
+            filter: diss < 0.999 && !onReveal ? `blur(${lerp(10, 0, diss)}px)` : onReveal ? "blur(6px)" : undefined,
+            transform: `translate(-50%,-50%) scale(${onReveal ? 0.98 : lerp(1.03, 1, diss)})`,
           }}
         >
           <div className="shadow-[var(--shadow-float)]">{dashEl}</div>
         </div>
       )}
 
-      {/* ---- brand reveal ---- */}
+      {/* ---- LUXA end frame ---- */}
       {onReveal && (
         <motion.div
-          className="absolute inset-0 z-20 grid place-items-center px-5 text-center"
+          className="absolute inset-0 z-20 grid place-items-center px-6 text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.2, ease }}
+          transition={{ duration: 1, ease }}
         >
           <div>
-            <motion.h2
-              initial={{ opacity: 0, y: 18, filter: "blur(8px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 1, delay: 0.25, ease }}
-              className="text-balance text-[clamp(2.5rem,7vw,5rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-white"
-            >
-              Luxury.
-              <br />
-              Automated.
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.55, ease }}
-              className="mx-auto mt-5 max-w-md text-balance text-[15px] leading-relaxed text-white/55 sm:text-base"
-            >
-              Every guest request. Perfectly orchestrated.
-            </motion.p>
             <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.75, ease }}
-              className="mt-9"
+              initial={{ opacity: 0, y: 14, filter: "blur(6px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 1.1, delay: 0.15, ease }}
+              className="mx-auto w-[clamp(150px,26vw,230px)]"
             >
-              <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
-                Book a Demo
-              </Link>
+              <LuxaMark />
             </motion.div>
+            <motion.h2
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.5, ease }}
+              className="mt-7 text-balance text-[clamp(1.6rem,4.4vw,3rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-white"
+            >
+              Luxury. <span className="text-white/55">Automated.</span>
+            </motion.h2>
           </div>
         </motion.div>
       )}
@@ -264,15 +248,9 @@ export function CinematicIntro() {
           <div className="text-white/90">
             clock <span className="text-[#2E7DFF]">{clock.toFixed(2)}s</span>
           </div>
-          <div className="mt-0.5 text-white/40">
-            villa {SCENE.villa} · lights {SCENE.lights} · notify {SCENE.notifyIn}–{SCENE.notifyOut}
-          </div>
-          <div className="text-white/40">
-            detect {SCENE.detect} · chips {SCENE.chips} · dissolve {SCENE.dissolve}
-          </div>
-          <div className="text-white/40">
-            dash {SCENE.dashboard} · reveal {SCENE.reveal} · end {SCENE.end}
-          </div>
+          <div className="mt-0.5 text-white/40">villa {SCENE.villa} · lights {SCENE.lights} · notify {SCENE.notifyIn}</div>
+          <div className="text-white/40">detect {SCENE.detect} · chips {SCENE.chips} · dissolve {SCENE.dissolve}</div>
+          <div className="text-white/40">dash {SCENE.dashboard} · reveal {SCENE.reveal} · end {SCENE.end}</div>
         </div>
       )}
     </div>
