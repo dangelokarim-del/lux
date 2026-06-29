@@ -28,7 +28,7 @@ export function Hero() {
   const reduce = useReducedMotion();
 
   return (
-    <section className="relative px-5 pt-44 sm:pt-56">
+    <section className="relative px-5 pt-28 sm:pt-40">
       {/* deliberate lighting: soft top spotlight + edge vignette for depth */}
       <div aria-hidden className="spotlight pointer-events-none absolute inset-x-0 top-0 -z-10 h-[620px]" />
       <div
@@ -45,7 +45,7 @@ export function Hero() {
         <LuxaMark intro className="mx-auto w-[min(435px,63vw)]" />
 
         {/* headline — larger, heavier, each line independent */}
-        <h1 className="mt-16 text-balance font-semibold leading-[0.92] tracking-[-0.045em] text-white text-[clamp(3.4rem,11vw,7rem)]">
+        <h1 className="mt-10 text-balance font-semibold leading-[0.92] tracking-[-0.045em] text-white text-[clamp(3.4rem,11vw,7rem)]">
           <motion.span
             className="block"
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: 26, filter: "blur(10px)" }}
@@ -65,19 +65,19 @@ export function Hero() {
         </h1>
 
         <Rise delay={1.2}>
-          <p className="mx-auto mt-9 max-w-xl text-balance text-lg leading-relaxed text-white/65 sm:text-xl">
+          <p className="mx-auto mt-6 max-w-xl text-balance text-lg leading-relaxed text-white/65 sm:text-xl">
             The AI Operating System for Luxury Hospitality.
           </p>
         </Rise>
 
         <Rise delay={1.4}>
-          <p className="mx-auto mt-3.5 max-w-md text-balance text-[15px] leading-relaxed text-white/35">
+          <p className="mx-auto mt-3 max-w-md text-balance text-[15px] leading-relaxed text-white/35">
             The quiet infrastructure behind the world&apos;s most exclusive villas.
           </p>
         </Rise>
 
         <Rise delay={1.6}>
-          <div className="mt-12">
+          <div className="mt-8">
             <Magnetic className="inline-block" strength={0.3}>
               <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
                 Book a Demo
