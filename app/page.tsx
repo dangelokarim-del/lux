@@ -1,43 +1,26 @@
-import { Nav } from "@/components/landing/Nav";
+import { SiteHeader } from "@/components/landing/SiteHeader";
 import { Hero } from "@/components/landing/Hero";
-import { StatementSection } from "@/components/landing/StatementSection";
-import { FlowSection } from "@/components/landing/FlowSection";
-import { DashboardShowcase } from "@/components/landing/DashboardShowcase";
-import { CTASection } from "@/components/landing/CTASection";
-import { Footer } from "@/components/landing/Footer";
+import { VillaShowcase } from "@/components/landing/VillaShowcase";
+import { TrustedBy } from "@/components/landing/TrustedBy";
+import { Features } from "@/components/landing/Features";
+import { ClosingCTA } from "@/components/landing/ClosingCTA";
+import { SiteFooter } from "@/components/landing/SiteFooter";
 
 export default function LandingPage() {
   return (
-    <main className="relative">
-      <Nav />
+    <>
+      {/* light theme — overrides the dark global body for the marketing site */}
+      <div aria-hidden className="fixed inset-0 -z-50 bg-[#FAF9F6]" />
 
-      {/* 1 — Hero with floating dashboard */}
-      <Hero />
-
-      {/* 2 — Statement */}
-      <StatementSection id="problem" eyebrow="The problem">
-        Luxury hospitality
-        <br />
-        still runs on <span className="text-ink-3">chaos.</span>
-      </StatementSection>
-
-      {/* 3 — Product flow */}
-      <FlowSection />
-
-      {/* 4 — Dashboard showcase */}
-      <DashboardShowcase />
-
-      {/* 5 — Statement */}
-      <StatementSection>
-        Every request.
-        <br />
-        <span className="chrome">Under control.</span>
-      </StatementSection>
-
-      {/* 6 — Final CTA */}
-      <CTASection />
-
-      <Footer />
-    </main>
+      <main className="relative min-h-screen bg-[#FAF9F6] text-[#0E0E0F] antialiased">
+        <SiteHeader />
+        <Hero />
+        <VillaShowcase />
+        <TrustedBy />
+        <Features />
+        <ClosingCTA />
+        <SiteFooter />
+      </main>
+    </>
   );
 }
