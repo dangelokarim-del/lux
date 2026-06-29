@@ -37,7 +37,7 @@ const DUR: Record<Step, number> = {
 /* one-shot timeline for the cinematic intro (no intake card; the film already
    showed the message + extraction). Ends, resting, on "Assigned". */
 const FILM_SEQ = ["idle", "created", "assigned", "rest"] as const;
-const FILM_DUR = [1500, 1200, 1600, 999999];
+const FILM_DUR = [1300, 1100, 1500, 999999];
 
 /* ---------- atoms ---------- */
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { buttonVariants } from "@/components/ui";
@@ -9,46 +9,106 @@ import { Villa } from "./Villa";
 import { ProductDashboard } from "../ProductDashboard";
 
 const ease = [0.16, 1, 0.3, 1] as const;
+const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const lerp = (a: number, b: number, t: number) => a + (b - a) * clamp(t);
 
-const PHASES = ["emerge", "notify", "detect", "analyze", "dissolve", "dash", "reveal", "out"] as const;
-type Phase = (typeof PHASES)[number];
-const DUR: Record<Phase, number> = {
-  emerge: 1900,
-  notify: 1900,
-  detect: 1100,
-  analyze: 1600,
-  dissolve: 1500,
-  dash: 1900,
-  reveal: 2300,
-  out: 750,
+/* ------------------------------------------------------------------ *
+ *  CINEMATIC HERO — integration for a pre-rendered 8s 4K film.
+ *
+ *  TO GO LIVE WITH THE REAL FILM:
+ *   1. Drop the file at  public/hero/hero.mp4  (and optionally
+ *      public/hero/hero-poster.jpg for the first frame).
+ *   2. Tune the beat timestamps in FILM below to match your edit, and
+ *      point window.x / window.y at the lit window in your footage.
+ *  Until the mp4 exists, the handcrafted villa scene plays as a live
+ *  placeholder — every overlay is identical, so nothing else changes.
+ *
+ *  All overlays are driven by the *video's playback clock* (or a free-running
+ *  clock in placeholder mode), so they stay frame-synced to the footage.
+ * ------------------------------------------------------------------ */
+const FILM = {
+  src: "/hero/hero.mp4",
+  poster: "/hero/hero-poster.jpg",
+  // beat times, in seconds of the timeline (video ≈ 0–8s; reveal follows)
+  notifyIn: 1.8,
+  notifyOut: 6.2,
+  detect: 3.9, // electric-blue line draws to the window, window lights
+  chips: 4.9, // entity chips surface
+  dissolve: 6.4, // glass dissolve: film → dashboard begins
+  dashboard: 7.7, // dashboard fully sharp; task + stats run
+  reveal: 9.9, // brand reveal over the dimmed dashboard
+  end: 12.3, // hand off to the resting product hero
+  // the lit window the line/chips point at (percent of the stage)
+  window: { x: 58.2, y: 31.4 },
 };
 
-/* AI chips that surface beside the lit window (x%, y%) */
-const CHIPS: { label: string; x: number; y: number }[] = [
-  { label: "AC issue", x: 62, y: 23 },
-  { label: "Master bedroom", x: 70.5, y: 28 },
-  { label: "Maintenance", x: 63.5, y: 36 },
-  { label: "High priority", x: 73, y: 41 },
-  { label: "Villa Ocean", x: 60, y: 45 },
+/* chips positioned relative to the lit window */
+const CHIPS = [
+  { label: "AC issue", dx: 4, dy: -8.5 },
+  { label: "Master bedroom", dx: 12.5, dy: -3.5 },
+  { label: "Maintenance", dx: 5.5, dy: 4.5 },
+  { label: "High priority", dx: 15, dy: 9.5 },
+  { label: "Villa Ocean", dx: 1.5, dy: 13.5 },
 ];
 
 export function CinematicIntro() {
   const { shouldRun, done, finish } = useIntro();
-  const [i, setI] = useState(0);
-  const phase = PHASES[i];
-  const at = (k: Phase) => i >= PHASES.indexOf(k);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [resolved, setResolved] = useState<null | "video" | "villa">(null);
+  const [clock, setClock] = useState(0);
 
+  // decide video vs. placeholder once, before the timeline starts
   useEffect(() => {
     if (shouldRun !== true) return;
-    if (phase === "out") {
-      const t = setTimeout(finish, DUR.out);
-      return () => clearTimeout(t);
-    }
-    const t = setTimeout(() => setI((p) => p + 1), DUR[phase]);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldRun, i]);
+    const v = videoRef.current;
+    let settled = false;
+    const toVideo = () => {
+      if (settled) return;
+      settled = true;
+      setResolved("video");
+      v?.play().catch(() => setResolved("villa"));
+    };
+    const toVilla = () => {
+      if (settled) return;
+      settled = true;
+      setResolved("villa");
+    };
+    if (!v) return toVilla();
+    if (v.readyState >= 3) toVideo();
+    v.addEventListener("canplay", toVideo);
+    v.addEventListener("error", toVilla);
+    const fallback = setTimeout(() => !settled && toVilla(), 1400);
+    return () => {
+      v.removeEventListener("canplay", toVideo);
+      v.removeEventListener("error", toVilla);
+      clearTimeout(fallback);
+    };
+  }, [shouldRun]);
 
+  // master clock — follows the video while it plays, free-runs otherwise
+  useEffect(() => {
+    if (shouldRun !== true || resolved === null) return;
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      setClock((c) => {
+        const v = videoRef.current;
+        if (resolved === "video" && v && !v.paused && !v.ended && v.readyState >= 2) return v.currentTime;
+        return Math.min(c + dt, FILM.end);
+      });
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [shouldRun, resolved]);
+
+  useEffect(() => {
+    if (shouldRun === true && clock >= FILM.end) finish();
+  }, [clock, shouldRun, finish]);
+
+  // lock scroll during the film
   useEffect(() => {
     if (shouldRun !== true || done) return;
     const prev = document.body.style.overflow;
@@ -60,39 +120,57 @@ export function CinematicIntro() {
 
   if (shouldRun !== true || done) return null;
 
-  const camScale = at("dissolve") ? 2.5 : at("analyze") ? 1.11 : at("detect") ? 1.07 : at("notify") ? 1.035 : 1.0;
+  const after = (t: number) => clock >= t;
+  const isVilla = resolved !== "video";
+
+  // continuous, clock-derived transforms (frame-synced to the footage)
+  const drift = clamp(clock / FILM.dissolve);
+  const diss = clamp((clock - FILM.dissolve) / (FILM.dashboard - FILM.dissolve));
+  const dash = clamp((clock - FILM.dissolve) / (FILM.dashboard - FILM.dissolve));
+  const onReveal = after(FILM.reveal);
+
+  const stageScale = (isVilla ? lerp(1, 1.1, drift) * lerp(1, 2.4, diss) : lerp(1, 1.05, drift) * lerp(1, 1.35, diss));
+  const stageBlur = lerp(0, isVilla ? 18 : 14, diss);
+  const stageOpacity = 1 - clamp((clock - (FILM.dashboard - 0.4)) / 0.8);
+  const rootOpacity = 1 - clamp((clock - (FILM.end - 0.7)) / 0.7);
+
+  const win = FILM.window;
+  const lineD = `M 50 25 Q ${(50 + win.x) / 2} ${(25 + win.y) / 2 - 2} ${win.x} ${win.y}`;
+  const lineDraw = clamp((clock - FILM.detect) / 0.9);
+  const showNotify = clock >= FILM.notifyIn && clock < FILM.notifyOut && !after(FILM.dissolve);
+  const showChips = clock >= FILM.chips && !after(FILM.dissolve);
 
   return (
-    <motion.div
-      className="fixed inset-0 z-[200] overflow-hidden bg-black"
-      initial={{ opacity: 1 }}
-      animate={{ opacity: phase === "out" ? 0 : 1 }}
-      transition={{ duration: DUR.out / 1000, ease }}
-    >
-      {/* villa camera */}
-      <motion.div
+    <div className="fixed inset-0 z-[200] overflow-hidden bg-black" style={{ opacity: rootOpacity }}>
+      {/* ---- background stage: video (or villa placeholder) ---- */}
+      <div
         className="absolute inset-0"
-        style={{ transformOrigin: "58.2% 32%" }}
-        initial={{ scale: 1, opacity: 0 }}
-        animate={{
-          scale: camScale,
-          opacity: at("dash") ? 0 : 1,
-          filter: at("dissolve") ? "blur(18px)" : "blur(0px)",
+        style={{
+          transformOrigin: `${win.x}% ${win.y}%`,
+          transform: `scale(${stageScale})`,
+          filter: `blur(${stageBlur}px)`,
+          opacity: stageOpacity,
         }}
-        transition={{ duration: at("dissolve") ? 1.5 : at("emerge") ? 2.6 : 1.6, ease }}
       >
-        <Villa lit={at("detect")} />
-      </motion.div>
+        {/* the video always mounts so it can load/error; shown only if usable */}
+        <video
+          ref={videoRef}
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ opacity: resolved === "video" ? 1 : 0 }}
+          src={FILM.src}
+          poster={FILM.poster}
+          muted
+          playsInline
+          autoPlay
+          preload="auto"
+        />
+        {isVilla && <Villa lit={after(FILM.detect)} />}
+      </div>
 
-      {/* Act 2 — WhatsApp notification */}
+      {/* ---- WhatsApp notification ---- */}
       <motion.div
         className="pointer-events-none absolute left-1/2 top-[20%] w-[290px] max-w-[80%] -translate-x-1/2"
-        initial={{ opacity: 0, y: -12, scale: 0.97 }}
-        animate={{
-          opacity: at("notify") && !at("dissolve") ? 1 : 0,
-          y: at("notify") && !at("dissolve") ? 0 : -12,
-          scale: at("notify") ? 1 : 0.97,
-        }}
+        animate={{ opacity: showNotify ? 1 : 0, y: showNotify ? 0 : -12, scale: showNotify ? 1 : 0.97 }}
         transition={{ duration: 0.8, ease }}
       >
         <div className="rounded-[18px] border border-white/[0.08] bg-white/[0.05] p-3 backdrop-blur-2xl shadow-[0_24px_70px_-34px_rgba(0,0,0,0.8)]">
@@ -109,59 +187,57 @@ export function CinematicIntro() {
         </div>
       </motion.div>
 
-      {/* Act 3 — electric-blue precision line to the window */}
+      {/* ---- electric-blue precision line to the window ---- */}
       <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <motion.path
-          d="M50 26 Q 54.5 29.5 58.2 31.4"
+        <path
+          d={lineD}
           fill="none"
           stroke="#2E7DFF"
           strokeWidth={1.4}
           strokeLinecap="round"
           vectorEffect="non-scaling-stroke"
-          style={{ filter: "drop-shadow(0 0 3px rgba(46,125,255,0.55))" }}
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: at("detect") ? 1 : 0, opacity: at("detect") && !at("dissolve") ? 0.9 : 0 }}
-          transition={{ pathLength: { duration: 0.9, ease }, opacity: { duration: 0.5 } }}
+          pathLength={1}
+          style={{
+            filter: "drop-shadow(0 0 3px rgba(46,125,255,0.55))",
+            strokeDasharray: 1,
+            strokeDashoffset: 1 - lineDraw,
+            opacity: after(FILM.detect) && !after(FILM.dissolve) ? 0.9 : 0,
+            transition: "opacity 0.5s ease",
+          }}
         />
       </svg>
 
-      {/* Act 4 — AI chips beside the window */}
+      {/* ---- AI entity chips ---- */}
       {CHIPS.map((c, idx) => (
         <motion.span
           key={c.label}
           className="pointer-events-none absolute -translate-x-1/2 rounded-full border border-white/[0.1] bg-white/[0.06] px-2.5 py-1 text-[10px] font-medium text-white/75 backdrop-blur-xl"
-          style={{ left: `${c.x}%`, top: `${c.y}%` }}
-          initial={{ opacity: 0, y: 8, scale: 0.96 }}
-          animate={{
-            opacity: at("analyze") && !at("dissolve") ? 1 : 0,
-            y: at("analyze") && !at("dissolve") ? 0 : at("dissolve") ? -10 : 8,
-            scale: at("analyze") && !at("dissolve") ? 1 : 0.96,
-          }}
-          transition={{ duration: 0.7, delay: at("analyze") && !at("dissolve") ? idx * 0.18 : 0, ease }}
+          style={{ left: `${win.x + c.dx}%`, top: `${win.y + c.dy}%` }}
+          animate={{ opacity: showChips ? 1 : 0, y: showChips ? 0 : after(FILM.dissolve) ? -10 : 8, scale: showChips ? 1 : 0.96 }}
+          transition={{ duration: 0.7, delay: showChips ? idx * 0.16 : 0, ease }}
         >
           {c.label}
         </motion.span>
       ))}
 
-      {/* Acts 5–6 — dashboard glass-dissolves in, then reveal */}
-      {at("dissolve") && (
-        <motion.div
+      {/* ---- dashboard glass-dissolves in ---- */}
+      {after(FILM.dissolve - 0.15) && (
+        <div
           className="absolute left-1/2 top-1/2 w-[min(1000px,93vw)] -translate-x-1/2 -translate-y-1/2"
-          initial={{ opacity: 0, scale: 1.05, filter: "blur(22px)" }}
-          animate={{
-            opacity: at("reveal") ? 0.32 : 1,
-            scale: at("reveal") ? 0.97 : 1,
-            filter: at("reveal") ? "blur(7px)" : "blur(0px)",
+          style={{
+            opacity: onReveal ? 0.32 : dash,
+            filter: `blur(${onReveal ? 7 : lerp(22, 0, dash)}px)`,
+            transform: `translate(-50%,-50%) scale(${onReveal ? 0.97 : lerp(1.05, 1, dash)})`,
           }}
-          transition={{ duration: at("reveal") ? 1 : 1.4, ease }}
         >
           <div className="shadow-[var(--shadow-float)]">
             <ProductDashboard animated intro />
           </div>
-        </motion.div>
+        </div>
       )}
 
-      {at("reveal") && (
+      {/* ---- brand reveal ---- */}
+      {onReveal && (
         <motion.div
           className="absolute inset-0 z-20 grid place-items-center px-5 text-center"
           initial={{ opacity: 0 }}
@@ -200,11 +276,11 @@ export function CinematicIntro() {
       )}
 
       <button
-        onClick={() => setI(PHASES.indexOf("out"))}
+        onClick={() => setClock(FILM.end)}
         className="absolute bottom-6 right-6 z-30 rounded-full border border-white/15 bg-white/[0.04] px-4 py-1.5 text-[12px] text-white/55 backdrop-blur-md transition-colors hover:border-white/30 hover:text-white"
       >
         Skip
       </button>
-    </motion.div>
+    </div>
   );
 }
