@@ -11,6 +11,7 @@ import {
 } from "framer-motion";
 import { LuxaMark } from "@/components/ui/LuxaMark";
 import { LiveNumber } from "./anim/LiveNumber";
+import { SplineStage } from "./SplineStage";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -156,8 +157,8 @@ export function SpatialExperience() {
   return (
     <section ref={ref} id="product" className="relative h-[300vh]">
       <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
-        {/* environment */}
-        <VillaSpace dolly={scrollYProgress} />
+        {/* environment — Spline villa when configured, handcrafted CSS villa otherwise */}
+        <SplineStage fallback={<VillaSpace dolly={scrollYProgress} />} />
 
         {/* dim the scene as the brand resolves */}
         <motion.div aria-hidden className="absolute inset-0 bg-[#05060a]" animate={{ opacity: brand ? 0.55 : 0 }} transition={{ duration: 1, ease }} />
