@@ -23,9 +23,11 @@ export function IntroProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let run = false;
     try {
+      // dev toggle: ?film=1 force-replays the intro regardless of session/motion
+      const force = new URLSearchParams(window.location.search).get("film") === "1";
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const played = sessionStorage.getItem("luxa_intro_played") === "1";
-      run = !reduce && !played;
+      run = force || (!reduce && !played);
     } catch {
       run = false;
     }

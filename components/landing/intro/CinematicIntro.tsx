@@ -16,18 +16,21 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * clamp(t);
  *  CINEMATIC HERO — integration for a pre-rendered 8s 4K film.
  *
  *  TO GO LIVE WITH THE REAL FILM:
- *   1. Drop the file at  public/hero/hero.mp4  (and optionally
- *      public/hero/hero-poster.jpg for the first frame).
+ *   1. Drop the file at  public/hero/hero.webm  (preferred) and/or
+ *      public/hero/hero.mp4  (fallback). Optionally add
+ *      public/hero/hero-poster.jpg for the first frame.
  *   2. Tune the beat timestamps in FILM below to match your edit, and
  *      point window.x / window.y at the lit window in your footage.
- *  Until the mp4 exists, the handcrafted villa scene plays as a live
+ *  Until a video exists, the handcrafted villa scene plays as a live
  *  placeholder — every overlay is identical, so nothing else changes.
  *
  *  All overlays are driven by the *video's playback clock* (or a free-running
  *  clock in placeholder mode), so they stay frame-synced to the footage.
  * ------------------------------------------------------------------ */
 const FILM = {
-  src: "/hero/hero.mp4",
+  // webm is tried first (smaller), mp4 is the fallback
+  webm: "/hero/hero.webm",
+  mp4: "/hero/hero.mp4",
   poster: "/hero/hero-poster.jpg",
   // beat times, in seconds of the timeline (video ≈ 0–8s; reveal follows)
   notifyIn: 1.8,
@@ -157,13 +160,16 @@ export function CinematicIntro() {
           ref={videoRef}
           className="absolute inset-0 h-full w-full object-cover"
           style={{ opacity: resolved === "video" ? 1 : 0 }}
-          src={FILM.src}
           poster={FILM.poster}
           muted
           playsInline
           autoPlay
           preload="auto"
-        />
+        >
+          {/* webm is tried first (smaller); mp4 is the fallback */}
+          <source src={FILM.webm} type="video/webm" />
+          <source src={FILM.mp4} type="video/mp4" />
+        </video>
         {isVilla && <Villa lit={after(FILM.detect)} />}
       </div>
 
