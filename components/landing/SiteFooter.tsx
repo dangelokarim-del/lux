@@ -1,30 +1,41 @@
 import Link from "next/link";
+import { Logo } from "@/components/ui";
+
+const cols = [
+  { title: "Product", items: ["Overview", "Operations", "Requests", "Analytics"] },
+  { title: "Company", items: ["About", "Careers", "Contact"] },
+  { title: "Legal", items: ["Privacy", "Terms"] },
+];
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-[#ECE8DF] bg-[#FAF9F6] px-5 py-14">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
+    <footer id="footer" className="border-t border-white/[0.06] px-5 py-16">
+      <div className="mx-auto grid max-w-6xl gap-12 sm:grid-cols-[1.5fr_1fr_1fr_1fr]">
         <div>
-          <Link href="/" className="flex items-center gap-1 text-[18px] font-semibold tracking-[-0.02em] text-[#0E0E0F]">
-            LUXA
-            <span className="mb-2 h-1 w-1 rounded-full bg-[#A9854A]" />
-          </Link>
-          <p className="mt-3 max-w-xs text-[13px] leading-relaxed text-[#8B8A90]">
+          <Logo />
+          <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-white/40">
             The AI Operating System for luxury hospitality. Designed in Marbella.
           </p>
         </div>
-
-        <div className="flex flex-wrap gap-x-10 gap-y-3 text-[14px] text-[#57565C]">
-          <a href="#features" className="transition-colors hover:text-[#0E0E0F]">Features</a>
-          <a href="#features" className="transition-colors hover:text-[#0E0E0F]">How it works</a>
-          <Link href="/login" className="transition-colors hover:text-[#0E0E0F]">Sign in</Link>
-          <Link href="/login" className="transition-colors hover:text-[#0E0E0F]">Book a Demo</Link>
-        </div>
+        {cols.map((c) => (
+          <div key={c.title}>
+            <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/30">{c.title}</div>
+            <ul className="mt-4 space-y-2.5">
+              {c.items.map((it) => (
+                <li key={it}>
+                  <Link href="/login" className="text-[14px] text-white/55 transition-colors hover:text-white">
+                    {it}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
 
-      <div className="mx-auto mt-12 flex max-w-6xl items-center justify-between border-t border-[#ECE8DF] pt-6 text-[12px] text-[#9a9890]">
+      <div className="mx-auto mt-14 flex max-w-6xl items-center justify-between border-t border-white/[0.06] pt-6 text-[12px] text-white/30">
         <span>© {new Date().getFullYear()} LUXA</span>
-        <span>Luxury made simple.</span>
+        <span>Luxury. Automated.</span>
       </div>
     </footer>
   );
