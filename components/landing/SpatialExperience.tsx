@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   motion,
+  AnimatePresence,
   useScroll,
   useTransform,
   useMotionValueEvent,
@@ -10,6 +11,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { LuxaMark } from "@/components/ui/LuxaMark";
+import { LiveNumber } from "./anim/LiveNumber";
 import { SplineStage } from "./SplineStage";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -22,7 +24,7 @@ const CHIPS = ["AC Issue", "Master Bedroom", "Maintenance", "High Priority"];
 const CAPTIONS = [
   "Villa Ocean · Marbella",
   "Incoming request",
-  "LUXA understands",
+  "The building wakes",
   "Extracting the details",
   "The villa becomes the system",
   "Live operations",
@@ -30,15 +32,16 @@ const CAPTIONS = [
 ];
 
 /* ------------------------------------------------------------------ *
- *  SPATIAL EXPERIENCE — a pinned, scroll-driven cinematic. The dark
- *  Marbella villa receives a request; its rooms light one by one, the
- *  architecture dissolves into thin luminous frames, and the LUXA
- *  operating system materialises exactly where the rooms were: the
- *  building itself is running LUXA. Frosted glass + aluminium + soft
- *  white light; electric blue is reserved for AI actions only.
+ *  SPATIAL EXPERIENCE — the emotional climax. A silent Marbella villa
+ *  (one room lit) receives a request; an electric-blue AI signal enters
+ *  and travels, waking each room in turn; the architecture transforms —
+ *  concrete to aluminium, walls to frosted panels, structural lines to
+ *  dashboard frames — and the LUXA operating system materialises exactly
+ *  where the rooms were. Then it stays alive. The building is running LUXA.
+ *  Frosted glass + brushed aluminium + soft white light; electric blue is
+ *  AI intelligence only. No neon, no particles, no hologram clichés.
  * ------------------------------------------------------------------ */
 
-/* ---- the villa environment (dark, calm, expensive) ---- */
 export function VillaSpace({ dolly }: { dolly: MotionValue<number> }) {
   const reduce = useReducedMotion();
   const scale = useTransform(dolly, [0, 1], [1.04, 1.16]);
@@ -51,12 +54,7 @@ export function VillaSpace({ dolly }: { dolly: MotionValue<number> }) {
         <div className="absolute inset-x-0" style={{ top: "52%", height: "44%", background: "radial-gradient(44% 40% at 46% 90%, rgba(214,150,104,0.5), rgba(150,96,72,0.16) 46%, transparent 74%)", filter: "blur(3px)" }} />
         <div className="absolute inset-x-0" style={{ top: "78%", bottom: 0, background: "linear-gradient(180deg,#7b5142 0%,#34323f 26%,#171f2d 64%,#0e1622 100%)" }} />
         <div className="absolute inset-x-0" style={{ top: "78%", height: "1.5px", background: "linear-gradient(90deg,transparent,rgba(220,170,130,0.55),transparent)" }} />
-        <motion.div
-          className="absolute"
-          style={{ left: "40%", right: "50%", top: "78%", height: "16%", background: "linear-gradient(180deg,rgba(214,150,104,0.45),transparent)", filter: "blur(7px)" }}
-          animate={reduce ? undefined : { opacity: [0.4, 0.7, 0.4], scaleX: [1, 1.1, 1] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
+        <motion.div className="absolute" style={{ left: "40%", right: "50%", top: "78%", height: "16%", background: "linear-gradient(180deg,rgba(214,150,104,0.45),transparent)", filter: "blur(7px)" }} animate={reduce ? undefined : { opacity: [0.4, 0.7, 0.4], scaleX: [1, 1.1, 1] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} />
         <Palm className="-left-4 bottom-[2%]" scale={1.45} flip />
         <Palm className="-right-6 bottom-[-1%]" scale={1.65} />
         {[34, 66].map((x) => (
@@ -90,7 +88,6 @@ function Palm({ className, scale = 1, flip = false }: { className?: string; scal
   );
 }
 
-/* a glass surface, warm rim-light on the top edge (early-beat panels) */
 function Panel({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
     <div className={`glass edge-light relative rounded-[20px] border border-white/[0.1] shadow-[0_40px_90px_-36px_rgba(0,0,0,0.85)] ${className ?? ""}`}>
@@ -102,112 +99,170 @@ function Panel({ className, children }: { className?: string; children: React.Re
 
 const ALU_FRAME = "inset 0 0 0 1px rgba(208,222,244,0.5), inset 0 1px 0 rgba(255,255,255,0.38)";
 
-/* a villa room that becomes a dashboard panel in place:
-   warm light → luminous aluminium frame → frosted glass + data */
-function Cell({ index, lit, cool, assemble, label, value, accent }: {
+/* a villa room that wakes (warm light) then becomes a dashboard panel in place */
+function Cell({ index, wake, base, cool, assemble, label, value, accent, live }: {
   index: number;
-  lit: MotionValue<number>;
+  wake: MotionValue<number>;
+  base: number;
   cool: MotionValue<number>;
   assemble: MotionValue<number>;
   label: string;
-  value: string;
+  value: number;
   accent?: boolean;
+  live?: boolean;
 }) {
-  const warm = useTransform(lit, [index * 0.16, index * 0.16 + 0.5], [0, 1]);
-  const warmShown = useTransform([warm, cool] as MotionValue<number>[], ([w, c]: number[]) => w * (1 - c));
+  // the AI signal wakes this room as it passes; `base` is the one already-lit room
+  const woken = useTransform(wake, [index * 0.24, index * 0.24 + 0.32], [0, 1]);
+  const warmShown = useTransform([woken, cool] as MotionValue<number>[], ([w, c]: number[]) => Math.max(base, w) * (1 - c));
   return (
     <div className="relative h-[74px]">
       <div className="absolute inset-0 rounded-xl bg-[#0a0c12]" />
-      {/* warm interior light */}
       <motion.div className="absolute inset-0 rounded-xl" style={{ opacity: warmShown, background: "linear-gradient(180deg,rgba(255,200,146,0.5),rgba(226,150,98,0.72))" }} />
-      {/* luminous aluminium frame (the architecture) */}
       <motion.div className="absolute inset-0 rounded-xl" style={{ opacity: cool, boxShadow: ALU_FRAME, filter: "drop-shadow(0 0 2px rgba(180,205,255,0.25))" }} />
-      {/* frosted glass fill */}
       <motion.div className="absolute inset-0 rounded-xl glass" style={{ opacity: assemble }} />
-      {/* data */}
       <motion.div className="absolute inset-0 px-3.5 py-2.5" style={{ opacity: assemble }}>
         <div className="text-[9px] uppercase tracking-[0.14em] text-white/40">{label}</div>
-        <div className={`mt-1.5 text-[24px] font-semibold leading-none tabular-nums ${accent ? "text-[#6ba5ff]" : "text-white"}`}>{value}</div>
+        <div className={`mt-1.5 text-[24px] font-semibold leading-none tabular-nums ${accent ? "text-[#6ba5ff]" : "text-white"}`}>
+          {live ? <LiveNumber value={value} pad={2} /> : String(value).padStart(2, "0")}
+        </div>
       </motion.div>
     </div>
   );
 }
 
-/* the operating system the villa becomes — frames first, then frosted panels */
-function ArchitectureOS({ lit, cool, assemble }: { lit: MotionValue<number>; cool: MotionValue<number>; assemble: MotionValue<number> }) {
-  const cells = [
-    { l: "Open requests", v: "15" },
-    { l: "Urgent", v: "03", a: true },
-    { l: "Resolved", v: "28" },
-    { l: "Arrivals", v: "06" },
+/* the operating system the villa becomes — frames first, then frosted panels,
+   then genuinely alive (breathing, a request arriving, numbers moving) */
+function ArchitectureOS({ wake, cool, assemble, alive }: { wake: MotionValue<number>; cool: MotionValue<number>; assemble: MotionValue<number>; alive: boolean }) {
+  const reduce = useReducedMotion();
+  const [pulse, setPulse] = useState(0);
+  const [notif, setNotif] = useState(false);
+
+  useEffect(() => {
+    if (!alive || reduce) return;
+    const id = setInterval(() => setPulse((v) => v + 1), 4200);
+    return () => clearInterval(id);
+  }, [alive, reduce]);
+  useEffect(() => {
+    if (!alive || reduce || pulse === 0 || pulse % 2 === 0) return;
+    setNotif(true);
+    const t = setTimeout(() => setNotif(false), 3200);
+    return () => clearTimeout(t);
+  }, [pulse, alive, reduce]);
+
+  const open = notif ? 16 : 15;
+  const resolved = 28 + (alive ? Math.min(pulse, 9) : 0);
+  const cells: { l: string; v: number; a?: boolean; live?: boolean }[] = [
+    { l: "Open requests", v: open, live: true },
+    { l: "Urgent", v: 3, a: true },
+    { l: "Resolved", v: resolved, live: true },
+    { l: "Arrivals", v: 6 },
   ];
-  const rows = [
-    { t: "Beach club reservation", v: "Villa Aura", s: "Confirmed" },
-    { t: "Private chef — dinner for 6", v: "Villa Sol", s: "Pending" },
-  ];
+  const base = [0.34, 0, 0, 0]; // only the first room is lit at the start
+
+  const signalX = useTransform(wake, [0, 1], ["3%", "97%"]);
+  const signalOpacity = useTransform(wake, [0, 0.06, 0.92, 1], [0, 1, 1, 0]);
+
   return (
     <div className="absolute left-1/2 top-1/2 w-[min(900px,94%)] -translate-x-1/2 -translate-y-1/2">
-      {/* soft white key light as the system forms */}
-      <motion.div aria-hidden className="absolute -inset-10 -z-10" style={{ opacity: assemble, background: "radial-gradient(55% 55% at 50% 26%, rgba(216,230,255,0.12), transparent 72%)", filter: "blur(26px)" }} />
-      {/* container: luminous frame → frosted fill */}
-      <motion.div aria-hidden className="absolute inset-0 rounded-[24px]" style={{ opacity: cool, boxShadow: "inset 0 0 0 1px rgba(208,222,244,0.45)", filter: "drop-shadow(0 0 3px rgba(180,205,255,0.18))" }} />
-      <motion.div aria-hidden className="absolute inset-0 rounded-[24px] glass" style={{ opacity: assemble, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.24), 0 60px 130px -44px rgba(0,0,0,0.85)" }} />
+      <motion.div animate={alive && !reduce ? { scale: [1, 1.005, 1] } : { scale: 1 }} transition={{ duration: 7.5, repeat: Infinity, ease: "easeInOut" }} className="relative">
+        {/* soft white key light */}
+        <motion.div aria-hidden className="absolute -inset-10 -z-10" style={{ opacity: assemble, background: "radial-gradient(55% 55% at 50% 26%, rgba(216,230,255,0.12), transparent 72%)", filter: "blur(26px)" }} />
+        {/* container: luminous frame → frosted fill */}
+        <motion.div aria-hidden className="absolute inset-0 rounded-[24px]" style={{ opacity: cool, boxShadow: "inset 0 0 0 1px rgba(208,222,244,0.45)", filter: "drop-shadow(0 0 3px rgba(180,205,255,0.18))" }} />
+        <motion.div aria-hidden className="absolute inset-0 rounded-[24px] glass" style={{ opacity: assemble, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.24), 0 60px 130px -44px rgba(0,0,0,0.85)" }} />
 
-      <div className="relative px-5 py-4">
-        {/* header */}
-        <motion.div className="mb-3 flex items-center justify-between" style={{ opacity: assemble }}>
-          <span className="flex items-center gap-1 text-[13px] font-semibold tracking-[-0.02em] text-white">
-            LUXA<span className="h-1 w-1 translate-y-1 rounded-full bg-[#2E7DFF]" />
-            <span className="ml-2 text-[11px] font-normal text-white/35">Operations</span>
-          </span>
-          <span className="flex items-center gap-1.5 text-[11px] text-white/60">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#2E7DFF]" /> Live
-          </span>
-        </motion.div>
-
-        {/* stat row — the rooms, becoming panels in place */}
-        <div className="grid grid-cols-4 gap-3">
-          {cells.map((c, i) => (
-            <Cell key={c.l} index={i} lit={lit} cool={cool} assemble={assemble} label={c.l} value={c.v} accent={c.a} />
-          ))}
-        </div>
-
-        {/* operations */}
-        <div className="relative mt-4">
-          <motion.div className="mb-1.5 flex items-center justify-between" style={{ opacity: assemble }}>
-            <span className="text-[12px] font-medium text-white">Live operations</span>
-            <span className="text-[10px] text-white/30">Updated just now</span>
+        <div className="relative px-5 py-4">
+          {/* header */}
+          <motion.div className="mb-3 flex items-center justify-between" style={{ opacity: assemble }}>
+            <span className="flex items-center gap-1 text-[13px] font-semibold tracking-[-0.02em] text-white">
+              LUXA<span className="h-1 w-1 translate-y-1 rounded-full bg-[#2E7DFF]" />
+              <span className="ml-2 text-[11px] font-normal text-white/35">Operations</span>
+            </span>
+            <span className="flex items-center gap-1.5 text-[11px] text-white/60">
+              <span className="relative flex h-1.5 w-1.5">
+                {alive && !reduce && <motion.span className="absolute inset-0 rounded-full bg-[#2E7DFF]" animate={{ scale: [1, 2.6], opacity: [0.5, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }} />}
+                <span className="relative h-1.5 w-1.5 rounded-full bg-[#2E7DFF]" />
+              </span>
+              Live
+            </span>
           </motion.div>
 
-          {/* the AI-resolved task — blue (AI action) */}
-          <div className="relative h-[52px]">
-            <motion.div className="absolute inset-0 rounded-xl" style={{ opacity: cool, boxShadow: "inset 0 0 0 1px rgba(46,125,255,0.4)", filter: "drop-shadow(0 0 2px rgba(46,125,255,0.3))" }} />
-            <motion.div className="absolute inset-0 rounded-xl" style={{ opacity: assemble, background: "rgba(46,125,255,0.05)" }} />
-            <motion.div className="absolute inset-0 flex items-center justify-between px-3.5" style={{ opacity: assemble }}>
-              <div className="min-w-0">
-                <div className="truncate text-[13px] font-medium text-white">AC — Master Bedroom</div>
-                <div className="flex items-center gap-1.5 text-[11px] text-white/45">
-                  Maintenance · Villa Ocean
-                  <span className="text-white/20">·</span>
-                  <span className="grid h-4 w-4 place-items-center rounded-full border border-white/15 bg-white/[0.06] text-[7px] text-white/70">CN</span>
-                  Carlos
-                </div>
-              </div>
-              <span className="shrink-0 rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/12 px-2 py-0.5 text-[10px] font-medium text-[#8fbcff]">In Progress</span>
+          {/* stat row — the rooms wake, then become panels; AI signal sweeps across */}
+          <div className="relative">
+            <div className="grid grid-cols-4 gap-3">
+              {cells.map((c, i) => (
+                <Cell key={c.l} index={i} wake={wake} base={base[i]} cool={cool} assemble={assemble} label={c.l} value={c.v} accent={c.a} live={c.live && alive} />
+              ))}
+            </div>
+            {/* travelling AI signal */}
+            <motion.div className="pointer-events-none absolute top-0 bottom-0 w-8 -translate-x-1/2" style={{ left: signalX, opacity: signalOpacity }}>
+              <div className="absolute inset-y-1 left-1/2 w-px -translate-x-1/2" style={{ background: "linear-gradient(180deg,transparent,#2E7DFF,transparent)" }} />
+              <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#2E7DFF] blur-[3px]" />
             </motion.div>
+            <motion.div className="pointer-events-none absolute -bottom-1.5 left-0 h-px" style={{ width: signalX, opacity: signalOpacity, background: "linear-gradient(90deg,transparent,rgba(46,125,255,0.5))" }} />
           </div>
 
-          {rows.map((r) => (
-            <motion.div key={r.t} className="mt-1 flex items-center justify-between px-3.5 py-2.5" style={{ opacity: assemble }}>
-              <div className="min-w-0">
-                <div className="truncate text-[12.5px] text-white/90">{r.t}</div>
-                <div className="text-[10.5px] text-white/35">Concierge · {r.v}</div>
-              </div>
-              <span className="shrink-0 rounded-full border border-white/[0.12] bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-white/55">{r.s}</span>
+          {/* operations */}
+          <div className="relative mt-4">
+            <motion.div className="mb-1.5 flex items-center justify-between" style={{ opacity: assemble }}>
+              <span className="text-[12px] font-medium text-white">Live operations</span>
+              <span className="text-[10px] text-white/30">Updated just now</span>
             </motion.div>
-          ))}
+
+            {/* a request arrives (alive) */}
+            <AnimatePresence>
+              {notif && (
+                <motion.div
+                  key="notif"
+                  initial={{ opacity: 0, x: 24, height: 0, marginBottom: 0 }}
+                  animate={{ opacity: 1, x: 0, height: 44, marginBottom: 4 }}
+                  exit={{ opacity: 0, x: 16, height: 0, marginBottom: 0 }}
+                  transition={{ duration: 0.7, ease }}
+                  className="flex items-center justify-between overflow-hidden rounded-xl px-3.5"
+                  style={{ background: "rgba(46,125,255,0.05)", boxShadow: "inset 0 0 0 1px rgba(46,125,255,0.18)" }}
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-[12.5px] font-medium text-white">New request · Villa Sol</div>
+                    <div className="text-[10.5px] text-white/40">Late checkout requested</div>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/12 px-2 py-0.5 text-[10px] font-medium text-[#8fbcff]">New</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* the AI-resolved task — blue (AI action) */}
+            <div className="relative h-[52px]">
+              <motion.div className="absolute inset-0 rounded-xl" style={{ opacity: cool, boxShadow: "inset 0 0 0 1px rgba(46,125,255,0.4)", filter: "drop-shadow(0 0 2px rgba(46,125,255,0.3))" }} />
+              <motion.div className="absolute inset-0 rounded-xl" style={{ opacity: assemble, background: "rgba(46,125,255,0.05)" }} />
+              <motion.div className="absolute inset-0 flex items-center justify-between px-3.5" style={{ opacity: assemble }}>
+                <div className="min-w-0">
+                  <div className="truncate text-[13px] font-medium text-white">AC — Master Bedroom</div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-white/45">
+                    Maintenance · Villa Ocean
+                    <span className="text-white/20">·</span>
+                    <span className="grid h-4 w-4 place-items-center rounded-full border border-white/15 bg-white/[0.06] text-[7px] text-white/70">CN</span>
+                    Carlos
+                  </div>
+                </div>
+                <span className="shrink-0 rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/12 px-2 py-0.5 text-[10px] font-medium text-[#8fbcff]">In Progress</span>
+              </motion.div>
+            </div>
+
+            {[
+              { t: "Beach club reservation", v: "Villa Aura", s: "Confirmed" },
+              { t: "Private chef — dinner for 6", v: "Villa Sol", s: "Pending" },
+            ].map((r) => (
+              <motion.div key={r.t} className="mt-1 flex items-center justify-between px-3.5 py-2.5" style={{ opacity: assemble }}>
+                <div className="min-w-0">
+                  <div className="truncate text-[12.5px] text-white/90">{r.t}</div>
+                  <div className="text-[10.5px] text-white/35">Concierge · {r.v}</div>
+                </div>
+                <span className="shrink-0 rounded-full border border-white/[0.12] bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-white/55">{r.s}</span>
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -217,44 +272,43 @@ export function SpatialExperience() {
   const reduce = useReducedMotion();
   const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const [beat, setBeat] = useState(0);
+  const [alive, setAlive] = useState(false);
 
   useMotionValueEvent(p, "change", (v) => {
-    const b = v < 0.1 ? 0 : v < 0.22 ? 1 : v < 0.34 ? 2 : v < 0.46 ? 3 : v < 0.6 ? 4 : v < 0.8 ? 5 : 6;
-    setBeat(b);
+    setBeat(v < 0.09 ? 0 : v < 0.24 ? 1 : v < 0.38 ? 2 : v < 0.48 ? 3 : v < 0.6 ? 4 : v < 0.8 ? 5 : 6);
+    setAlive(v > 0.84);
   });
 
-  // continuous (scroll-scrubbed) — the transformation
-  const driftNear = useTransform(p, [0, 1], ["0px", "36px"]);
-  const roomLit = useTransform(p, [0.2, 0.4], [0, 1]);
-  const cool = useTransform(p, [0.42, 0.56], [0, 1]);
-  const dissolve = useTransform(p, [0.42, 0.62], [0, 1]);
-  const villaOpacity = useTransform(dissolve, [0, 1], [1, 0.14]);
+  const driftNear = useTransform(p, [0, 1], ["0px", "34px"]);
+  const wake = useTransform(p, [0.26, 0.4], [0, 1]);
+  const cool = useTransform(p, [0.5, 0.62], [0, 1]);
+  const dissolve = useTransform(p, [0.5, 0.68], [0, 1]);
+  const villaOpacity = useTransform(dissolve, [0, 1], [1, 0.13]);
   const villaBlur = useTransform(dissolve, [0, 1], ["blur(0px)", "blur(14px)"]);
-  const coolOverlay = useTransform(dissolve, [0, 1], [0, 0.64]);
-  const assemble = useTransform(p, [0.56, 0.74], [0, 1]);
+  const coolOverlay = useTransform(dissolve, [0, 1], [0, 0.66]);
+  const assemble = useTransform(p, [0.62, 0.8], [0, 1]);
 
-  // camera: slow dolly-in + a very subtle orbit
-  const camScale = useTransform(p, [0.42, 1], [1, 1.05]);
-  const camRotY = useTransform(p, [0.42, 0.85], [0, 2.2]);
-  const camRotX = useTransform(p, [0.42, 0.8], [2, 0]);
+  // camera: very slow dolly-in + almost-imperceptible orbit
+  const camScale = useTransform(p, [0.42, 1], [1, 1.04]);
+  const camRotY = useTransform(p, [0.5, 0.9], [0, 1.6]);
+  const camRotX = useTransform(p, [0.5, 0.85], [1.6, 0]);
 
   const requestShow = beat >= 1 && beat <= 3;
   const chipsShow = beat === 2 || beat === 3;
   const brand = beat >= 6;
 
   return (
-    <section ref={ref} id="product" className="relative h-[360vh]">
+    <section ref={ref} id="product" className="relative h-[400vh]">
       <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
-        {/* villa — dissolves into light during the transform */}
         <motion.div className="absolute inset-0" style={{ opacity: villaOpacity, filter: villaBlur }}>
           <SplineStage fallback={<VillaSpace dolly={p} />} />
         </motion.div>
         <motion.div aria-hidden className="absolute inset-0 bg-[#070b14]" style={{ opacity: coolOverlay }} />
 
         {/* camera-rigged architecture → operating system */}
-        <div className="absolute inset-0" style={{ perspective: 2200 }}>
+        <div className="absolute inset-0" style={{ perspective: 2400 }}>
           <motion.div className="absolute inset-0" style={{ rotateX: camRotX, rotateY: camRotY, scale: camScale, transformStyle: "preserve-3d" }}>
-            <ArchitectureOS lit={roomLit} cool={cool} assemble={assemble} />
+            <ArchitectureOS wake={wake} cool={cool} assemble={assemble} alive={alive} />
           </motion.div>
         </div>
 
@@ -262,7 +316,7 @@ export function SpatialExperience() {
         <div className="absolute inset-0">
           <div className="absolute left-1/2 top-[10%] -translate-x-1/2 text-center">
             {brand ? (
-              <motion.div key="brand" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.1, ease }}>
+              <motion.div key="brand" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, ease }}>
                 <div className="mx-auto w-[clamp(116px,16vw,160px)]">
                   <LuxaMark />
                 </div>
@@ -277,10 +331,10 @@ export function SpatialExperience() {
             )}
           </div>
 
-          {/* electric-blue AI path from the request up to the master-bedroom room */}
+          {/* electric-blue AI signal entering the villa, toward the first room */}
           <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             <motion.path
-              d="M 50 57 C 48 50, 45 44, 43 40"
+              d="M 50 57 C 46 50, 40 45, 34 41"
               fill="none"
               stroke="#2E7DFF"
               strokeWidth={0.4}
@@ -288,17 +342,10 @@ export function SpatialExperience() {
               vectorEffect="non-scaling-stroke"
               pathLength={1}
               style={{ filter: "drop-shadow(0 0 2px rgba(46,125,255,0.5))", strokeDasharray: 1 }}
-              animate={{ strokeDashoffset: beat >= 2 ? 0 : 1, opacity: beat === 2 || beat === 3 ? 0.85 : 0 }}
+              animate={{ strokeDashoffset: beat >= 2 ? 0 : 1, opacity: beat === 2 ? 0.85 : 0 }}
               transition={{ strokeDashoffset: { duration: 1, ease }, opacity: { duration: 0.6 } }}
             />
           </svg>
-          <motion.div className="pointer-events-none absolute" style={{ left: "43%", top: "40%" }} animate={{ opacity: beat === 2 || beat === 3 ? 1 : 0 }} transition={{ duration: 0.6 }}>
-            <span className="relative block h-2 w-2 -translate-x-1/2 -translate-y-1/2">
-              {!reduce && <motion.span className="absolute inset-0 rounded-full bg-[#2E7DFF]" animate={{ scale: [1, 2.8], opacity: [0.5, 0] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }} />}
-              <span className="absolute inset-0 rounded-full bg-[#2E7DFF] shadow-[0_0_10px_2px_rgba(46,125,255,0.55)]" />
-            </span>
-            <span className="absolute left-3 top-0 -translate-y-1/2 whitespace-nowrap rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/[0.08] px-2 py-0.5 text-[9px] font-medium text-[#8fbcff] backdrop-blur-sm">Master Bedroom</span>
-          </motion.div>
 
           {/* request + extracted chips (recede as the villa transforms) */}
           <motion.div className="absolute left-1/2 top-[62%] w-[320px] max-w-[84%] -translate-x-1/2 -translate-y-1/2" style={{ y: driftNear }}>
@@ -315,9 +362,6 @@ export function SpatialExperience() {
                   <span className="text-[9px] text-white/30">Villa Ocean · now</span>
                 </div>
                 <p className="mt-2.5 text-[13.5px] leading-snug text-white/90">Hi, the AC is not working in the master bedroom.</p>
-                <motion.div className="mt-3 h-px w-full overflow-hidden rounded-full bg-white/[0.06]" animate={{ opacity: beat === 2 ? 1 : 0 }} transition={{ duration: 0.5 }}>
-                  <motion.div className="h-full w-1/3 rounded-full bg-gradient-to-r from-transparent via-[#2E7DFF] to-transparent" animate={beat === 2 && !reduce ? { x: ["-120%", "320%"] } : { x: "-120%" }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }} />
-                </motion.div>
               </Panel>
             </motion.div>
             <div className="absolute left-1/2 top-full mt-4 flex w-full -translate-x-1/2 flex-wrap justify-center gap-2">
