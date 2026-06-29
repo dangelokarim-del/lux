@@ -59,6 +59,23 @@ export function CinematicIntro() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [resolved, setResolved] = useState<null | "video" | "villa">(null);
   const [clock, setClock] = useState(0);
+  const [showSkip, setShowSkip] = useState(false);
+  const [debug, setDebug] = useState(false);
+
+  // calibration HUD: ?debug=1 prints the live timeline clock so you can read
+  // off the exact beat timestamps while watching your own cut.
+  useEffect(() => {
+    try {
+      setDebug(new URLSearchParams(window.location.search).get("debug") === "1");
+    } catch {}
+  }, []);
+
+  // reveal the Skip control 1s into playback
+  useEffect(() => {
+    if (shouldRun !== true) return;
+    const t = setTimeout(() => setShowSkip(true), 1000);
+    return () => clearTimeout(t);
+  }, [shouldRun]);
 
   // decide video vs. placeholder once, before the timeline starts
   useEffect(() => {
@@ -164,7 +181,7 @@ export function CinematicIntro() {
           muted
           playsInline
           autoPlay
-          preload="auto"
+          preload="metadata"
         >
           {/* webm is tried first (smaller); mp4 is the fallback */}
           <source src={FILM.webm} type="video/webm" />
@@ -283,10 +300,26 @@ export function CinematicIntro() {
 
       <button
         onClick={() => setClock(FILM.end)}
-        className="absolute bottom-6 right-6 z-30 rounded-full border border-white/15 bg-white/[0.04] px-4 py-1.5 text-[12px] text-white/55 backdrop-blur-md transition-colors hover:border-white/30 hover:text-white"
+        style={{ opacity: showSkip ? 1 : 0, pointerEvents: showSkip ? "auto" : "none" }}
+        className="absolute bottom-6 right-6 z-30 rounded-full border border-white/15 bg-white/[0.04] px-4 py-1.5 text-[12px] text-white/55 backdrop-blur-md transition-[opacity,border-color,color] duration-500 hover:border-white/30 hover:text-white"
       >
         Skip
       </button>
+
+      {/* ---- calibration HUD (?debug=1) — read off beat timestamps ---- */}
+      {debug && (
+        <div className="absolute left-4 top-4 z-40 select-none rounded-md bg-black/75 px-3 py-2 font-mono text-[11px] leading-relaxed text-white/80 backdrop-blur-sm">
+          <div className="text-white/90">
+            clock <span className="text-[#2E7DFF]">{clock.toFixed(2)}s</span> · {resolved ?? "resolving…"}
+          </div>
+          <div className="mt-0.5 text-white/40">
+            notify {FILM.notifyIn}–{FILM.notifyOut} · detect {FILM.detect} · chips {FILM.chips}
+          </div>
+          <div className="text-white/40">
+            dissolve {FILM.dissolve} · dash {FILM.dashboard} · reveal {FILM.reveal} · end {FILM.end}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -31,3 +31,27 @@ in sync. To line them up with your cut, edit the `FILM` object in
 - `window.x / window.y` — point the line + chips at the lit window in your footage (in %)
 
 No other code changes are needed.
+
+## Reading the exact timestamps (calibration HUD)
+You don't have to guess the numbers. Open the homepage with **`?film=1&debug=1`**:
+
+- `?film=1` force-replays the intro (ignores the once-per-session lock)
+- `?debug=1` shows a live `clock 0.00s` readout in the top-left
+
+Watch your film play and note the `clock` value at each moment:
+
+| When you see…                                   | Set this field            |
+| ----------------------------------------------- | ------------------------- |
+| the phone / WhatsApp message appear → disappear  | `notifyIn` → `notifyOut`  |
+| the AI finishes "reading" the request            | `detect`                  |
+| the extracted entity chips should surface        | `chips`                   |
+| the shot should start dissolving to the dashboard| `dissolve`                |
+| the dashboard is fully sharp                      | `dashboard`               |
+| the brand line should appear                      | `reveal`                  |
+| the film is fully done → hand off to the site     | `end`                     |
+
+`detect → dissolve` should land within your ~8 s video; `reveal` and `end` are
+allowed to run a little past the video's end — the clock free-runs after the
+last frame so the dashboard + brand reveal finish cleanly, then the whole intro
+fades into the live homepage hero underneath. Tune, re-load `?film=1&debug=1`,
+repeat until it locks.
