@@ -9,22 +9,22 @@ export function Statement({
   children,
   id,
   tall,
+  black,
 }: {
   eyebrow?: string;
   children: React.ReactNode;
   id?: string;
   /** full-viewport, oversized — for the dramatic "core problem" reveal */
   tall?: boolean;
+  /** pure-black backdrop, isolating the statement from the rest of the page */
+  black?: boolean;
 }) {
   const reduce = useReducedMotion();
   return (
     <section
       id={id}
-      className={
-        tall
-          ? "relative flex min-h-[92vh] items-center px-5 py-32"
-          : "relative px-5 py-44 sm:py-56"
-      }
+      className={`relative ${tall ? "flex min-h-[92vh] items-center px-5 py-32" : "px-5 py-44 sm:py-56"}`}
+      style={black ? { background: "radial-gradient(120% 90% at 50% 50%, #0a0b0e 0%, #000 70%)" } : undefined}
     >
       <div className={`mx-auto text-center ${tall ? "max-w-6xl" : "max-w-4xl"}`}>
         {eyebrow && (

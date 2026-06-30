@@ -23,8 +23,8 @@ export default function LandingPage() {
         {/* 1 — Video hero: the villa at blue hour + the guest sending a WhatsApp request */}
         <VideoHero />
 
-        {/* 2 — The core problem, revealed Apple-style: one huge, dark statement */}
-        <Statement eyebrow="The problem" tall>
+        {/* 2 — The core problem, revealed Apple-style: one huge statement on black */}
+        <Statement tall black>
           Luxury hospitality
           <br />
           still runs on <span className="text-white/35">WhatsApp.</span>
@@ -33,14 +33,7 @@ export default function LandingPage() {
         {/* 3 — The request becomes intelligence → 4 — live operations dashboard */}
         <OperationsStory />
 
-        {/* 5 — Payoff */}
-        <Statement>
-          Every request.
-          <br />
-          <span className="chrome">Under control.</span>
-        </Statement>
-
-        {/* 6 — Final CTA */}
+        {/* 5 — Final CTA */}
         <FinalCTA />
 
         <SiteFooter />

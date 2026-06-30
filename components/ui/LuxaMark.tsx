@@ -65,12 +65,12 @@ export function LuxaMark({
         {/* banded polished-chrome gradient (vertical) */}
         <linearGradient id={id("chrome")} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#ffffff" />
-          <stop offset="0.13" stopColor="#d3d8e0" />
-          <stop offset="0.33" stopColor="#828893" />
-          <stop offset="0.45" stopColor="#f1f4f8" />
-          <stop offset="0.60" stopColor="#757b86" />
-          <stop offset="0.80" stopColor="#c6ccd5" />
-          <stop offset="1" stopColor="#d8dde4" />
+          <stop offset="0.13" stopColor="#e2e6ec" />
+          <stop offset="0.33" stopColor="#a7adb8" />
+          <stop offset="0.45" stopColor="#f6f8fb" />
+          <stop offset="0.60" stopColor="#9aa0ac" />
+          <stop offset="0.80" stopColor="#d6dbe2" />
+          <stop offset="1" stopColor="#e4e8ee" />
         </linearGradient>
 
         {/* top-edge light — the bevel highlight */}

@@ -167,27 +167,26 @@ export function VideoHero() {
         {/* brand identity — fades as you scroll */}
         <motion.div className="absolute inset-0 z-20" style={{ opacity: introOpacity, filter: introBlur, y: introY, scale: introScale, pointerEvents: "auto" }}>
           <ParallaxScene className="absolute inset-0">
-            <div className="pointer-events-none absolute inset-x-0 top-[25%] flex flex-col items-center px-5 text-center">
+            <div className="pointer-events-none absolute inset-x-0 top-[28%] flex flex-col items-center px-5 text-center">
               <ParallaxLayer depth={14} className="flex flex-col items-center">
-                <Rise delay={0.35} blur={6}>
-                  <span className="mb-7 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.22em] text-white/40">
-                    <span className="h-1 w-1 rounded-full bg-[#2E7DFF]" /> Villa Ocean · Marbella
-                  </span>
-                </Rise>
+                {/* the logo reveals first and holds alone for ~2s — readable
+                    silver chrome lifted off the video with a soft shadow */}
                 <Rise delay={0.5} blur={5}>
-                  <LuxaMark className="mx-auto w-[min(320px,54vw)]" />
+                  <div style={{ filter: "drop-shadow(0 3px 16px rgba(0,0,0,0.6))" }}>
+                    <LuxaMark className="mx-auto w-[min(236px,48vw)]" />
+                  </div>
                 </Rise>
-                <Rise delay={0.7} blur={10}>
-                  <h1 className="mt-9 text-balance text-[clamp(2.6rem,7vw,5rem)] font-semibold leading-[0.95] tracking-[-0.045em] text-white">
+                <Rise delay={2.1} blur={10}>
+                  <h1 className="mt-10 text-balance text-[clamp(2.6rem,7vw,5rem)] font-semibold leading-[0.95] tracking-[-0.045em] text-white [text-shadow:0_2px_30px_rgba(0,0,0,0.45)]">
                     Luxury. <span className="text-white/55">Automated.</span>
                   </h1>
                 </Rise>
-                <Rise delay={0.9}>
-                  <p className="mx-auto mt-6 max-w-xl text-balance text-[15px] leading-relaxed text-white/60 sm:text-lg">
+                <Rise delay={2.35}>
+                  <p className="mx-auto mt-6 max-w-xl text-balance text-[15px] leading-relaxed text-white/70 sm:text-lg [text-shadow:0_1px_18px_rgba(0,0,0,0.5)]">
                     The AI Operating System for Luxury Hospitality.
                   </p>
                 </Rise>
-                <Rise delay={1.1}>
+                <Rise delay={2.6}>
                   <div className="pointer-events-auto mt-9 flex flex-wrap items-center justify-center gap-3">
                     <Magnetic className="inline-block" strength={0.3}>
                       <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>

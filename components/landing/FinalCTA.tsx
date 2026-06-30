@@ -40,7 +40,6 @@ export function FinalCTA() {
               Book a Demo
             </Link>
           </Magnetic>
-          <p className="mt-5 text-[13px] text-white/35">A 20-minute private walkthrough.</p>
         </motion.div>
       </div>
     </section>
