@@ -16,7 +16,7 @@ import { buttonVariants } from "@/components/ui";
 import { LiveNumber } from "./anim/LiveNumber";
 import { Magnetic } from "./anim/Magnetic";
 import { ParallaxScene, ParallaxLayer } from "./anim/Parallax";
-import { SplineStage } from "./SplineStage";
+import { VideoBackdrop } from "./VideoBackdrop";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -24,6 +24,12 @@ const GRAIN =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E\")";
 
 const CHIPS = ["AC Issue", "Master Bedroom", "Maintenance", "High Priority"];
+
+/* Where the guest holds the iPhone in the FINAL FRAME of your hero video,
+   as a share of the viewport. The WhatsApp message appears just above this
+   point and then "leaves the phone" upward into the villa. Tune x/y to match
+   the composition of your Artlist export so the bubble lands on the phone. */
+const PHONE = { x: "50%", y: "64%" };
 
 const CAPTIONS = [
   "Villa Ocean · Marbella",
@@ -320,17 +326,34 @@ export function SpatialExperience() {
   const introScale = useTransform(p, [0, 0.08], [1, 0.985]);
   // the floating interface only emerges once the brand has dissolved
   const osReveal = useTransform(p, [0.05, 0.14], [0, 1]);
+  // dark readability wash over the video — full during the brand/request beats,
+  // easing off once the cool dashboard (its own dark base) takes over
+  const readability = useTransform(p, [0, 0.06, 0.5, 0.62], [1, 1, 1, 0.35]);
 
-  const requestShow = beat >= 1 && beat <= 3;
-  const chipsShow = beat === 2 || beat === 3;
+  // 1 — message appears just above the phone · 2 — it leaves the phone (AI line
+  // travels, master bedroom highlights) · 3 — AI analysis chips · 4+ — dashboard
+  const requestShow = beat >= 1 && beat <= 2;
+  const phoneResting = beat === 1;
+  const chipsShow = beat === 3;
+  const aiLine = beat >= 2 && beat <= 3;
   const brand = beat >= 6;
 
   return (
     <section ref={ref} id="product" className="relative h-[400vh]">
       <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
         <motion.div className="absolute inset-0" style={{ opacity: villaOpacity, filter: villaBlur }}>
-          <SplineStage fallback={<VillaSpace dolly={p} />} />
+          <VideoBackdrop fallback={<VillaSpace dolly={p} />} />
         </motion.div>
+        {/* subtle readability wash (~20%) over the video — only to lift the text */}
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            opacity: readability,
+            background:
+              "radial-gradient(125% 100% at 50% 34%, transparent 38%, rgba(5,6,10,0.55)), linear-gradient(180deg, rgba(5,6,10,0.22), transparent 26%, transparent 64%, rgba(5,6,10,0.5))",
+          }}
+        />
         <motion.div aria-hidden className="absolute inset-0 bg-[#070b14]" style={{ opacity: coolOverlay }} />
 
         {/* camera-rigged architecture → operating system */}
@@ -359,10 +382,11 @@ export function SpatialExperience() {
             ) : null}
           </div>
 
-          {/* electric-blue AI signal entering the villa, toward the first room */}
+          {/* electric-blue AI signal leaving the phone, travelling into the villa
+              toward the master bedroom (the first room / first dashboard cell) */}
           <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             <motion.path
-              d="M 50 57 C 46 50, 40 45, 34 41"
+              d="M 50 60 C 47 52, 41 46, 34 43"
               fill="none"
               stroke="#2E7DFF"
               strokeWidth={0.4}
@@ -370,15 +394,45 @@ export function SpatialExperience() {
               vectorEffect="non-scaling-stroke"
               pathLength={1}
               style={{ filter: "drop-shadow(0 0 2px rgba(46,125,255,0.5))", strokeDasharray: 1 }}
-              animate={{ strokeDashoffset: beat >= 2 ? 0 : 1, opacity: beat === 2 ? 0.85 : 0 }}
-              transition={{ strokeDashoffset: { duration: 1, ease }, opacity: { duration: 0.6 } }}
+              animate={{ strokeDashoffset: aiLine ? 0 : 1, opacity: aiLine ? 0.85 : 0 }}
+              transition={{ strokeDashoffset: { duration: 1.1, ease }, opacity: { duration: 0.6 } }}
+            />
+            {/* a travelling node riding the line as the message leaves the phone */}
+            <motion.circle
+              r={0.7}
+              fill="#2E7DFF"
+              style={{ filter: "drop-shadow(0 0 3px rgba(46,125,255,0.9))" }}
+              animate={
+                aiLine
+                  ? { cx: [50, 47, 41, 34], cy: [60, 52, 46, 43], opacity: [0, 1, 1, 0] }
+                  : { opacity: 0 }
+              }
+              transition={{ duration: 1.3, ease, times: [0, 0.35, 0.75, 1] }}
             />
           </svg>
 
-          {/* request + extracted chips (recede as the villa transforms) */}
-          <motion.div className="absolute left-1/2 top-[62%] w-[320px] max-w-[84%] -translate-x-1/2 -translate-y-1/2" style={{ y: driftNear }}>
+          {/* WhatsApp message — appears just above the phone, then leaves it,
+              rising into the villa. Anchored to PHONE; chips follow as analysis. */}
+          <motion.div
+            className="absolute w-[320px] max-w-[84%] -translate-x-1/2 -translate-y-full"
+            style={{ left: PHONE.x, top: PHONE.y, y: driftNear }}
+          >
+            {/* faint tether from the phone up to the resting message */}
             <motion.div
-              animate={{ opacity: requestShow ? 1 : 0, y: requestShow ? 0 : beat > 3 ? -22 : 20, scale: requestShow ? 1 : 0.95, filter: requestShow ? "blur(0px)" : "blur(6px)" }}
+              aria-hidden
+              className="absolute left-1/2 top-full h-10 w-px -translate-x-1/2"
+              style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.25), transparent)" }}
+              animate={{ opacity: phoneResting ? 0.6 : 0 }}
+              transition={{ duration: 0.6, ease }}
+            />
+            <motion.div
+              animate={{
+                opacity: requestShow ? 1 : 0,
+                // emerges from the phone (below) → rests above it → leaves upward
+                y: phoneResting ? 0 : beat >= 2 ? -78 : 30,
+                scale: phoneResting ? 1 : beat >= 2 ? 0.96 : 0.9,
+                filter: phoneResting ? "blur(0px)" : "blur(5px)",
+              }}
               transition={{ duration: 1, ease }}
               className="pointer-events-none"
             >
@@ -436,10 +490,23 @@ export function SpatialExperience() {
                   </p>
                 </Rise>
                 <Rise delay={1.1}>
-                  <div className="pointer-events-auto mt-9">
+                  <div className="pointer-events-auto mt-9 flex flex-wrap items-center justify-center gap-3">
                     <Magnetic className="inline-block" strength={0.3}>
                       <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
                         Book a Demo
+                      </Link>
+                    </Magnetic>
+                    <Magnetic className="inline-block" strength={0.25}>
+                      <Link
+                        href="/login"
+                        className="glass edge-light inline-flex h-12 items-center gap-2 rounded-[var(--radius-control)] border border-white/15 px-6 text-[15px] font-medium text-white/90 transition-colors duration-300 hover:border-white/25 hover:text-white"
+                      >
+                        <span aria-hidden className="grid h-5 w-5 place-items-center rounded-full border border-white/25">
+                          <svg width="8" height="9" viewBox="0 0 8 9" fill="none" className="translate-x-px">
+                            <path d="M0 0.5L8 4.5L0 8.5V0.5Z" fill="currentColor" />
+                          </svg>
+                        </span>
+                        Watch Demo
                       </Link>
                     </Magnetic>
                   </div>
