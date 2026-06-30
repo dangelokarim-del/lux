@@ -171,7 +171,7 @@ export function VideoHero() {
         {/* brand identity — fades as you scroll */}
         <motion.div className="absolute inset-0 z-20" style={{ opacity: introOpacity, filter: introBlur, y: introY, scale: introScale, pointerEvents: "auto" }}>
           <ParallaxScene className="absolute inset-0">
-            <div className="pointer-events-none absolute inset-x-0 top-[27%] flex flex-col items-center px-5 text-center">
+            <div className="pointer-events-none absolute inset-x-0 top-[21%] flex flex-col items-center px-5 text-center">
               <ParallaxLayer depth={14} className="flex flex-col items-center">
                 {/* the logo reveals first and holds alone for ~2s — readable
                     silver chrome, always lifted off the video by a soft blurred
@@ -184,16 +184,22 @@ export function VideoHero() {
                     </div>
                   </div>
                 </Rise>
-                <Rise delay={2.35} blur={12}>
-                  <h1 className="mt-14 text-balance text-[clamp(2.9rem,7.6vw,5.6rem)] font-semibold leading-[0.94] tracking-[-0.045em] text-white [text-shadow:0_2px_40px_rgba(0,0,0,0.6)]">
-                    Luxury. <span className="text-white/65">Automated.</span>
-                  </h1>
-                </Rise>
-                <Rise delay={2.65}>
-                  <p className="mx-auto mt-8 max-w-xl text-balance text-[17px] leading-relaxed text-white/72 sm:text-[19px] [text-shadow:0_1px_20px_rgba(0,0,0,0.55)]">
+                {/* headline + subtitle share a near-invisible localized scrim, so
+                    they stay perfectly legible over every frame without the eye
+                    ever registering a gradient */}
+                <div className="relative mt-14 flex flex-col items-center">
+                  <span aria-hidden className="pointer-events-none absolute left-1/2 top-[58%] -z-10 h-[300%] w-[164%] -translate-x-1/2 -translate-y-1/2" style={{ background: "radial-gradient(closest-side, rgba(4,5,9,0.38), rgba(4,5,9,0.13) 50%, transparent 76%)", filter: "blur(34px)" }} />
+                  <Rise delay={2.35} blur={12}>
+                    <h1 className="text-balance text-[clamp(2.9rem,7.6vw,5.6rem)] font-semibold leading-[0.94] tracking-[-0.045em] text-white [text-shadow:0_2px_40px_rgba(0,0,0,0.6)]">
+                      Luxury. <span className="text-white/65">Automated.</span>
+                    </h1>
+                  </Rise>
+                  <Rise delay={2.65}>
+                    <p className="mx-auto mt-8 max-w-xl text-balance text-[17px] leading-relaxed text-white/75 sm:text-[19px] [text-shadow:0_1px_20px_rgba(0,0,0,0.55)]">
                     The AI Operating System for Luxury Hospitality.
                   </p>
-                </Rise>
+                  </Rise>
+                </div>
                 <Rise delay={2.95}>
                   <div className="pointer-events-auto mt-12 flex flex-wrap items-center justify-center gap-3.5">
                     <Magnetic className="inline-block" strength={0.3}>
@@ -204,7 +210,7 @@ export function VideoHero() {
                     <Magnetic className="inline-block" strength={0.25}>
                       <Link
                         href="/login"
-                        className="glass edge-light inline-flex h-12 items-center gap-2 rounded-[var(--radius-control)] border border-white/15 px-6 text-[15px] font-medium text-white/90 transition-colors duration-300 hover:border-white/25 hover:text-white"
+                        className="glass edge-light inline-flex h-12 items-center gap-2 rounded-[var(--radius-control)] border border-white/[0.18] px-6 text-[15px] font-medium text-white/90 transition-colors duration-300 hover:border-white/30 hover:text-white"
                       >
                         <span aria-hidden className="grid h-5 w-5 place-items-center rounded-full border border-white/25">
                           <svg width="8" height="9" viewBox="0 0 8 9" fill="none" className="translate-x-px">
