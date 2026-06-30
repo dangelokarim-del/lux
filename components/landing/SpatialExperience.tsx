@@ -7,6 +7,7 @@ import {
   AnimatePresence,
   useScroll,
   useTransform,
+  useMotionValue,
   useMotionValueEvent,
   useReducedMotion,
   type MotionValue,
@@ -24,12 +25,6 @@ const GRAIN =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E\")";
 
 const CHIPS = ["AC Issue", "Master Bedroom", "Maintenance", "High Priority"];
-
-/* Where the guest holds the iPhone in the FINAL FRAME of your hero video,
-   as a share of the viewport. The WhatsApp message appears just above this
-   point and then "leaves the phone" upward into the villa. Tune x/y to match
-   the composition of your Artlist export so the bubble lands on the phone. */
-const PHONE = { x: "50%", y: "64%" };
 
 const CAPTIONS = [
   "Villa Ocean · Marbella",
@@ -114,15 +109,27 @@ function Palm({ className, scale = 1, flip = false }: { className?: string; scal
   );
 }
 
-function Panel({ className, children }: { className?: string; children: React.ReactNode }) {
+// (the standalone glass Panel used by the old static request card is no longer
+//  needed — the WhatsApp request now rides the phone via PhoneMessage)
+
+/* compact WhatsApp notification that rides the guest's phone in the interior clip */
+function PhoneMessage() {
   return (
-    <div className={`glass edge-light relative rounded-[20px] border border-white/[0.1] shadow-[0_40px_90px_-36px_rgba(0,0,0,0.85)] ${className ?? ""}`}>
-      <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[20px]" style={{ background: "linear-gradient(160deg, rgba(255,186,130,0.07), transparent 40%)" }} />
-      {children}
+    <div className="w-[230px] sm:w-[260px]">
+      <div className="glass edge-light relative rounded-[15px] border border-white/12 bg-[#0b0d12]/70 px-3 py-2.5 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.9)] backdrop-blur-xl">
+        <div className="flex items-center justify-between">
+          <span className="flex items-center gap-1.5 text-[8.5px] font-semibold uppercase tracking-[0.16em] text-[#43d178]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#25D366]" /> WhatsApp
+          </span>
+          <span className="text-[8.5px] text-white/35">now</span>
+        </div>
+        <p className="mt-1.5 text-[12px] leading-snug text-white/90">Hi, the AC is not working in the master bedroom.</p>
+        {/* tail pointing down to the phone */}
+        <div className="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 rounded-[3px] border-b border-r border-white/12 bg-[#0b0d12]/70" />
+      </div>
     </div>
   );
 }
-
 const ALU_FRAME = "inset 0 0 0 1px rgba(208,222,244,0.5), inset 0 1px 0 rgba(255,255,255,0.38)";
 
 /* a villa room that wakes (warm light) then becomes a dashboard panel in place */
@@ -305,7 +312,6 @@ export function SpatialExperience() {
     setAlive(v > 0.84);
   });
 
-  const driftNear = useTransform(p, [0, 1], ["0px", "34px"]);
   const wake = useTransform(p, [0.26, 0.4], [0, 1]);
   const cool = useTransform(p, [0.5, 0.62], [0, 1]);
   const dissolve = useTransform(p, [0.5, 0.68], [0, 1]);
@@ -330,10 +336,18 @@ export function SpatialExperience() {
   // easing off once the cool dashboard (its own dark base) takes over
   const readability = useTransform(p, [0, 0.06, 0.5, 0.62], [1, 1, 1, 0.35]);
 
-  // 1 — message appears just above the phone · 2 — it leaves the phone (AI line
-  // travels, master bedroom highlights) · 3 — AI analysis chips · 4+ — dashboard
-  const requestShow = beat >= 1 && beat <= 2;
-  const phoneResting = beat === 1;
+  // the WhatsApp message that rides the guest's phone through the interior clip.
+  // VideoBackdrop drives these (screen px + visibility) from part 2's playback.
+  // It is revealed only as the brand dissolves (so it never fights the centred
+  // headline) and fades out again as the architecture cools into the dashboard.
+  const phoneX = useMotionValue(0);
+  const phoneY = useMotionValue(0);
+  const phoneVis = useMotionValue(0);
+  const phoneReveal = useTransform(p, [0.05, 0.12, 0.44, 0.54], [0, 1, 1, 0]);
+  const phoneOpacity = useTransform([phoneVis, phoneReveal] as MotionValue<number>[], ([v, r]: number[]) => v * r);
+
+  // 1 — request rides the phone · 2 — it leaves the phone (AI line travels,
+  // master bedroom highlights) · 3 — AI analysis chips · 4+ — dashboard
   const chipsShow = beat === 3;
   const aiLine = beat >= 2 && beat <= 3;
   const brand = beat >= 6;
@@ -342,7 +356,15 @@ export function SpatialExperience() {
     <section ref={ref} id="product" className="relative h-[400vh]">
       <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
         <motion.div className="absolute inset-0" style={{ opacity: villaOpacity, filter: villaBlur }}>
-          <VideoBackdrop fallback={<VillaSpace dolly={p} />} />
+          <VideoBackdrop fallback={<VillaSpace dolly={p} />} phone={{ x: phoneX, y: phoneY, vis: phoneVis }} />
+        </motion.div>
+
+        {/* WhatsApp message locked to the guest's phone through the interior clip —
+            positioned by VideoBackdrop via translate (GPU), hovering just above it */}
+        <motion.div className="pointer-events-none absolute left-0 top-0 z-30" style={{ x: phoneX, y: phoneY, opacity: phoneOpacity }}>
+          <div className="-translate-x-1/2 -translate-y-[132%]">
+            <PhoneMessage />
+          </div>
         </motion.div>
         {/* subtle readability wash (~20%) over the video — only to lift the text */}
         <motion.div
@@ -411,55 +433,21 @@ export function SpatialExperience() {
             />
           </svg>
 
-          {/* WhatsApp message — appears just above the phone, then leaves it,
-              rising into the villa. Anchored to PHONE; chips follow as analysis. */}
-          <motion.div
-            className="absolute w-[320px] max-w-[84%] -translate-x-1/2 -translate-y-full"
-            style={{ left: PHONE.x, top: PHONE.y, y: driftNear }}
-          >
-            {/* faint tether from the phone up to the resting message */}
-            <motion.div
-              aria-hidden
-              className="absolute left-1/2 top-full h-10 w-px -translate-x-1/2"
-              style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.25), transparent)" }}
-              animate={{ opacity: phoneResting ? 0.6 : 0 }}
-              transition={{ duration: 0.6, ease }}
-            />
-            <motion.div
-              animate={{
-                opacity: requestShow ? 1 : 0,
-                // emerges from the phone (below) → rests above it → leaves upward
-                y: phoneResting ? 0 : beat >= 2 ? -78 : 30,
-                scale: phoneResting ? 1 : beat >= 2 ? 0.96 : 0.9,
-                filter: phoneResting ? "blur(0px)" : "blur(5px)",
-              }}
-              transition={{ duration: 1, ease }}
-              className="pointer-events-none"
-            >
-              <Panel className="p-4">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-[9px] font-medium uppercase tracking-[0.18em] text-white/45">
-                    <span className="h-1 w-1 rounded-full bg-white/55" /> WhatsApp
-                  </span>
-                  <span className="text-[9px] text-white/30">Villa Ocean · now</span>
-                </div>
-                <p className="mt-2.5 text-[13.5px] leading-snug text-white/90">Hi, the AC is not working in the master bedroom.</p>
-              </Panel>
-            </motion.div>
-            <div className="absolute left-1/2 top-full mt-4 flex w-full -translate-x-1/2 flex-wrap justify-center gap-2">
-              {CHIPS.map((c, i) => (
-                <motion.span
-                  key={c}
-                  animate={{ opacity: chipsShow ? 1 : 0, y: chipsShow ? 0 : beat >= 4 ? -16 : 10, scale: chipsShow ? 1 : 0.92 }}
-                  transition={{ duration: 0.7, delay: chipsShow ? i * 0.12 : 0, ease }}
-                  className="glass rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/[0.08] px-2.5 py-1 text-[11px] font-medium text-white/85"
-                >
-                  <span className="mr-1 inline-block h-[3px] w-[3px] -translate-y-px rounded-full bg-[#2E7DFF]/80" />
-                  {c}
-                </motion.span>
-              ))}
-            </div>
-          </motion.div>
+          {/* AI analysis chips — the WhatsApp request, parsed into structured
+              detail after the message leaves the phone */}
+          <div className="pointer-events-none absolute left-1/2 top-[59%] flex w-[340px] max-w-[86%] -translate-x-1/2 flex-wrap justify-center gap-2">
+            {CHIPS.map((c, i) => (
+              <motion.span
+                key={c}
+                animate={{ opacity: chipsShow ? 1 : 0, y: chipsShow ? 0 : beat >= 4 ? -16 : 12, scale: chipsShow ? 1 : 0.92 }}
+                transition={{ duration: 0.7, delay: chipsShow ? i * 0.1 : 0, ease }}
+                className="glass rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/[0.08] px-2.5 py-1 text-[11px] font-medium text-white/85"
+              >
+                <span className="mr-1 inline-block h-[3px] w-[3px] -translate-y-px rounded-full bg-[#2E7DFF]/80" />
+                {c}
+              </motion.span>
+            ))}
+          </div>
         </div>
 
         {/* OPENING — the LUXA identity living inside the villa (this is the hero).

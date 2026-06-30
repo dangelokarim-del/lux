@@ -22,8 +22,10 @@ no audio, H.264, `-movflags +faststart`, compressed efficiently (CRF ~23).
 
 Two stacked `<video>` elements are cross-dissolved by GPU-composited opacity:
 
-- Part 1 plays. ~0.55 s before its final frame, part 2 (already buffered) starts
-  from frame 0 and the opacity crossfades part 1 → part 2.
+- Part 1 plays. ~0.35 s before its final frame, part 2 (already buffered) starts
+  from frame 0 and the opacity crossfades part 1 → part 2. Part 1's last frame and
+  part 2's first frame are the same composition, so this reads as a hidden match
+  cut — one continuous camera move.
 - Part 2 plays. Near its end it crossfades back to part 1 from frame 0.
 - Repeat forever. There is never a black frame, flash, pause or restart — the
   outgoing clip holds its last frame if the next isn't buffered, and the incoming
@@ -43,8 +45,14 @@ NEXT_PUBLIC_HERO_POSTER=https://cdn.example.com/luxa/villa-poster.jpg
 
 ## The on-video story
 
-As the visitor scrolls, a WhatsApp message appears above the guest's phone, then
-leaves it as an electric-blue AI line travels into the villa and lights the master
-bedroom; analysis chips follow and the dashboard emerges. Set where the phone sits
-in your final frame via the `PHONE = { x, y }` constant near the top of
-`SpatialExperience.tsx` so the message lands on the phone.
+A WhatsApp message rides the guest's phone through the interior clip: it appears
+on the phone and **follows it** as he walks across the room, then leaves the phone
+as an electric-blue AI line travels into the villa and lights the master bedroom;
+analysis chips follow and the dashboard emerges.
+
+The phone is tracked by `PHONE_TRACK` near the top of `VideoBackdrop.tsx` — a list
+of `{ t, x, y }` keyframes where `t` is part-2 playback seconds and `x`/`y` are
+normalised to the video frame (0–1). These were measured frame-by-frame from the
+current footage; if you swap in a new `villa-part2.mp4`, re-measure the phone path
+and update those keyframes (the overlay maps them through the same `object-fit:
+cover` math, so it stays locked to the phone on any screen size).

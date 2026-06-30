@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { MotionValue } from "framer-motion";
 
 /* Two-part hero, played as ONE continuous cinematic. Drop your exports at:
      public/hero/villa-part1.mp4   (exterior villa)
@@ -15,8 +16,54 @@ const PARTS = [
 ];
 const POSTER = process.env.NEXT_PUBLIC_HERO_POSTER || "/hero/villa-poster.jpg";
 
-// crossfade length — short enough to read as a match cut, long enough to hide the seam
-const FADE_MS = 550;
+// hidden match cut: part 1's last frame and part 2's first frame are the same
+// composition, so a short 350ms dissolve reads as one continuous camera move
+const FADE_MS = 350;
+
+/* The phone's screen position through part 2 (the interior clip), measured frame
+   by frame from the footage. Coordinates are normalised to the video (0..1);
+   `t` is part-2 playback seconds. The guest walks left→right holding the phone,
+   so the WhatsApp overlay can ride this path and "follow the phone". */
+const VIDEO_W = 1932;
+const VIDEO_H = 1072;
+const PHONE_TRACK: { t: number; x: number; y: number }[] = [
+  { t: 0.0, x: 0.295, y: 0.52 },
+  { t: 0.5, x: 0.30, y: 0.52 },
+  { t: 0.8, x: 0.32, y: 0.52 },
+  { t: 1.2, x: 0.37, y: 0.51 },
+  { t: 1.6, x: 0.41, y: 0.51 },
+  { t: 2.0, x: 0.44, y: 0.515 },
+  { t: 2.4, x: 0.47, y: 0.52 },
+  { t: 2.8, x: 0.50, y: 0.52 },
+  { t: 3.2, x: 0.53, y: 0.52 },
+  { t: 3.56, x: 0.555, y: 0.52 },
+];
+
+function sampleTrack(t: number) {
+  const k = PHONE_TRACK;
+  if (t <= k[0].t) return { x: k[0].x, y: k[0].y };
+  if (t >= k[k.length - 1].t) return { x: k[k.length - 1].x, y: k[k.length - 1].y };
+  for (let i = 0; i < k.length - 1; i++) {
+    const a = k[i], b = k[i + 1];
+    if (t >= a.t && t <= b.t) {
+      const f = (t - a.t) / (b.t - a.t);
+      return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
+    }
+  }
+  return { x: k[0].x, y: k[0].y };
+}
+
+// the message lands on the phone (fade in), follows it, then lifts off + fades
+// ("sent") near the end of the clip
+function trackVisibility(t: number) {
+  if (t < 0.4) return 0;
+  if (t < 0.8) return (t - 0.4) / 0.4;
+  if (t < 2.8) return 1;
+  if (t < 3.4) return 1 - (t - 2.8) / 0.6;
+  return 0;
+}
+
+type PhoneOut = { x: MotionValue<number>; y: MotionValue<number>; vis: MotionValue<number> };
 
 /**
  * The cinematic backdrop. Plays part 1 (exterior) → part 2 (interior) → part 1 …
@@ -31,7 +78,7 @@ const FADE_MS = 550;
  * scrolls off-screen (battery/perf), and falls back to the CSS villa if H.264
  * can't be decoded at all — the page is never broken.
  */
-export function VideoBackdrop({ fallback }: { fallback: ReactNode }) {
+export function VideoBackdrop({ fallback, phone }: { fallback: ReactNode; phone?: PhoneOut }) {
   const holderRef = useRef<HTMLDivElement>(null);
   const v0Ref = useRef<HTMLVideoElement>(null); // part 1
   const v1Ref = useRef<HTMLVideoElement>(null); // part 2
@@ -122,10 +169,34 @@ export function VideoBackdrop({ fallback }: { fallback: ReactNode }) {
     a.addEventListener("playing", upgradeNext, { once: true });
 
     let raf = 0;
+    const holder = holderRef.current;
     const tick = () => {
       const st = ctrl.current;
       const cur = vids[st.active];
       const nxt = vids[1 - st.active];
+
+      // WhatsApp overlay rides the phone, but only while part 2 (v1, the interior
+      // clip) is the one actually showing — otherwise it is hidden
+      if (phone) {
+        const part2 = vids[1];
+        if (st.active === 1 && st.visible && holder && part2.duration) {
+          const tt = part2.currentTime;
+          const { x: nx, y: ny } = sampleTrack(tt);
+          const vw = part2.videoWidth || VIDEO_W;
+          const vh = part2.videoHeight || VIDEO_H;
+          const cw = holder.clientWidth, ch = holder.clientHeight;
+          const s = Math.max(cw / vw, ch / vh); // object-fit: cover
+          const offX = (cw - vw * s) / 2, offY = (ch - vh * s) / 2;
+          // slight lift-off as it "sends" near the end
+          const lift = tt > 2.9 ? Math.min((tt - 2.9) / 0.6, 1) * 0.06 : 0;
+          phone.x.set(offX + nx * vw * s);
+          phone.y.set(offY + (ny - lift) * vh * s);
+          phone.vis.set(trackVisibility(tt));
+        } else {
+          phone.vis.set(0);
+        }
+      }
+
       if (cur && nxt && !st.transitioning && st.visible && cur.duration) {
         const remaining = cur.duration - cur.currentTime;
         // near the final frame — begin the crossfade once the next clip can paint
