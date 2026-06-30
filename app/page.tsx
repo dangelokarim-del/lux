@@ -1,7 +1,7 @@
 import { SiteHeader } from "@/components/landing/SiteHeader";
+import { VideoHero } from "@/components/landing/VideoHero";
 import { Statement } from "@/components/landing/Statement";
-import { ProductFlow } from "@/components/landing/ProductFlow";
-import { SpatialExperience } from "@/components/landing/SpatialExperience";
+import { OperationsStory } from "@/components/landing/OperationsStory";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { SiteFooter } from "@/components/landing/SiteFooter";
 import { Atmosphere } from "@/components/landing/anim/Atmosphere";
@@ -20,29 +20,27 @@ export default function LandingPage() {
       <main className="relative min-h-screen text-white antialiased">
         <SiteHeader />
 
-        {/* 1 — THE HOMEPAGE: one continuous Vision Pro cinematic. The page opens
-            inside the villa with the LUXA identity, then the whole story unfolds
-            in a single scroll until the building becomes the operating system. */}
-        <SpatialExperience />
+        {/* 1 — Video hero: the villa at blue hour + the guest sending a WhatsApp request */}
+        <VideoHero />
 
-        {/* 2 — Problem */}
-        <Statement eyebrow="The problem">
-          Luxury hospitality still
+        {/* 2 — The core problem, revealed Apple-style: one huge, dark statement */}
+        <Statement eyebrow="The problem" tall>
+          Luxury hospitality
           <br />
-          runs on <span className="text-white/35">WhatsApp.</span>
+          still runs on <span className="text-white/35">WhatsApp.</span>
         </Statement>
 
-        {/* 3 — Product flow */}
-        <ProductFlow />
+        {/* 3 — The request becomes intelligence → 4 — live operations dashboard */}
+        <OperationsStory />
 
-        {/* 4 — Payoff statement */}
+        {/* 5 — Payoff */}
         <Statement>
           Every request.
           <br />
           <span className="chrome">Under control.</span>
         </Statement>
 
-        {/* 5 — Final CTA */}
+        {/* 6 — Final CTA */}
         <FinalCTA />
 
         <SiteFooter />

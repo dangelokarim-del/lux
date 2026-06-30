@@ -8,7 +8,6 @@ import { Magnetic } from "./anim/Magnetic";
 
 const links = [
   { label: "Product", href: "#product" },
-  { label: "Solutions", href: "#how" },
   { label: "About", href: "#footer" },
 ];
 
