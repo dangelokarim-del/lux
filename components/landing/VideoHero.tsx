@@ -107,30 +107,44 @@ export function VideoHero() {
   const introY = useTransform(p, [0, 0.24], ["0px", "-54px"]);
   const introScale = useTransform(p, [0, 0.24], [1, 0.98]);
 
-  // the whole hero gently lifts + fades at the very end → soft, not a cut,
-  // into the problem statement below
-  const exitOpacity = useTransform(p, [0.88, 1], [1, 0]);
-  const exitScale = useTransform(p, [0.86, 1], [1, 1.04]);
-
   // readability wash — strongest while the brand is up
   const readability = useTransform(p, [0, 0.5], [1, 0.82]);
 
-  // the blue-hour film slowly darkens into the dark site background as you
-  // scroll — a dark gradient grows from the bottom, so the headline below
-  // emerges from the same atmosphere rather than starting on a new black page
-  const darken = useTransform(p, [0.45, 1], [0, 1]);
+  // the blue-hour film darkens fully into the dark site background as you scroll
+  // — a dark gradient grows from the bottom so the problem headline emerges
+  // *from* the film, in the same screen (no separate page). It reaches full dark
+  // well before the hero ends, so when the whole (now-dark) hero scrolls away it
+  // simply blends into the operations story below — one continuous surface.
+  const darken = useTransform(p, [0.26, 0.6], [0, 1]);
+
+  // the problem statement rises out of the darkening film and HOLDS at full
+  // opacity — it is never faded out here; it scrolls away with the hero into the
+  // next beat, so there is never an empty band between the two.
+  const problemOpacity = useTransform(p, [0.3, 0.52], [0, 1]);
+  const problemY = useTransform(p, [0.3, 0.52], ["48px", "0px"]);
+  const problemBlur = useTransform(p, [0.3, 0.52], ["blur(16px)", "blur(0px)"]);
 
   return (
     <section ref={ref} className="relative h-[200vh]">
-      <motion.div className="sticky top-0 h-screen overflow-hidden" style={{ opacity: exitOpacity, scale: exitScale }}>
+      <motion.div className="sticky top-0 h-screen overflow-hidden">
         <VideoBackdrop fallback={<VillaSpace dolly={p} />} />
 
         {/* readability wash */}
         <motion.div aria-hidden className="pointer-events-none absolute inset-0" style={{ opacity: readability, background: "radial-gradient(125% 96% at 50% 40%, transparent 30%, rgba(5,6,10,0.62)), linear-gradient(180deg, rgba(5,6,10,0.28), transparent 24%, rgba(5,6,10,0.14) 50%, transparent 66%, rgba(5,6,10,0.55))" }} />
 
         {/* the film darkens into the dark background — grows from the bottom up */}
-        <motion.div aria-hidden className="pointer-events-none absolute inset-0" style={{ opacity: darken, background: "linear-gradient(180deg, transparent 14%, rgba(4,6,11,0.45) 52%, rgba(3,6,10,0.92) 84%, #03060a 100%)" }} />
+        <motion.div aria-hidden className="pointer-events-none absolute inset-0" style={{ opacity: darken, background: "linear-gradient(180deg, transparent 8%, rgba(4,6,11,0.5) 46%, rgba(3,6,10,0.94) 80%, #03060a 100%)" }} />
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-64" style={{ background: "linear-gradient(180deg,transparent,#03060a)" }} />
+
+        {/* THE PROBLEM — emerges from the darkening film in the same screen, so the
+            hero and the statement are one continuous beat, never separate pages */}
+        <motion.div className="absolute inset-0 z-20 flex items-center justify-center px-5" style={{ opacity: problemOpacity, y: problemY, filter: problemBlur }}>
+          <h2 className="max-w-6xl text-balance text-center font-semibold leading-[0.94] tracking-[-0.05em] text-white text-[clamp(2.9rem,9.8vw,7.4rem)] [text-shadow:0_2px_60px_rgba(0,0,0,0.72)]">
+            Luxury hospitality
+            <br />
+            still runs on <span className="text-white/35">WhatsApp.</span>
+          </h2>
+        </motion.div>
 
         {/* brand identity — fades as you scroll */}
         <motion.div className="absolute inset-0 z-20" style={{ opacity: introOpacity, filter: introBlur, y: introY, scale: introScale, pointerEvents: "auto" }}>
