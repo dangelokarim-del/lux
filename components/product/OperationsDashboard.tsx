@@ -12,13 +12,15 @@ import {
   type Task,
   type TaskStatus,
 } from "@/lib/domain";
-import { useOperationsStats, useReady, useTasks } from "@/lib/store/hooks";
+import { useDatabase, useReady, useTasks } from "@/lib/store/hooks";
+import { computeKpis, fmtDuration } from "@/lib/store/insights";
 import { useToast } from "./Toast";
 import { TaskRow } from "./TaskRow";
 import { TaskDetail } from "./TaskDetail";
 import { WhatsAppSimulator } from "./WhatsAppSimulator";
 import { NotificationBell } from "./NotificationBell";
 import { ShortcutsHelp } from "./ShortcutsHelp";
+import { IntelligencePanel } from "./IntelligencePanel";
 import { KpiSkeleton, TaskListSkeleton } from "./Skeletons";
 
 type Filter = "all" | TaskStatus;
@@ -26,13 +28,13 @@ const FILTERS: Filter[] = ["all", ...BOARD_STATUSES];
 
 export function OperationsDashboard() {
   const readyState = useReady();
-  // relative timestamps + live numbers are client-only; render skeletons until
-  // mounted so SSR and first paint agree (no hydration mismatch).
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const ready = readyState && mounted;
+
+  const db = useDatabase();
   const tasks = useTasks();
-  const stats = useOperationsStats();
+  const kpis = useMemo(() => computeKpis(db), [db]);
   const toast = useToast();
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [simOpen, setSimOpen] = useState(false);
@@ -75,7 +77,6 @@ export function OperationsDashboard() {
     }
   }, [tasks, ready, toast]);
 
-  // keep the keyboard cursor in range as the list changes
   useEffect(() => {
     setCursor((c) => (c >= filtered.length ? filtered.length - 1 : c));
   }, [filtered.length]);
@@ -131,7 +132,7 @@ export function OperationsDashboard() {
               Live
             </span>
           </h1>
-          <p className="truncate text-[12px] text-ink-3">Marbella portfolio · 6 villas</p>
+          <p className="truncate text-[12px] text-ink-3">Marbella portfolio · {db.properties.length} villas</p>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -144,50 +145,62 @@ export function OperationsDashboard() {
       </header>
 
       <div className="space-y-6 p-5 sm:p-7">
-        {/* live KPIs */}
+        {/* KPI strip */}
         {ready ? (
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Kpi label="Open requests" value={stats.open} />
-            <Kpi label="Urgent" value={stats.urgent} tone="urgent" />
-            <Kpi label="In progress" value={stats.inProgress} tone="accent" />
-            <Kpi label="Completed today" value={stats.completedToday} tone="ok" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7">
+            <Kpi label="Open requests" value={kpis.open} />
+            <Kpi label="Urgent" value={kpis.urgent} tone="urgent" />
+            <Kpi label="In progress" value={kpis.inProgress} tone="accent" />
+            <Kpi label="Completed today" value={kpis.completedToday} tone="ok" />
+            <Kpi label="Team online" value={kpis.teamOnline} />
+            <Kpi label="Villas active" value={kpis.villasActive} />
+            <Kpi label="Avg response" text={fmtDuration(kpis.avgResponse)} />
           </div>
         ) : (
           <KpiSkeleton />
         )}
 
-        {/* task board */}
-        {ready ? (
-          <Card className="overflow-hidden p-0">
-            <div className="flex flex-wrap items-center gap-1 border-b border-line px-3 py-2.5">
-              <Tab label="All" count={counts.all} active={filter === "all"} onClick={() => { setFilter("all"); setCursor(-1); }} />
-              {BOARD_STATUSES.map((s) => (
-                <Tab key={s} label={statusMeta[s].label} count={counts[s]} active={filter === s} onClick={() => { setFilter(s); setCursor(-1); }} />
-              ))}
-            </div>
-
-            <div className="space-y-1.5 p-3">
-              {filtered.length === 0 ? (
-                <EmptyBoard filter={filter} onCompose={() => setSimOpen(true)} />
-              ) : (
-                <AnimatePresence initial={false}>
-                  {filtered.map((t, i) => (
-                    <TaskRow key={t.id} task={t} onOpen={setOpenTaskId} fresh={isFresh(t)} selected={i === cursor} />
+        {/* board + intelligence */}
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="min-w-0">
+            {ready ? (
+              <Card className="overflow-hidden p-0">
+                <div className="flex flex-wrap items-center gap-1 border-b border-line px-3 py-2.5">
+                  <Tab label="All" count={counts.all} active={filter === "all"} onClick={() => { setFilter("all"); setCursor(-1); }} />
+                  {BOARD_STATUSES.map((s) => (
+                    <Tab key={s} label={statusMeta[s].label} count={counts[s]} active={filter === s} onClick={() => { setFilter(s); setCursor(-1); }} />
                   ))}
-                </AnimatePresence>
-              )}
-            </div>
-          </Card>
-        ) : (
-          <TaskListSkeleton />
-        )}
+                </div>
+
+                <div className="space-y-1.5 p-3">
+                  {filtered.length === 0 ? (
+                    <EmptyBoard filter={filter} onCompose={() => setSimOpen(true)} />
+                  ) : (
+                    <AnimatePresence initial={false}>
+                      {filtered.map((t, i) => (
+                        <TaskRow key={t.id} task={t} onOpen={setOpenTaskId} fresh={isFresh(t)} selected={i === cursor} />
+                      ))}
+                    </AnimatePresence>
+                  )}
+                </div>
+              </Card>
+            ) : (
+              <TaskListSkeleton />
+            )}
+          </div>
+
+          {ready && (
+            <aside className="min-w-0">
+              <IntelligencePanel />
+            </aside>
+          )}
+        </div>
       </div>
 
       <TaskDetail taskId={openTaskId} onClose={() => setOpenTaskId(null)} />
       <WhatsAppSimulator open={simOpen} onClose={() => setSimOpen(false)} onOpenTask={setOpenTaskId} />
       <ShortcutsHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
 
-      {/* floating composer for mobile reach */}
       <button
         onClick={() => setSimOpen(true)}
         className="fixed bottom-20 right-5 z-30 grid h-12 w-12 place-items-center rounded-full bg-accent text-white shadow-[0_18px_48px_-10px_rgba(46,125,255,0.78)] transition-transform active:scale-95 lg:hidden"
@@ -228,14 +241,14 @@ function EmptyBoard({ filter, onCompose }: { filter: Filter; onCompose: () => vo
   );
 }
 
-function Kpi({ label, value, tone = "default" }: { label: string; value: number; tone?: "default" | "urgent" | "accent" | "ok" }) {
-  const color = tone === "urgent" ? "text-urgent" : tone === "ok" ? "text-ok" : tone === "accent" ? "text-ink" : "text-ink";
+function Kpi({ label, value, text, tone = "default" }: { label: string; value?: number; text?: string; tone?: "default" | "urgent" | "accent" | "ok" }) {
+  const color = tone === "urgent" ? "text-urgent" : tone === "ok" ? "text-ok" : "text-ink";
   return (
-    <Card hover className="relative p-5">
-      {tone === "accent" && <div className="glow-accent pointer-events-none absolute -right-6 -top-8 h-24 w-24 opacity-70 blur-xl" />}
-      <div className="text-[12px] uppercase tracking-wider text-ink-3">{label}</div>
-      <div className={`mt-3 text-4xl font-semibold tracking-tight tabular-nums ${color}`}>
-        <LiveNumber value={value} pad={1} duration={0.9} />
+    <Card hover className="relative p-4">
+      {tone === "accent" && <div className="glow-accent pointer-events-none absolute -right-5 -top-7 h-20 w-20 opacity-70 blur-xl" />}
+      <div className="truncate text-[11px] uppercase tracking-wider text-ink-3">{label}</div>
+      <div className={`mt-2.5 text-[28px] font-semibold leading-none tracking-tight tabular-nums ${color}`}>
+        {text != null ? text : <LiveNumber value={value ?? 0} pad={1} duration={0.9} />}
       </div>
     </Card>
   );

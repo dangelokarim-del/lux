@@ -1,21 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, ChevronDown, Sparkles } from "lucide-react";
 import { Avatar, Badge, StatusPill, buttonVariants } from "@/components/ui";
 import {
   BOARD_STATUSES,
+  PRIORITIES,
   categoryMeta,
   departmentMeta,
   intentMeta,
   presenceMeta,
   priorityMeta,
   statusMeta,
+  type Priority,
   type Staff,
   type TaskStatus,
 } from "@/lib/domain";
 import { useConversation, useLuxa, useNotesForTask, useStaff, useTask } from "@/lib/store/hooks";
+import { tones } from "@/lib/tone";
 import { useToast } from "./Toast";
 import { SlideOver } from "./SlideOver";
 import { clockTime, timeAgo } from "./format";
@@ -35,6 +38,17 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
   const assignee = store.staffById(task?.assigneeId ?? null);
   const sourceMessage = messages.find((m) => m.id === task?.sourceMessageId) ?? null;
   const completed = task?.status === "completed";
+
+  const timeline = useMemo(() => {
+    type T = { id: string; label: string; sub: string | null; at: string; dotClass: string; userNote?: boolean };
+    if (!task) return [] as T[];
+    const items: T[] = [];
+    if (sourceMessage) items.push({ id: "src", label: "WhatsApp message received", sub: guest?.name ?? null, at: sourceMessage.createdAt, dotClass: "bg-ok" });
+    if (task.aiConfidence != null) items.push({ id: "ai", label: "AI understood the request", sub: `${Math.round(task.aiConfidence * 100)}% confidence`, at: task.createdAt, dotClass: "bg-accent" });
+    items.push({ id: "created", label: "Task created", sub: task.code, at: task.createdAt, dotClass: "bg-ink-4" });
+    for (const n of notes) items.push({ id: n.id, label: n.body, sub: n.system ? null : n.authorName, at: n.createdAt, dotClass: n.system ? "bg-ink-4" : "bg-accent", userNote: !n.system });
+    return items.sort((a, b) => a.at.localeCompare(b.at));
+  }, [task, sourceMessage, guest, notes]);
 
   function submitNote() {
     if (!task || !noteDraft.trim()) return;
@@ -78,6 +92,16 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
             <div className="mt-2 grid grid-cols-4 gap-1.5">
               {BOARD_STATUSES.map((s) => (
                 <StatusButton key={s} status={s} active={task.status === s} onClick={() => store.setTaskStatus(task.id, s)} />
+              ))}
+            </div>
+          </section>
+
+          {/* priority control */}
+          <section>
+            <Label>Priority</Label>
+            <div className="mt-2 grid grid-cols-4 gap-1.5">
+              {PRIORITIES.map((p) => (
+                <PriorityButton key={p} priority={p} active={task.priority === p} onClick={() => store.setTaskPriority(task.id, p)} />
               ))}
             </div>
           </section>
@@ -157,20 +181,20 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
             </section>
           )}
 
-          {/* activity + notes */}
+          {/* activity timeline */}
           <section>
-            <Label>Activity</Label>
-            <div className="mt-2.5 space-y-3">
-              {notes.length === 0 && <p className="text-[13px] text-ink-3">No activity yet.</p>}
-              {notes.map((n) => (
-                <div key={n.id} className="flex gap-2.5">
-                  <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${n.system ? "bg-ink-4" : "bg-accent"}`} />
+            <Label>Activity timeline</Label>
+            <div className="mt-3 space-y-0">
+              {timeline.map((e, i) => (
+                <div key={e.id} className="relative flex gap-3 pb-4 last:pb-0">
+                  {i < timeline.length - 1 && <span className="absolute left-[3px] top-3.5 h-full w-px bg-line" aria-hidden />}
+                  <span className={`relative z-10 mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${e.dotClass}`} />
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-[12.5px] font-medium text-ink-2">{n.authorName}</span>
-                      <span className="text-[11px] text-ink-4">{timeAgo(n.createdAt)}</span>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className={`text-[13px] ${e.userNote ? "text-ink" : "text-ink-2"}`}>{e.label}</span>
+                      <span className="shrink-0 font-mono text-[10.5px] tabular-nums text-ink-4">{clockTime(e.at)}</span>
                     </div>
-                    <p className={`text-[13px] ${n.system ? "text-ink-3" : "text-ink"}`}>{n.body}</p>
+                    {e.sub && <span className="text-[11.5px] text-ink-4">{e.sub}</span>}
                   </div>
                 </div>
               ))}
@@ -221,6 +245,22 @@ function StatusButton({ status, active, onClick }: { status: TaskStatus; active:
           : "border-line text-ink-3 hover:border-line-2 hover:text-ink-2"
       }`}
     >
+      {meta.label}
+    </button>
+  );
+}
+
+function PriorityButton({ priority, active, onClick }: { priority: Priority; active: boolean; onClick: () => void }) {
+  const meta = priorityMeta[priority];
+  const t = tones[meta.tone];
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center justify-center gap-1.5 rounded-lg border px-1 py-2 text-[11.5px] font-medium transition-colors ${
+        active ? `${t.border} ${t.bg} text-ink` : "border-line text-ink-3 hover:border-line-2 hover:text-ink-2"
+      }`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${t.dot}`} />
       {meta.label}
     </button>
   );

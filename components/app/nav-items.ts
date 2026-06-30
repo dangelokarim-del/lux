@@ -4,6 +4,7 @@ import {
   Building2,
   Users,
   MessageSquareText,
+  BarChart3,
   type LucideIcon,
 } from "lucide-react";
 
@@ -23,4 +24,5 @@ export const navItems: NavItem[] = [
   { href: "/villas", label: "Villas", shortLabel: "Villas", icon: Building2 },
   { href: "/team", label: "Team", shortLabel: "Team", icon: Users },
   { href: "/requests", label: "Guest Requests", shortLabel: "Requests", icon: MessageSquareText, badge: "new" },
+  { href: "/analytics", label: "Analytics", shortLabel: "Stats", icon: BarChart3 },
 ];

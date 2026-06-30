@@ -26,10 +26,14 @@ export function TaskRow({ task, onOpen, fresh, selected }: { task: Task; onOpen:
       layout
       onClick={() => onOpen(task.id)}
       aria-current={selected ? "true" : undefined}
-      initial={fresh ? { opacity: 0, y: -12, backgroundColor: "rgba(46,125,255,0.10)" } : false}
-      animate={{ opacity: 1, y: 0, backgroundColor: "rgba(46,125,255,0)" }}
-      exit={{ opacity: 0, scale: 0.98 }}
-      transition={{ duration: 0.6, ease, backgroundColor: { duration: 2.4, ease } }}
+      initial={
+        fresh
+          ? { opacity: 0, y: -12, filter: "blur(8px)", backgroundColor: "rgba(46,125,255,0.10)" }
+          : { opacity: 0, y: 8, filter: "blur(6px)" }
+      }
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)", backgroundColor: "rgba(46,125,255,0)" }}
+      exit={{ opacity: 0, scale: 0.98, filter: "blur(4px)" }}
+      transition={{ duration: 0.55, ease, backgroundColor: { duration: 2.4, ease } }}
       className={`group flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-[border-color,background-color,box-shadow] hover:border-line-2 hover:bg-white/[0.025] ${
         selected ? "border-accent/50 bg-white/[0.03] shadow-[0_0_0_1px_rgba(46,125,255,0.35)]" : "border-line"
       }`}

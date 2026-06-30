@@ -13,6 +13,7 @@
 import {
   categoryMeta,
   departmentMeta,
+  priorityMeta,
   newId,
   nextTaskCode,
   primeTaskSeq,
@@ -200,6 +201,13 @@ export class LuxaStore implements OpsGateway {
     this.patchTask(taskId, { status, completedAt, updatedAt: nowIso() });
     this.addSystemNote(taskId, `Status → ${statusMeta[status].label}`);
     this.notify("status_change", "Status updated", `${task.title} → ${statusMeta[status].label}`, taskId);
+  }
+
+  setTaskPriority(taskId: string, priority: Task["priority"]) {
+    const task = this.db.tasks.find((t) => t.id === taskId);
+    if (!task || task.priority === priority) return;
+    this.patchTask(taskId, { priority, updatedAt: nowIso() });
+    this.addSystemNote(taskId, `Priority → ${priorityMeta[priority].label}`);
   }
 
   assignTask(taskId: string, staffId: string | null) {

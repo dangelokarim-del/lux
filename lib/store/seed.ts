@@ -61,7 +61,7 @@ const tasks: Task[] = [
     id: "task_seed_1", code: "REQ-1041", title: "Airport transfer — 4 guests", description: "Arrival transfer requested for this evening.",
     category: "transport", department: "concierge", priority: "high", intent: "request", status: "in_progress",
     propertyId: "prop_sol", room: null, assigneeId: "staff_lucia", guestId: "guest_sophie", conversationId: "conv_sol",
-    sourceMessageId: null, aiConfidence: 0.94, createdAt: minsAgo(38), updatedAt: minsAgo(12), completedAt: null,
+    sourceMessageId: "msg_sol_1", aiConfidence: 0.94, createdAt: minsAgo(38), updatedAt: minsAgo(12), completedAt: null,
   },
   {
     id: "task_seed_2", code: "REQ-1040", title: "Private chef — dinner for 6", description: "Tonight, Mediterranean menu.",
@@ -84,8 +84,8 @@ const tasks: Task[] = [
   {
     id: "task_seed_5", code: "REQ-1035", title: "Spa booking — couples massage", description: "Booked for 17:00.",
     category: "concierge", department: "concierge", priority: "normal", intent: "request", status: "completed",
-    propertyId: "prop_ocean", room: null, assigneeId: "staff_lucia", guestId: "guest_james", conversationId: null,
-    sourceMessageId: null, aiConfidence: 0.92, createdAt: hoursAgo(5), updatedAt: hoursAgo(4), completedAt: hoursAgo(4),
+    propertyId: "prop_ocean", room: null, assigneeId: "staff_lucia", guestId: "guest_james", conversationId: "conv_ocean",
+    sourceMessageId: "msg_ocean_1", aiConfidence: 0.92, createdAt: hoursAgo(5), updatedAt: hoursAgo(4), completedAt: hoursAgo(4),
   },
   {
     id: "task_seed_6", code: "REQ-1033", title: "Welcome champagne & flowers", description: null,
@@ -101,9 +101,9 @@ const conversations: Conversation[] = [
 ];
 
 const messages: Message[] = [
-  { id: "msg_sol_1", conversationId: "conv_sol", direction: "inbound", channel: "whatsapp", body: "Bonjour, can you arrange an airport transfer for 4 this evening?", author: "Sophie Laurent", createdAt: minsAgo(40) },
+  { id: "msg_sol_1", conversationId: "conv_sol", direction: "inbound", channel: "whatsapp", body: "Bonjour, can you arrange an airport transfer for 4 this evening?", author: "Sophie Laurent", createdAt: minsAgo(40), taskId: "task_seed_1" },
   { id: "msg_sol_2", conversationId: "conv_sol", direction: "outbound", channel: "whatsapp", body: "Of course Sophie — booking a transfer for 4 now. I'll confirm the driver shortly.", author: "LUXA", createdAt: minsAgo(38) },
-  { id: "msg_ocean_1", conversationId: "conv_ocean", direction: "inbound", channel: "whatsapp", body: "Could we book a couples massage at the villa this afternoon?", author: "James Whitmore", createdAt: hoursAgo(5) },
+  { id: "msg_ocean_1", conversationId: "conv_ocean", direction: "inbound", channel: "whatsapp", body: "Could we book a couples massage at the villa this afternoon?", author: "James Whitmore", createdAt: hoursAgo(5), taskId: "task_seed_5" },
   { id: "msg_ocean_2", conversationId: "conv_ocean", direction: "outbound", channel: "whatsapp", body: "Absolutely — I've reserved a couples massage for 17:00.", author: "LUXA", createdAt: hoursAgo(4) },
 ];
 

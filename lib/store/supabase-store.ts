@@ -9,7 +9,7 @@
  * local snapshot. Staff actions are persisted to Postgres; the realtime echo
  * keeps every connected dashboard in sync. The UI never knows the difference.
  */
-import { statusMeta, type Database, type Guest, type Property, type Staff, type TaskStatus } from "@/lib/domain";
+import { priorityMeta, statusMeta, type Database, type Guest, type Priority, type Property, type Staff, type TaskStatus } from "@/lib/domain";
 import type { InboundMessage } from "@/lib/services/whatsapp/inbound";
 import { browserSupabase } from "@/lib/supabase/browser";
 import {
@@ -133,6 +133,17 @@ export class SupabaseLiveStore implements OpsGateway {
       await this.sb.from("tasks").update({ status, completed_at: status === "completed" ? now : null, updated_at: now }).eq("id", taskId);
       await this.sb.from("activity_log").insert({ task_id: taskId, actor_name: "You", type: "status_change", is_system: true, body: `Status → ${statusMeta[status].label}` });
       await this.sb.from("notifications").insert({ kind: "status_change", title: "Status updated", body: `${task.title} → ${statusMeta[status].label}`, task_id: taskId });
+    });
+  }
+
+  setTaskPriority(taskId: string, priority: Priority) {
+    const task = this.db.tasks.find((t) => t.id === taskId);
+    if (!task || task.priority === priority) return;
+    const now = new Date().toISOString();
+    this.patch({ tasks: this.db.tasks.map((t) => (t.id === taskId ? { ...t, priority, updatedAt: now } : t)) });
+    void this.run(async () => {
+      await this.sb.from("tasks").update({ priority, updated_at: now }).eq("id", taskId);
+      await this.sb.from("activity_log").insert({ task_id: taskId, actor_name: "You", type: "status_change", is_system: true, body: `Priority → ${priorityMeta[priority].label}` });
     });
   }
 
