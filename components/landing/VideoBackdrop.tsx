@@ -2,30 +2,45 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-/* The Artlist hero export. Drop your file at public/hero/villa.mp4 (the .mp4
-   <source> is listed first, so it wins wherever it can play); villa.webm is a
-   lightweight modern-codec companion / fallback. Override either with
-   NEXT_PUBLIC_HERO_VIDEO / NEXT_PUBLIC_HERO_POSTER if you host them on a CDN. */
-const MP4 = process.env.NEXT_PUBLIC_HERO_VIDEO || "/hero/villa.mp4";
-const WEBM = "/hero/villa.webm";
+/* Two-part hero, played as ONE continuous cinematic. Drop your exports at:
+     public/hero/villa-part1.mp4   (exterior villa)
+     public/hero/villa-part2.mp4   (interior continuation)
+   The .mp4s are the real hero (H.264, universally supported). Optional
+   stylised .webm companions sit beside them as a graceful fallback for the
+   rare browser that can't decode H.264. Override the .mp4 paths with
+   NEXT_PUBLIC_HERO_PART1 / NEXT_PUBLIC_HERO_PART2 to host them on a CDN. */
+const PARTS = [
+  { mp4: process.env.NEXT_PUBLIC_HERO_PART1 || "/hero/villa-part1.mp4", webm: "/hero/villa-part1.webm" },
+  { mp4: process.env.NEXT_PUBLIC_HERO_PART2 || "/hero/villa-part2.mp4", webm: "/hero/villa-part2.webm" },
+];
 const POSTER = process.env.NEXT_PUBLIC_HERO_POSTER || "/hero/villa-poster.jpg";
 
+// crossfade length — short enough to read as a match cut, long enough to hide the seam
+const FADE_MS = 550;
+
 /**
- * The cinematic backdrop: the looping hero video, full-bleed (object-cover, no
- * borders), GPU-composited, muted + inline + autoplay. It is lazy-armed (sources
- * attach only once it nears the viewport) and shows the poster until the first
- * frame can paint, so there is never a black flash or layout shift. If the video
- * cannot load at all, the handcrafted CSS villa `fallback` takes over silently —
- * the page is never broken, but the video is always the hero when present.
+ * The cinematic backdrop. Plays part 1 (exterior) → part 2 (interior) → part 1 …
+ * forever, crossfading exactly as one clip reaches its final frame into the next,
+ * so the viewer believes it is a single continuous camera move. There is never a
+ * black frame, flash, pause or restart: the outgoing clip holds its last frame if
+ * the next isn't buffered yet, and the incoming clip is only revealed once it has
+ * a real frame to show.
+ *
+ * Two stacked <video>s are cross-dissolved purely by GPU-composited opacity. The
+ * pair is lazy-armed (sources attach only near the viewport), paused when the hero
+ * scrolls off-screen (battery/perf), and falls back to the CSS villa if H.264
+ * can't be decoded at all — the page is never broken.
  */
 export function VideoBackdrop({ fallback }: { fallback: ReactNode }) {
   const holderRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const v0Ref = useRef<HTMLVideoElement>(null); // part 1
+  const v1Ref = useRef<HTMLVideoElement>(null); // part 2
   const [armed, setArmed] = useState(false);
-  const [playing, setPlaying] = useState(false);
+  const [shown, setShown] = useState(false);
   const [failed, setFailed] = useState(false);
+  const ctrl = useRef({ active: 0, transitioning: false, visible: true });
 
-  // lazy: attach the sources only when the hero is on/near screen
+  // lazy: attach sources only when the hero nears the viewport
   useEffect(() => {
     const el = holderRef.current;
     if (!el) return;
@@ -46,65 +61,141 @@ export function VideoBackdrop({ fallback }: { fallback: ReactNode }) {
     return () => io.disconnect();
   }, []);
 
-  // once armed, load the (now-attached) sources + autoplay; reveal on first paint
+  // pause both when the hero is fully off-screen; resume the active one on return
   useEffect(() => {
-    const v = videoRef.current;
-    if (!v || !armed) return;
-    v.load();
-    const reveal = () => setPlaying(true);
-    const tryPlay = () => v.play().catch(() => {});
-    // a transient <source> miss (e.g. an absent .mp4) does NOT set v.error — the
-    // browser just advances to the next candidate. Only flag failure when the
-    // element itself ends up with a MediaError (all candidates exhausted).
-    const onError = () => {
+    const el = holderRef.current;
+    if (!el || !("IntersectionObserver" in window)) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        ctrl.current.visible = e.isIntersecting;
+        const vids = [v0Ref.current, v1Ref.current];
+        if (e.isIntersecting) vids[ctrl.current.active]?.play().catch(() => {});
+        else vids.forEach((v) => v?.pause());
+      },
+      { threshold: 0.001 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // the seamless controller
+  useEffect(() => {
+    if (!armed) return;
+    const a = v0Ref.current;
+    const c = v1Ref.current;
+    if (!a || !c) return;
+    const vids: HTMLVideoElement[] = [a, c];
+
+    vids.forEach((v) => {
+      v.muted = true;
+      v.style.opacity = "0";
+      v.load(); // attach the <source> children
+    });
+
+    // stagger bandwidth: part 1 loads eagerly; part 2 only buffers in full once
+    // part 1 is actually playing (it has the whole first clip to get ready)
+    const upgradeNext = () => {
+      if (c.preload !== "auto") {
+        c.preload = "auto";
+        c.load();
+      }
+    };
+
+    const reveal = () => setShown(true);
+    const onError = (v: HTMLVideoElement) => () => {
+      // both <source>s for this clip exhausted → fall back to the CSS villa
       if (v.error) setFailed(true);
     };
-    v.addEventListener("loadeddata", reveal);
-    v.addEventListener("canplay", tryPlay);
-    v.addEventListener("playing", reveal);
-    v.addEventListener("error", onError);
-    tryPlay();
+    const onErr0 = onError(a);
+    const onErr1 = onError(c);
+    a.addEventListener("playing", reveal);
+    a.addEventListener("error", onErr0);
+    c.addEventListener("error", onErr1);
+
+    // start part 1
+    a.currentTime = 0;
+    a.play().then(() => {
+      a.style.opacity = "1";
+      setShown(true);
+      upgradeNext();
+    }).catch(() => {});
+    a.addEventListener("playing", upgradeNext, { once: true });
+
+    let raf = 0;
+    const tick = () => {
+      const st = ctrl.current;
+      const cur = vids[st.active];
+      const nxt = vids[1 - st.active];
+      if (cur && nxt && !st.transitioning && st.visible && cur.duration) {
+        const remaining = cur.duration - cur.currentTime;
+        // near the final frame — begin the crossfade once the next clip can paint
+        if (remaining <= FADE_MS / 1000 + 0.04 && nxt.readyState >= 3) {
+          st.transitioning = true;
+          nxt.currentTime = 0;
+          nxt
+            .play()
+            .then(() => {
+              // reveal the incoming clip only now that it has a real frame
+              cur.style.transition = `opacity ${FADE_MS}ms linear`;
+              nxt.style.transition = `opacity ${FADE_MS}ms linear`;
+              nxt.style.opacity = "1";
+              cur.style.opacity = "0";
+              window.setTimeout(() => {
+                cur.pause();
+                cur.currentTime = 0;
+                cur.style.transition = "";
+                st.active = 1 - st.active;
+                st.transitioning = false;
+              }, FADE_MS);
+            })
+            .catch(() => {
+              st.transitioning = false;
+            });
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
     return () => {
-      v.removeEventListener("loadeddata", reveal);
-      v.removeEventListener("canplay", tryPlay);
-      v.removeEventListener("playing", reveal);
-      v.removeEventListener("error", onError);
+      cancelAnimationFrame(raf);
+      a.removeEventListener("playing", reveal);
+      a.removeEventListener("error", onErr0);
+      c.removeEventListener("error", onErr1);
     };
   }, [armed]);
 
+  const videoClass =
+    "pointer-events-none absolute inset-0 h-full w-full object-cover";
+  const videoStyle = {
+    opacity: 0,
+    transform: "translate3d(0,0,0)",
+    willChange: "opacity",
+    backfaceVisibility: "hidden" as const,
+  };
+
   return (
     <div ref={holderRef} className="absolute inset-0 overflow-hidden bg-[#070809]">
-      {/* CSS villa underneath: paints instantly, and stays if the video fails */}
+      {/* CSS villa underneath: paints instantly, and stays if H.264 can't decode */}
       <div
         className="absolute inset-0 transition-opacity duration-[1200ms] ease-out"
-        style={{ opacity: playing && !failed ? 0 : 1 }}
+        style={{ opacity: shown && !failed ? 0 : 1 }}
       >
         {fallback}
       </div>
 
-      {/* the video is never unmounted on a transient error — it stays put and is
-          simply hidden (revealing the fallback) until it can actually paint */}
-      <video
-        ref={videoRef}
-        className="absolute inset-0 h-full w-full object-cover transition-opacity duration-[1200ms] ease-out"
-        style={{
-          opacity: playing && !failed ? 1 : 0,
-          transform: "translate3d(0,0,0)",
-          willChange: "opacity",
-          backfaceVisibility: "hidden",
-        }}
-        poster={POSTER}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        disablePictureInPicture
-        aria-hidden="true"
-      >
-        {armed && <source src={MP4} type="video/mp4" />}
-        {armed && <source src={WEBM} type="video/webm" />}
-      </video>
+      {!failed && (
+        <>
+          <video ref={v0Ref} className={videoClass} style={videoStyle} poster={POSTER} muted loop={false} playsInline preload="auto" disablePictureInPicture aria-hidden="true">
+            {armed && <source src={PARTS[0].mp4} type="video/mp4" />}
+            {armed && <source src={PARTS[0].webm} type="video/webm" />}
+          </video>
+          <video ref={v1Ref} className={videoClass} style={videoStyle} muted loop={false} playsInline preload="metadata" disablePictureInPicture aria-hidden="true">
+            {armed && <source src={PARTS[1].mp4} type="video/mp4" />}
+            {armed && <source src={PARTS[1].webm} type="video/webm" />}
+          </video>
+        </>
+      )}
     </div>
   );
 }
