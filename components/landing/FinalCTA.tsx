@@ -26,15 +26,27 @@ export function FinalCTA() {
           transition={{ duration: 1.5, ease }}
           className="text-balance text-[clamp(2.7rem,7.8vw,5.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-white"
         >
-          Bring order to luxury operations.
+          Luxury operations.
+          <br />
+          <span className="text-white/45">Perfectly orchestrated.</span>
         </motion.h2>
+
+        <motion.p
+          initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 1, delay: 0.2, ease }}
+          className="mx-auto mt-8 max-w-xl text-balance text-[17px] leading-relaxed text-white/70 sm:text-[18px]"
+        >
+          One platform for guests, staff and every request.
+        </motion.p>
 
         <motion.div
           initial={{ opacity: 0, y: 18, filter: "blur(6px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.9, delay: 0.25, ease }}
-          className="mt-14"
+          transition={{ duration: 0.9, delay: 0.35, ease }}
+          className="mt-12"
         >
           <Magnetic className="inline-block" strength={0.3}>
             <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>

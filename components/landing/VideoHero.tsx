@@ -6,7 +6,6 @@ import {
   motion,
   useScroll,
   useTransform,
-  useMotionValue,
   useReducedMotion,
   type MotionValue,
 } from "framer-motion";
@@ -90,31 +89,12 @@ export function VillaSpace({ dolly }: { dolly: MotionValue<number> }) {
   );
 }
 
-/* compact WhatsApp notification that rides the guest's phone in the interior clip */
-function PhoneMessage() {
-  return (
-    <div className="w-[230px] sm:w-[260px]">
-      <div className="glass edge-light relative rounded-[15px] border border-white/12 bg-[#0b0d12]/70 px-3 py-2.5 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.9)] backdrop-blur-xl">
-        <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-[8.5px] font-semibold uppercase tracking-[0.16em] text-[#43d178]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#25D366]" /> WhatsApp
-          </span>
-          <span className="text-[8.5px] text-white/35">now</span>
-        </div>
-        <p className="mt-1.5 text-[12px] leading-snug text-white/90">Hi, the AC is not working in the master bedroom.</p>
-        {/* tail pointing down to the phone */}
-        <div className="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 rounded-[3px] border-b border-r border-white/12 bg-[#0b0d12]/70" />
-      </div>
-    </div>
-  );
-}
-
 /* ------------------------------------------------------------------ *
  *  VIDEO HERO — the first thing visitors see: the €40M Marbella villa at
  *  blue hour (looping two-part film) with the LUXA identity. As you scroll,
- *  the brand dissolves and a WhatsApp request rides the guest's phone — the
- *  guest sending a request. Then the page cuts to the problem statement.
- *  No dashboard here; the story continues in OperationsStory.
+ *  the brand dissolves and the blue-hour film slowly darkens into the dark
+ *  site background, so the problem statement below emerges from the same
+ *  atmosphere — never a hard cut. The video tells the villa/guest story.
  * ------------------------------------------------------------------ */
 export function VideoHero() {
   const ref = useRef<HTMLDivElement>(null);
@@ -127,46 +107,30 @@ export function VideoHero() {
   const introY = useTransform(p, [0, 0.24], ["0px", "-54px"]);
   const introScale = useTransform(p, [0, 0.24], [1, 0.98]);
 
-  // the whole hero gently lifts, blurs + fades at the very end → soft, not a cut,
+  // the whole hero gently lifts + fades at the very end → soft, not a cut,
   // into the problem statement below
-  const exitOpacity = useTransform(p, [0.84, 1], [1, 0]);
-  const exitBlur = useTransform(p, [0.84, 1], ["blur(0px)", "blur(9px)"]);
-  const exitScale = useTransform(p, [0.84, 1], [1, 1.03]);
+  const exitOpacity = useTransform(p, [0.88, 1], [1, 0]);
+  const exitScale = useTransform(p, [0.86, 1], [1, 1.04]);
 
   // readability wash — strongest while the brand is up
   const readability = useTransform(p, [0, 0.5], [1, 0.82]);
 
-  // WhatsApp message that rides the guest's phone (driven by VideoBackdrop from
-  // part 2's playback); revealed once the brand has dissolved.
-  const phoneX = useMotionValue(0);
-  const phoneY = useMotionValue(0);
-  const phoneVis = useMotionValue(0);
-  const phoneReveal = useTransform(p, [0.1, 0.2, 0.82, 0.94], [0, 1, 1, 0]);
-  const phoneOpacity = useTransform([phoneVis, phoneReveal] as MotionValue<number>[], ([v, r]: number[]) => v * r);
-
-  // a quiet caption while the request is on the phone
-  const captionOpacity = useTransform(p, [0.2, 0.3, 0.8, 0.9], [0, 1, 1, 0]);
+  // the blue-hour film slowly darkens into the dark site background as you
+  // scroll — a dark gradient grows from the bottom, so the headline below
+  // emerges from the same atmosphere rather than starting on a new black page
+  const darken = useTransform(p, [0.45, 1], [0, 1]);
 
   return (
     <section ref={ref} className="relative h-[200vh]">
-      <motion.div className="sticky top-0 h-screen overflow-hidden" style={{ opacity: exitOpacity, filter: exitBlur, scale: exitScale }}>
-        <VideoBackdrop fallback={<VillaSpace dolly={p} />} phone={{ x: phoneX, y: phoneY, vis: phoneVis }} />
+      <motion.div className="sticky top-0 h-screen overflow-hidden" style={{ opacity: exitOpacity, scale: exitScale }}>
+        <VideoBackdrop fallback={<VillaSpace dolly={p} />} />
 
-        {/* readability wash + seamless fade into the dark section below */}
+        {/* readability wash */}
         <motion.div aria-hidden className="pointer-events-none absolute inset-0" style={{ opacity: readability, background: "radial-gradient(125% 96% at 50% 40%, transparent 30%, rgba(5,6,10,0.62)), linear-gradient(180deg, rgba(5,6,10,0.28), transparent 24%, rgba(5,6,10,0.14) 50%, transparent 66%, rgba(5,6,10,0.55))" }} />
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-56" style={{ background: "linear-gradient(180deg,transparent,#050608)" }} />
 
-        {/* WhatsApp message locked to the guest's phone (GPU translate) */}
-        <motion.div className="pointer-events-none absolute left-0 top-0 z-30" style={{ x: phoneX, y: phoneY, opacity: phoneOpacity }}>
-          <div className="-translate-x-1/2 -translate-y-[132%]">
-            <PhoneMessage />
-          </div>
-        </motion.div>
-
-        {/* quiet caption */}
-        <motion.div className="pointer-events-none absolute left-1/2 top-[13%] z-20 -translate-x-1/2 text-[11px] font-medium uppercase tracking-[0.24em] text-white/45" style={{ opacity: captionOpacity }}>
-          Incoming request
-        </motion.div>
+        {/* the film darkens into the dark background — grows from the bottom up */}
+        <motion.div aria-hidden className="pointer-events-none absolute inset-0" style={{ opacity: darken, background: "linear-gradient(180deg, transparent 14%, rgba(4,6,11,0.45) 52%, rgba(3,6,10,0.92) 84%, #03060a 100%)" }} />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-64" style={{ background: "linear-gradient(180deg,transparent,#03060a)" }} />
 
         {/* brand identity — fades as you scroll */}
         <motion.div className="absolute inset-0 z-20" style={{ opacity: introOpacity, filter: introBlur, y: introY, scale: introScale, pointerEvents: "auto" }}>

@@ -242,6 +242,24 @@ export function OperationsStory() {
         {/* soft electric key light grows as the system assembles */}
         <motion.div aria-hidden className="pointer-events-none absolute inset-0" animate={{ opacity: beat === 3 ? 1 : beat === 0 ? 0 : 0.5 }} transition={{ duration: 1.2, ease }} style={{ background: "radial-gradient(60% 50% at 50% 48%, rgba(46,125,255,0.06), transparent 70%)" }} />
 
+        {/* a single, quiet electric-blue thread that runs through the whole
+            sequence — the message, the AI, the task and the dashboard all sit on
+            it, so the beats read as one connected flow rather than separate cards */}
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 h-[58vh] w-px -translate-x-1/2 -translate-y-1/2"
+          animate={{ opacity: beat === 3 ? 0.12 : beat === 0 ? 0.28 : 0.4 }}
+          transition={{ duration: 1, ease }}
+          style={{ background: "linear-gradient(180deg, transparent, rgba(46,125,255,0.55) 26%, rgba(46,125,255,0.55) 74%, transparent)" }}
+        />
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 h-[58vh] w-[3px] -translate-x-1/2 -translate-y-1/2 blur-[7px]"
+          animate={{ opacity: beat === 3 ? 0.08 : 0.22 }}
+          transition={{ duration: 1, ease }}
+          style={{ background: "linear-gradient(180deg, transparent, rgba(46,125,255,0.5), transparent)" }}
+        />
+
         {/* step caption */}
         <div className="absolute left-1/2 top-[12%] -translate-x-1/2 text-center">
           <AnimatePresence mode="wait">
@@ -286,10 +304,11 @@ export function OperationsStory() {
           ))}
         </motion.div>
 
-        {/* BEAT 2 — the structured, assigned task */}
+        {/* BEAT 2 — the structured, assigned task. On the way to the dashboard it
+            fades DOWN as the dashboard rises up underneath it (item 7). */}
         <motion.div
           className="pointer-events-none absolute left-1/2 top-1/2 w-[min(460px,90vw)] -translate-x-1/2 -translate-y-1/2"
-          animate={{ opacity: beat === 2 ? 1 : 0, y: beat === 2 ? 0 : beat < 2 ? 30 : -30, scale: beat === 2 ? 1 : 0.97, filter: beat === 2 ? "blur(0px)" : "blur(6px)" }}
+          animate={{ opacity: beat === 2 ? 1 : 0, y: beat === 2 ? 0 : beat < 2 ? 30 : 64, scale: beat === 2 ? 1 : 0.97, filter: beat === 2 ? "blur(0px)" : "blur(6px)" }}
           transition={{ duration: 1.05, ease }}
         >
           <TaskCard active={beat === 2} />
