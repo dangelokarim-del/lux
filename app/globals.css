@@ -52,8 +52,8 @@
     0 0 0 1px rgba(46, 125, 255, 0.65),
     0 18px 48px -10px rgba(46, 125, 255, 0.78);
 
-  /* shared easing — one motion language */
-  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+  /* shared easing — one motion language (smooth ease-in-out cubic, premium settle) */
+  --ease-premium: cubic-bezier(0.62, 0.04, 0.2, 1);
 }
 
 @layer base {
@@ -143,7 +143,7 @@
   }
 
   .panel-hover {
-    transition: border-color 0.3s ease, background 0.3s ease;
+    transition: border-color 0.45s var(--ease-premium), background 0.45s var(--ease-premium);
   }
   .panel-hover:hover {
     border-color: var(--color-line-2);

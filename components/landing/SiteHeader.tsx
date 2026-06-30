@@ -33,8 +33,8 @@ export function SiteHeader() {
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-[var(--ease-premium)]",
-        scrolled ? "border-b border-white/[0.06] bg-[#070708]/70 backdrop-blur-2xl saturate-150" : "border-b border-transparent"
+        "fixed inset-x-0 top-0 z-50 transition-all duration-700 ease-[var(--ease-premium)]",
+        scrolled ? "border-b border-white/[0.07] bg-[#04050a]/85 backdrop-blur-2xl saturate-150" : "border-b border-transparent"
       )}
     >
       <div className="mx-auto flex h-[68px] max-w-6xl items-center justify-between px-5 sm:px-8">

@@ -10,7 +10,8 @@ import {
 } from "framer-motion";
 import { LiveNumber } from "./anim/LiveNumber";
 
-const ease = [0.16, 1, 0.3, 1] as const;
+// keynote motion language — smooth ease-in-out cubic
+const ease = [0.62, 0.04, 0.2, 1] as const;
 
 const CHIPS = ["AC Issue", "Master Bedroom", "Maintenance", "High Priority"];
 const STEP = ["Incoming request", "LUXA understands", "Task created", "Live operations"];
@@ -40,7 +41,7 @@ function TaskCard({ active }: { active: boolean }) {
       setHp(false);
       return;
     }
-    const t = setTimeout(() => setHp(true), 750);
+    const t = setTimeout(() => setHp(true), 1050);
     return () => clearTimeout(t);
   }, [active]);
 
@@ -53,9 +54,9 @@ function TaskCard({ active }: { active: boolean }) {
         <AnimatePresence>
           {hp && (
             <motion.span
-              initial={{ opacity: 0, scale: 0.8, x: 6 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              transition={{ duration: 0.5, ease }}
+              initial={{ opacity: 0, scale: 0.82, filter: "blur(4px)" }}
+              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+              transition={{ duration: 0.7, ease }}
               className="rounded-full border border-[#2E7DFF]/30 bg-[#2E7DFF]/15 px-2.5 py-0.5 text-[10px] font-semibold text-[#8fbcff]"
             >
               High Priority
@@ -92,10 +93,10 @@ function Cell({ active, index, label, value, accent, live }: {
 }) {
   return (
     <motion.div
-      className="relative h-[76px] rounded-xl"
+      className="relative h-[80px] rounded-xl"
       initial={false}
-      animate={{ opacity: active ? 1 : 0, y: active ? 0 : 16 }}
-      transition={{ duration: 0.6, delay: active ? index * 0.1 : 0, ease }}
+      animate={{ opacity: active ? 1 : 0, y: active ? 0 : 20, filter: active ? "blur(0px)" : "blur(8px)" }}
+      transition={{ duration: 0.85, delay: active ? index * 0.13 : 0, ease }}
     >
       <div className="absolute inset-0 rounded-xl bg-white/[0.03]" style={{ boxShadow: "inset 0 0 0 1px rgba(208,222,244,0.16), inset 0 1px 0 rgba(255,255,255,0.10)" }} />
       <div className="absolute inset-0 px-3.5 py-2.5">
@@ -119,8 +120,8 @@ function Dashboard({ active }: { active: boolean }) {
       setPhase(0);
       return;
     }
-    const t1 = setTimeout(() => setPhase(1), 1200);
-    const t2 = setTimeout(() => setPhase(2), 1950);
+    const t1 = setTimeout(() => setPhase(1), 1600);
+    const t2 = setTimeout(() => setPhase(2), 2700);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -143,11 +144,11 @@ function Dashboard({ active }: { active: boolean }) {
         {/* soft key light */}
         <div aria-hidden className="absolute -inset-10 -z-10" style={{ background: "radial-gradient(55% 55% at 50% 26%, rgba(216,230,255,0.10), transparent 72%)", filter: "blur(26px)" }} />
         {/* frosted container */}
-        <motion.div aria-hidden className="absolute inset-0 rounded-[24px] glass" initial={false} animate={{ opacity: active ? 1 : 0 }} transition={{ duration: 0.7, ease }} style={{ boxShadow: "inset 0 0 0 1px rgba(208,222,244,0.22), inset 0 1px 0 rgba(255,255,255,0.18), 0 60px 130px -44px rgba(0,0,0,0.85)" }} />
+        <motion.div aria-hidden className="absolute inset-0 rounded-[24px] glass" initial={false} animate={{ opacity: active ? 1 : 0 }} transition={{ duration: 1, ease }} style={{ boxShadow: "inset 0 0 0 1px rgba(208,222,244,0.22), inset 0 1px 0 rgba(255,255,255,0.18), 0 60px 130px -44px rgba(0,0,0,0.85)" }} />
 
         <div className="relative px-5 py-4">
           {/* header */}
-          <motion.div className="mb-3 flex items-center justify-between" initial={false} animate={{ opacity: active ? 1 : 0 }} transition={{ duration: 0.6, delay: 0.1, ease }}>
+          <motion.div className="mb-3 flex items-center justify-between" initial={false} animate={{ opacity: active ? 1 : 0 }} transition={{ duration: 0.85, delay: 0.15, ease }}>
             <span className="flex items-center gap-1 text-[13px] font-semibold tracking-[-0.02em] text-white">
               LUXA<span className="h-1 w-1 translate-y-1 rounded-full bg-[#2E7DFF]" />
               <span className="ml-2 text-[11px] font-normal text-white/35">Operations</span>
@@ -170,7 +171,7 @@ function Dashboard({ active }: { active: boolean }) {
 
           {/* operations */}
           <div className="relative mt-4">
-            <motion.div className="mb-1.5 flex items-center justify-between" initial={false} animate={{ opacity: active ? 1 : 0 }} transition={{ duration: 0.6, delay: 0.4, ease }}>
+            <motion.div className="mb-1.5 flex items-center justify-between" initial={false} animate={{ opacity: active ? 1 : 0 }} transition={{ duration: 0.85, delay: 0.6, ease }}>
               <span className="text-[12px] font-medium text-white">Live operations</span>
               <span className="text-[10px] text-white/30">Updated just now</span>
             </motion.div>
@@ -180,10 +181,10 @@ function Dashboard({ active }: { active: boolean }) {
               {showAC && (
                 <motion.div
                   key="ac"
-                  initial={{ opacity: 0, height: 0, marginBottom: 0, x: 18 }}
-                  animate={{ opacity: 1, height: 52, marginBottom: 4, x: 0 }}
+                  initial={{ opacity: 0, height: 0, marginBottom: 0, filter: "blur(6px)" }}
+                  animate={{ opacity: 1, height: 52, marginBottom: 4, filter: "blur(0px)" }}
                   exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                  transition={{ duration: 0.7, ease }}
+                  transition={{ duration: 0.9, ease }}
                   className="flex items-center justify-between overflow-hidden rounded-xl px-3.5"
                   style={{ background: "rgba(46,125,255,0.05)", boxShadow: "inset 0 0 0 1px rgba(46,125,255,0.28)" }}
                 >
@@ -205,7 +206,7 @@ function Dashboard({ active }: { active: boolean }) {
               { t: "Beach club reservation", v: "Villa Aura", s: "Confirmed" },
               { t: "Private chef — dinner for 6", v: "Villa Sol", s: "Pending" },
             ].map((r, i) => (
-              <motion.div key={r.t} className="flex items-center justify-between px-3.5 py-2.5" initial={false} animate={{ opacity: active ? 1 : 0 }} transition={{ duration: 0.6, delay: 0.5 + i * 0.08, ease }}>
+              <motion.div key={r.t} className="flex items-center justify-between px-3.5 py-3" initial={false} animate={{ opacity: active ? 1 : 0 }} transition={{ duration: 0.85, delay: 0.7 + i * 0.12, ease }}>
                 <div className="min-w-0">
                   <div className="truncate text-[12.5px] text-white/90">{r.t}</div>
                   <div className="text-[10.5px] text-white/35">Concierge · {r.v}</div>
@@ -246,11 +247,11 @@ export function OperationsStory() {
           <AnimatePresence mode="wait">
             <motion.div
               key={beat}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.6, ease }}
-              className="text-[11px] font-medium uppercase tracking-[0.24em] text-white/45"
+              initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
+              transition={{ duration: 0.85, ease }}
+              className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/45"
             >
               {STEP[beat]}
             </motion.div>
@@ -261,7 +262,7 @@ export function OperationsStory() {
         <motion.div
           className="pointer-events-none absolute left-1/2 top-1/2 w-[min(560px,90vw)] -translate-x-1/2 -translate-y-1/2"
           animate={{ opacity: beat === 0 ? 1 : 0, y: beat === 0 ? 0 : -30, scale: beat === 0 ? 1 : 0.97, filter: beat === 0 ? "blur(0px)" : "blur(6px)" }}
-          transition={{ duration: 0.8, ease }}
+          transition={{ duration: 1.05, ease }}
         >
           <WhatsAppCard />
         </motion.div>
@@ -270,14 +271,14 @@ export function OperationsStory() {
         <motion.div
           className="pointer-events-none absolute left-1/2 top-1/2 flex w-[min(560px,90vw)] -translate-x-1/2 -translate-y-1/2 flex-wrap justify-center gap-2.5"
           animate={{ opacity: beat === 1 ? 1 : 0, y: beat === 1 ? 0 : beat < 1 ? 30 : -30, scale: beat === 1 ? 1 : 0.97, filter: beat === 1 ? "blur(0px)" : "blur(6px)" }}
-          transition={{ duration: 0.8, ease }}
+          transition={{ duration: 1.05, ease }}
         >
           {CHIPS.map((c, i) => (
             <motion.span
               key={c}
-              animate={{ opacity: beat === 1 ? 1 : 0, y: beat === 1 ? 0 : 12, scale: beat === 1 ? 1 : 0.9 }}
-              transition={{ duration: 0.6, delay: beat === 1 ? i * 0.12 : 0, ease }}
-              className="glass rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/[0.08] px-4 py-2 text-[clamp(0.8rem,1.6vw,0.95rem)] font-medium text-white/90"
+              animate={{ opacity: beat === 1 ? 1 : 0, y: beat === 1 ? 0 : 14, scale: beat === 1 ? 1 : 0.9, filter: beat === 1 ? "blur(0px)" : "blur(5px)" }}
+              transition={{ duration: 0.85, delay: beat === 1 ? i * 0.15 : 0, ease }}
+              className="glass rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/[0.08] px-4 py-2 text-[clamp(0.82rem,1.7vw,1rem)] font-medium text-white/90"
             >
               <span className="mr-1.5 inline-block h-1 w-1 -translate-y-px rounded-full bg-[#2E7DFF]" />
               {c}
@@ -289,7 +290,7 @@ export function OperationsStory() {
         <motion.div
           className="pointer-events-none absolute left-1/2 top-1/2 w-[min(460px,90vw)] -translate-x-1/2 -translate-y-1/2"
           animate={{ opacity: beat === 2 ? 1 : 0, y: beat === 2 ? 0 : beat < 2 ? 30 : -30, scale: beat === 2 ? 1 : 0.97, filter: beat === 2 ? "blur(0px)" : "blur(6px)" }}
-          transition={{ duration: 0.8, ease }}
+          transition={{ duration: 1.05, ease }}
         >
           <TaskCard active={beat === 2} />
         </motion.div>
@@ -298,7 +299,7 @@ export function OperationsStory() {
         <motion.div
           className="pointer-events-none absolute left-1/2 top-1/2 w-[min(900px,94vw)] -translate-x-1/2 -translate-y-1/2"
           animate={{ opacity: beat === 3 ? 1 : 0, y: beat === 3 ? 0 : 30 }}
-          transition={{ duration: 0.8, ease }}
+          transition={{ duration: 1.05, ease }}
         >
           <Dashboard active={beat === 3} />
         </motion.div>

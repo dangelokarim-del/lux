@@ -17,8 +17,8 @@ const PARTS = [
 const POSTER = process.env.NEXT_PUBLIC_HERO_POSTER || "/hero/villa-poster.jpg";
 
 // hidden match cut: part 1's last frame and part 2's first frame are the same
-// composition, so a short 350ms dissolve reads as one continuous camera move
-const FADE_MS = 350;
+// composition, so a soft ~420ms dissolve reads as one continuous camera move
+const FADE_MS = 420;
 
 /* The phone's screen position through part 2 (the interior clip), measured frame
    by frame from the footage. Coordinates are normalised to the video (0..1);

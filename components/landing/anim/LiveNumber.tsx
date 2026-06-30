@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 export function LiveNumber({
   value,
   pad = 2,
-  duration = 0.6,
+  duration = 1.1,
   className,
 }: {
   value: number;
@@ -24,7 +24,8 @@ export function LiveNumber({
     const start = performance.now();
     const tick = (t: number) => {
       const p = Math.min(1, (t - start) / (duration * 1000));
-      const eased = 1 - Math.pow(1 - p, 3);
+      // ease-in-out cubic — a natural settle rather than an abrupt change
+      const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
       setDisp(Math.round(from + (value - from) * eased));
       if (p < 1) raf = requestAnimationFrame(tick);
       else fromRef.current = value;

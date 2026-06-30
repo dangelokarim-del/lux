@@ -16,7 +16,8 @@ import { Magnetic } from "./anim/Magnetic";
 import { ParallaxScene, ParallaxLayer } from "./anim/Parallax";
 import { VideoBackdrop } from "./VideoBackdrop";
 
-const ease = [0.16, 1, 0.3, 1] as const;
+// keynote motion language — smooth ease-in-out cubic, everything breathes
+const ease = [0.62, 0.04, 0.2, 1] as const;
 
 const GRAIN =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E\")";
@@ -26,9 +27,9 @@ function Rise({ children, delay = 0, blur = 7 }: { children: React.ReactNode; de
   const reduce = useReducedMotion();
   return (
     <motion.div
-      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 18, filter: `blur(${blur}px)` }}
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 22, filter: `blur(${blur}px)` }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      transition={{ duration: 1.2, ease, delay }}
+      transition={{ duration: 1.5, ease, delay }}
     >
       {children}
     </motion.div>
@@ -120,14 +121,17 @@ export function VideoHero() {
   const reduce = useReducedMotion();
   const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
 
-  // brand identity — present at rest, dissolves as you begin to scroll
-  const introOpacity = useTransform(p, [0, 0.16], [1, 0]);
-  const introBlur = useTransform(p, [0, 0.14], ["blur(0px)", "blur(10px)"]);
-  const introY = useTransform(p, [0, 0.18], ["0px", "-48px"]);
-  const introScale = useTransform(p, [0, 0.18], [1, 0.985]);
+  // brand identity — present at rest, dissolves slowly as you begin to scroll
+  const introOpacity = useTransform(p, [0, 0.22], [1, 0]);
+  const introBlur = useTransform(p, [0, 0.2], ["blur(0px)", "blur(12px)"]);
+  const introY = useTransform(p, [0, 0.24], ["0px", "-54px"]);
+  const introScale = useTransform(p, [0, 0.24], [1, 0.98]);
 
-  // the whole hero gently lifts + fades at the very end → clean cut to the statement
-  const exitOpacity = useTransform(p, [0.9, 1], [1, 0]);
+  // the whole hero gently lifts, blurs + fades at the very end → soft, not a cut,
+  // into the problem statement below
+  const exitOpacity = useTransform(p, [0.84, 1], [1, 0]);
+  const exitBlur = useTransform(p, [0.84, 1], ["blur(0px)", "blur(9px)"]);
+  const exitScale = useTransform(p, [0.84, 1], [1, 1.03]);
 
   // readability wash — strongest while the brand is up
   const readability = useTransform(p, [0, 0.5], [1, 0.82]);
@@ -144,13 +148,13 @@ export function VideoHero() {
   const captionOpacity = useTransform(p, [0.2, 0.3, 0.8, 0.9], [0, 1, 1, 0]);
 
   return (
-    <section ref={ref} className="relative h-[180vh]">
-      <motion.div className="sticky top-0 h-screen overflow-hidden" style={{ opacity: exitOpacity }}>
+    <section ref={ref} className="relative h-[200vh]">
+      <motion.div className="sticky top-0 h-screen overflow-hidden" style={{ opacity: exitOpacity, filter: exitBlur, scale: exitScale }}>
         <VideoBackdrop fallback={<VillaSpace dolly={p} />} phone={{ x: phoneX, y: phoneY, vis: phoneVis }} />
 
         {/* readability wash + seamless fade into the dark section below */}
         <motion.div aria-hidden className="pointer-events-none absolute inset-0" style={{ opacity: readability, background: "radial-gradient(125% 96% at 50% 40%, transparent 30%, rgba(5,6,10,0.62)), linear-gradient(180deg, rgba(5,6,10,0.28), transparent 24%, rgba(5,6,10,0.14) 50%, transparent 66%, rgba(5,6,10,0.55))" }} />
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-44" style={{ background: "linear-gradient(180deg,transparent,#050608)" }} />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-56" style={{ background: "linear-gradient(180deg,transparent,#050608)" }} />
 
         {/* WhatsApp message locked to the guest's phone (GPU translate) */}
         <motion.div className="pointer-events-none absolute left-0 top-0 z-30" style={{ x: phoneX, y: phoneY, opacity: phoneOpacity }}>
@@ -167,27 +171,31 @@ export function VideoHero() {
         {/* brand identity — fades as you scroll */}
         <motion.div className="absolute inset-0 z-20" style={{ opacity: introOpacity, filter: introBlur, y: introY, scale: introScale, pointerEvents: "auto" }}>
           <ParallaxScene className="absolute inset-0">
-            <div className="pointer-events-none absolute inset-x-0 top-[28%] flex flex-col items-center px-5 text-center">
+            <div className="pointer-events-none absolute inset-x-0 top-[27%] flex flex-col items-center px-5 text-center">
               <ParallaxLayer depth={14} className="flex flex-col items-center">
                 {/* the logo reveals first and holds alone for ~2s — readable
-                    silver chrome lifted off the video with a soft shadow */}
-                <Rise delay={0.5} blur={5}>
-                  <div style={{ filter: "drop-shadow(0 3px 16px rgba(0,0,0,0.6))" }}>
-                    <LuxaMark className="mx-auto w-[min(236px,48vw)]" />
+                    silver chrome, always lifted off the video by a soft blurred
+                    backdrop + glow so it never gets lost in a bright frame */}
+                <Rise delay={0.6} blur={5}>
+                  <div className="relative">
+                    <span aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[150%] w-[150%] -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: "radial-gradient(closest-side, rgba(6,8,14,0.55), transparent 72%)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)" }} />
+                    <div style={{ filter: "drop-shadow(0 2px 22px rgba(0,0,0,0.55)) drop-shadow(0 0 1px rgba(190,205,230,0.5))" }}>
+                      <LuxaMark className="mx-auto w-[min(248px,50vw)]" />
+                    </div>
                   </div>
                 </Rise>
-                <Rise delay={2.1} blur={10}>
-                  <h1 className="mt-10 text-balance text-[clamp(2.6rem,7vw,5rem)] font-semibold leading-[0.95] tracking-[-0.045em] text-white [text-shadow:0_2px_30px_rgba(0,0,0,0.45)]">
-                    Luxury. <span className="text-white/55">Automated.</span>
+                <Rise delay={2.35} blur={12}>
+                  <h1 className="mt-14 text-balance text-[clamp(2.9rem,7.6vw,5.6rem)] font-semibold leading-[0.94] tracking-[-0.045em] text-white [text-shadow:0_2px_40px_rgba(0,0,0,0.6)]">
+                    Luxury. <span className="text-white/65">Automated.</span>
                   </h1>
                 </Rise>
-                <Rise delay={2.35}>
-                  <p className="mx-auto mt-6 max-w-xl text-balance text-[15px] leading-relaxed text-white/70 sm:text-lg [text-shadow:0_1px_18px_rgba(0,0,0,0.5)]">
+                <Rise delay={2.65}>
+                  <p className="mx-auto mt-8 max-w-xl text-balance text-[17px] leading-relaxed text-white/72 sm:text-[19px] [text-shadow:0_1px_20px_rgba(0,0,0,0.55)]">
                     The AI Operating System for Luxury Hospitality.
                   </p>
                 </Rise>
-                <Rise delay={2.6}>
-                  <div className="pointer-events-auto mt-9 flex flex-wrap items-center justify-center gap-3">
+                <Rise delay={2.95}>
+                  <div className="pointer-events-auto mt-12 flex flex-wrap items-center justify-center gap-3.5">
                     <Magnetic className="inline-block" strength={0.3}>
                       <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
                         Book a Demo
@@ -213,10 +221,12 @@ export function VideoHero() {
           </ParallaxScene>
         </motion.div>
 
-        {/* scroll cue */}
-        <motion.div className="absolute bottom-7 left-1/2 z-20 -translate-x-1/2 flex flex-col items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-white/30" style={{ opacity: introOpacity }}>
-          Scroll
-          <motion.span className="h-6 w-px bg-gradient-to-b from-white/40 to-transparent" animate={reduce ? undefined : { scaleY: [0.4, 1, 0.4], opacity: [0.3, 0.7, 0.3] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} style={{ transformOrigin: "top" }} />
+        {/* scroll cue — appears last, completing the reveal; fades as you scroll */}
+        <motion.div className="absolute bottom-9 left-1/2 z-20 -translate-x-1/2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.4, delay: 3.4, ease }}>
+          <motion.div className="flex flex-col items-center gap-2.5 text-[10px] uppercase tracking-[0.24em] text-white/30" style={{ opacity: introOpacity }}>
+            Scroll
+            <motion.span className="h-7 w-px bg-gradient-to-b from-white/40 to-transparent" animate={reduce ? undefined : { scaleY: [0.4, 1, 0.4], opacity: [0.3, 0.7, 0.3] }} transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }} style={{ transformOrigin: "top" }} />
+          </motion.div>
         </motion.div>
       </motion.div>
     </section>

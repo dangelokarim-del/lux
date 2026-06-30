@@ -7,8 +7,9 @@ import { CursorGlow } from "./anim/CursorGlow";
 import { Magnetic } from "./anim/Magnetic";
 
 export function FinalCTA() {
+  const ease = [0.62, 0.04, 0.2, 1] as const;
   return (
-    <section className="relative overflow-hidden px-5 py-52 sm:py-64">
+    <section className="relative overflow-hidden px-5 py-60 sm:py-72">
       {/* the only accent glow on the page lives here, over a soft spotlight */}
       <div aria-hidden className="spotlight pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px]" />
       <div
@@ -19,21 +20,21 @@ export function FinalCTA() {
       <CursorGlow size={520} color="rgba(46,125,255,0.05)" />
       <div className="relative mx-auto max-w-3xl text-center">
         <motion.h2
-          initial={{ opacity: 0, y: 26, filter: "blur(8px)" }}
+          initial={{ opacity: 0, y: 32, filter: "blur(10px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          className="text-balance text-[clamp(2.5rem,7.5vw,5.5rem)] font-semibold leading-[0.96] tracking-[-0.05em] text-white"
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 1.5, ease }}
+          className="text-balance text-[clamp(2.7rem,7.8vw,5.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-white"
         >
           Bring order to luxury operations.
         </motion.h2>
 
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-12"
+          initial={{ opacity: 0, y: 18, filter: "blur(6px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.9, delay: 0.25, ease }}
+          className="mt-14"
         >
           <Magnetic className="inline-block" strength={0.3}>
             <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
