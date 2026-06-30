@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { Bell } from "lucide-react";
-import { Avatar, SearchTrigger } from "@/components/ui";
+import { SearchTrigger } from "@/components/ui";
+import { UserMenu } from "./UserMenu";
 
 export function Topbar({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
@@ -25,9 +25,9 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
           </span>
         </button>
 
-        <Link href="/" className="ml-1">
-          <Avatar name="Daniela Ruiz" size={36} />
-        </Link>
+        <span className="ml-1">
+          <UserMenu size={36} />
+        </span>
       </div>
     </header>
   );

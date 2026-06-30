@@ -66,13 +66,15 @@ export class SupabaseLiveStore implements OpsGateway {
   }
 
   private async init() {
-    // ensure a session so RLS (authenticated) lets us read/write
-    const { data } = await this.sb.auth.getSession();
-    if (!data.session) await this.sb.auth.signInAnonymously().catch((e) => console.error("[luxa] anon auth", e));
+    // The middleware guarantees an authenticated staff session before any
+    // protected route renders, so we can load straight away. RLS scopes every
+    // read/write to active staff members.
     await this.load();
     this._ready = true;
     this.emit();
     this.openRealtime();
+    // reload when the session changes (sign-in / token refresh / sign-out)
+    this.sb.auth.onAuthStateChange(() => void this.load());
   }
 
   private async load() {

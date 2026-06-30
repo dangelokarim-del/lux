@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Inbox, MessageSquarePlus } from "lucide-react";
-import { Avatar, Card, buttonVariants } from "@/components/ui";
+import { Card, buttonVariants } from "@/components/ui";
+import { UserMenu } from "@/components/app/UserMenu";
 import { LiveNumber } from "@/components/landing/anim/LiveNumber";
 import {
   BOARD_STATUSES,
@@ -140,7 +141,7 @@ export function OperationsDashboard() {
             <MessageSquarePlus size={15} /> <span className="hidden sm:inline">New message</span>
           </button>
           <NotificationBell onOpenTask={setOpenTaskId} />
-          <Avatar name="Daniela Ruiz" size={36} />
+          <UserMenu size={36} />
         </div>
       </header>
 

@@ -1,14 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { LuxaMark, Card, Field, Input, Button } from "@/components/ui";
 import { isLive } from "@/lib/config";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const params = useSearchParams();
+  const next = params.get("next") || "/dashboard";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,12 +34,13 @@ export default function LoginPage() {
 
     try {
       if (isLive()) {
-        // real Supabase email/password auth
+        // real Supabase email/password auth (cookie session → middleware)
         const { browserSupabase } = await import("@/lib/supabase/browser");
         const { error: authError } = await browserSupabase().auth.signInWithPassword({ email, password });
         if (authError) throw authError;
       }
-      router.push("/dashboard");
+      router.replace(next.startsWith("/") ? next : "/dashboard");
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "We couldn't sign you in. Check your details and try again.");
       setLoading(false);
