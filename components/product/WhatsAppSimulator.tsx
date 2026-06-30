@@ -53,7 +53,7 @@ export function WhatsAppSimulator({ open, onClose, onOpenTask }: { open: boolean
     const payload = buildWhatsAppWebhook({ from: guest.phone, body: body.trim(), name: guest.name });
     const [inbound] = parseWhatsAppWebhook(payload);
     const res = await store.ingestWhatsApp(inbound);
-    setResult({ extraction: res.extraction, taskId: res.task.id, code: res.task.code });
+    setResult({ extraction: res.extraction, taskId: res.taskId, code: res.code });
     setPhase("done");
     setBody("");
   }

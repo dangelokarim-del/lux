@@ -28,20 +28,14 @@ import {
 } from "@/lib/domain";
 import { extractor } from "@/lib/services/ai/extractor";
 import type { InboundMessage } from "@/lib/services/whatsapp/inbound";
+import type { IngestOutcome, OpsGateway } from "./gateway";
 
 type Listener = () => void;
 
 const nowIso = () => new Date().toISOString();
 const firstName = (n: string) => n.split(" ")[0];
 
-export interface IngestResult {
-  conversationId: string;
-  messageId: string;
-  extraction: Extraction;
-  task: Task;
-}
-
-export class LuxaStore {
+export class LuxaStore implements OpsGateway {
   private db: Database;
   private listeners = new Set<Listener>();
 
@@ -78,7 +72,7 @@ export class LuxaStore {
    * task → notification → auto-reply. Emits once when the message lands, then
    * again when the task is created (so the UI can show "analysing…").
    */
-  async ingestWhatsApp(inbound: InboundMessage): Promise<IngestResult> {
+  async ingestWhatsApp(inbound: InboundMessage): Promise<IngestOutcome> {
     const guest = this.resolveGuest(inbound);
     const property = this.propertyById(guest.propertyId);
     const conversation = this.resolveConversation(guest);
@@ -163,7 +157,7 @@ export class LuxaStore {
 
     this.notify("new_task", "New request", `${task.title} · ${property?.name ?? "Unknown villa"}`, task.id);
 
-    return { conversationId: conversation.id, messageId: message.id, extraction, task };
+    return { taskId: task.id, code: task.code, extraction, conversationId: conversation.id };
   }
 
   private resolveGuest(inbound: InboundMessage) {

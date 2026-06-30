@@ -1,14 +1,23 @@
 /**
- * The singleton store instance. One per browser session (the demo's "database").
- * Survives client navigations; recreated on full reload.
+ * The active data backend, chosen at runtime:
+ *   • Supabase live store when the project is configured (real DB + realtime);
+ *   • in-memory demo store otherwise (no infra required).
+ * One instance per browser session.
  */
-import { LuxaStore } from "./store";
+import { isLive } from "@/lib/config";
 import { createSeed } from "./seed";
+import { LuxaStore } from "./store";
+import { SupabaseLiveStore } from "./supabase-store";
+import type { OpsGateway } from "./gateway";
 
 declare global {
   // eslint-disable-next-line no-var
-  var __luxaStore: LuxaStore | undefined;
+  var __luxaStore: OpsGateway | undefined;
 }
 
-export const store: LuxaStore = globalThis.__luxaStore ?? new LuxaStore(createSeed());
+function createStore(): OpsGateway {
+  return isLive() ? new SupabaseLiveStore() : new LuxaStore(createSeed());
+}
+
+export const store: OpsGateway = globalThis.__luxaStore ?? createStore();
 if (process.env.NODE_ENV !== "production") globalThis.__luxaStore = store;
