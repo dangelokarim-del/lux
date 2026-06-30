@@ -53,11 +53,12 @@ function sampleTrack(t: number) {
   return { x: k[0].x, y: k[0].y };
 }
 
-// the message lands on the phone (fade in), follows it, then lifts off + fades
-// ("sent") near the end of the clip
+// the message lands on the phone (fade in) once the guest is up and walking with
+// it — the clean, well-tracked phase — follows it, then lifts off + fades
+// ("sent") near the end of the clip. The earlier seated→standing morph is skipped.
 function trackVisibility(t: number) {
-  if (t < 0.4) return 0;
-  if (t < 0.8) return (t - 0.4) / 0.4;
+  if (t < 0.95) return 0;
+  if (t < 1.35) return (t - 0.95) / 0.4;
   if (t < 2.8) return 1;
   if (t < 3.4) return 1 - (t - 2.8) / 0.6;
   return 0;

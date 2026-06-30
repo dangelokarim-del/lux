@@ -71,24 +71,31 @@ export function VillaSpace({ dolly }: { dolly: MotionValue<number> }) {
     <motion.div aria-hidden className="absolute inset-0 overflow-hidden" style={{ scale, y }}>
       <div className="absolute inset-0 bg-[#070809]" />
       <div className="absolute inset-x-[8%] top-0 bottom-[18%] overflow-hidden">
-        <div className="absolute inset-0" style={{ background: "linear-gradient(178deg,#0b1124 0%,#141a2d 30%,#23202f 50%,#3a2a31 64%,#6b4338 75%,#9a5e47 84%)" }} />
-        <div className="absolute inset-x-0" style={{ top: "52%", height: "44%", background: "radial-gradient(44% 40% at 46% 90%, rgba(214,150,104,0.5), rgba(150,96,72,0.16) 46%, transparent 74%)", filter: "blur(3px)" }} />
-        <div className="absolute inset-x-0" style={{ top: "78%", bottom: 0, background: "linear-gradient(180deg,#7b5142 0%,#34323f 26%,#171f2d 64%,#0e1622 100%)" }} />
-        <div className="absolute inset-x-0" style={{ top: "78%", height: "1.5px", background: "linear-gradient(90deg,transparent,rgba(220,170,130,0.55),transparent)" }} />
-        <motion.div className="absolute" style={{ left: "40%", right: "50%", top: "78%", height: "16%", background: "linear-gradient(180deg,rgba(214,150,104,0.45),transparent)", filter: "blur(7px)" }} animate={reduce ? undefined : { opacity: [0.4, 0.7, 0.4], scaleX: [1, 1.1, 1] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} />
+        {/* deep blue-hour sky */}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(178deg,#060a16 0%,#0a1224 30%,#0e1830 50%,#152038 64%,#1d2b46 76%,#2a3a58 86%)" }} />
+        {/* subtle moonlight high in the sky */}
+        <div className="absolute inset-0" style={{ background: "radial-gradient(40% 26% at 72% 8%, rgba(150,180,230,0.12), transparent 62%)" }} />
+        {/* darker ocean + cool horizon glow, with a thin warm residual of the set sun */}
+        <div className="absolute inset-x-0" style={{ top: "52%", height: "44%", background: "radial-gradient(46% 40% at 46% 90%, rgba(110,145,205,0.22), rgba(60,90,150,0.10) 46%, transparent 74%)", filter: "blur(3px)" }} />
+        <div className="absolute inset-x-0" style={{ top: "70%", height: "12%", background: "radial-gradient(34% 60% at 47% 100%, rgba(208,150,110,0.16), transparent 72%)", filter: "blur(4px)" }} />
+        <div className="absolute inset-x-0" style={{ top: "78%", bottom: 0, background: "linear-gradient(180deg,#16223c 0%,#101a30 26%,#0b1322 64%,#070c16 100%)" }} />
+        <div className="absolute inset-x-0" style={{ top: "78%", height: "1.5px", background: "linear-gradient(90deg,transparent,rgba(150,185,230,0.45),transparent)" }} />
+        <motion.div className="absolute" style={{ left: "40%", right: "50%", top: "78%", height: "16%", background: "linear-gradient(180deg,rgba(120,155,210,0.32),transparent)", filter: "blur(7px)" }} animate={reduce ? undefined : { opacity: [0.35, 0.6, 0.35], scaleX: [1, 1.1, 1] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} />
         <Palm className="-left-4 bottom-[2%]" scale={1.45} flip />
         <Palm className="-right-6 bottom-[-1%]" scale={1.65} />
         {[34, 66].map((x) => (
-          <div key={x} className="absolute top-0 bottom-0 w-px" style={{ left: `${x}%`, background: "linear-gradient(180deg,rgba(255,255,255,0.07),transparent)" }} />
+          <div key={x} className="absolute top-0 bottom-0 w-px" style={{ left: `${x}%`, background: "linear-gradient(180deg,rgba(180,205,240,0.06),transparent)" }} />
         ))}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(115deg, rgba(255,255,255,0.05) 0%, transparent 22%, transparent 78%, rgba(255,255,255,0.03) 100%)" }} />
+        {/* warm interior light spilling from the villa centre, through the glass */}
+        <div className="absolute inset-0" style={{ background: "radial-gradient(26% 22% at 50% 62%, rgba(255,190,135,0.12), transparent 72%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(115deg, rgba(180,205,240,0.045) 0%, transparent 22%, transparent 78%, rgba(180,205,240,0.03) 100%)" }} />
       </div>
-      <div className="absolute inset-x-0 bottom-0" style={{ height: "22%", background: "linear-gradient(180deg,rgba(40,34,30,0.0),#070809 70%)" }} />
+      <div className="absolute inset-x-0 bottom-0" style={{ height: "22%", background: "linear-gradient(180deg,rgba(20,28,44,0.0),#070809 70%)" }} />
       {[86, 90, 94].map((t, i) => (
-        <motion.div key={t} className="absolute inset-x-[16%]" style={{ top: `${t}%`, height: "1px", background: "rgba(210,170,140,0.12)" }} animate={reduce ? undefined : { opacity: [0.04, 0.16, 0.04] }} transition={{ duration: 6 + i, repeat: Infinity, ease: "easeInOut", delay: i * 0.7 }} />
+        <motion.div key={t} className="absolute inset-x-[16%]" style={{ top: `${t}%`, height: "1px", background: "rgba(150,180,220,0.10)" }} animate={reduce ? undefined : { opacity: [0.04, 0.14, 0.04] }} transition={{ duration: 6 + i, repeat: Infinity, ease: "easeInOut", delay: i * 0.7 }} />
       ))}
-      <div className="absolute inset-0" style={{ background: "radial-gradient(60% 40% at 12% 4%, rgba(255,184,128,0.10), transparent 56%)" }} />
-      <div className="absolute inset-0" style={{ background: "radial-gradient(64% 36% at 90% 100%, rgba(255,176,120,0.07), transparent 58%)" }} />
+      <div className="absolute inset-0" style={{ background: "radial-gradient(58% 38% at 16% 6%, rgba(150,180,225,0.06), transparent 56%)" }} />
+      <div className="absolute inset-0" style={{ background: "radial-gradient(60% 36% at 88% 100%, rgba(255,184,128,0.06), transparent 58%)" }} />
       <div className="absolute inset-x-0 top-0 h-[16%]" style={{ background: "linear-gradient(180deg,#05060a,transparent)" }} />
       <div className="absolute inset-0" style={{ background: "radial-gradient(118% 118% at 50% 44%, transparent 42%, rgba(4,5,9,0.82) 100%)" }} />
       <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay" style={{ backgroundImage: GRAIN, backgroundSize: "160px 160px" }} />
@@ -373,7 +380,7 @@ export function SpatialExperience() {
           style={{
             opacity: readability,
             background:
-              "radial-gradient(125% 100% at 50% 34%, transparent 38%, rgba(5,6,10,0.55)), linear-gradient(180deg, rgba(5,6,10,0.22), transparent 26%, transparent 64%, rgba(5,6,10,0.5))",
+              "radial-gradient(125% 96% at 50% 40%, transparent 30%, rgba(5,6,10,0.62)), linear-gradient(180deg, rgba(5,6,10,0.28), transparent 24%, rgba(5,6,10,0.14) 50%, transparent 66%, rgba(5,6,10,0.55))",
           }}
         />
         <motion.div aria-hidden className="absolute inset-0 bg-[#070b14]" style={{ opacity: coolOverlay }} />
