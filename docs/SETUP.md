@@ -13,21 +13,51 @@ No code changes are needed to switch — see `.env.example`.
 
 ## 1 · Supabase (Database, Auth, Realtime)
 
-1. Create a project at [supabase.com](https://supabase.com).
-2. **SQL Editor → New query →** paste `supabase/migrations/0001_init.sql` and run it.
-   This creates the enums + 8 tables (Properties, Guests, Conversations, Messages,
-   Tasks, Staff, Notifications, ActivityLog), indexes, RLS policies, the realtime
-   publication, and a seeded Marbella portfolio.
-3. **Authentication → Providers → Anonymous → enable.** The dashboard opens an
-   anonymous session so RLS (which grants `authenticated` full access) works
-   immediately. Swap this for real staff email/OAuth auth before production.
-4. **Project Settings → API** → copy into `.env.local`:
+The schema lives in `supabase/migrations/0001_init.sql` (enums + 8 tables —
+Properties, Guests, Conversations, Messages, Tasks, Staff, Notifications,
+ActivityLog — indexes, `updated_at` trigger, RLS policies, the realtime
+publication, and a seeded, fully-linked Marbella portfolio). It is validated
+end-to-end against PostgreSQL 16, so `supabase db push` and the SQL editor both
+apply it cleanly.
+
+Create a project at [supabase.com](https://supabase.com), then deploy the schema
+**either** way:
+
+**A · Supabase CLI (recommended)**
+
+```bash
+supabase link --project-ref <your-project-ref>   # or: npm run db:link
+supabase db push                                  # or: npm run db:push
+```
+
+`supabase/config.toml` is committed, so the CLI applies the migration and the
+project settings (anonymous sign-ins are already enabled there).
+
+**B · SQL editor**
+
+**SQL Editor → New query →** paste `supabase/migrations/0001_init.sql` and run it.
+
+Then:
+
+1. **Authentication → Providers → Anonymous → enable** (already `true` in
+   `config.toml`). The dashboard opens an anonymous session so RLS (which grants
+   `authenticated` full access) works immediately. Swap for real staff
+   email/OAuth auth before production — the login page already calls
+   `signInWithPassword` in live mode.
+2. **Project Settings → API** → copy into `.env.local`:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY` (server-only)
 
-Realtime is already enabled for all tables by the migration, so every dashboard
+Realtime is already enabled for all 8 tables by the migration, so every dashboard
 updates instantly when any row changes.
+
+### Local development (optional)
+
+With Docker running, `npm run db:start` boots the full Supabase stack locally and
+applies the migration; `npm run db:reset` reapplies it from scratch;
+`npm run db:types` regenerates `lib/supabase/database.types.ts` from the live
+schema. Point `.env.local` at the URL/keys that `supabase start` prints.
 
 ## 2 · OpenAI (message → structured task)
 

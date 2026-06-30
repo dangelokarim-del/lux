@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:link": "supabase link",
+    "db:push": "supabase db push",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:types": "supabase gen types typescript --linked --schema public > lib/supabase/database.types.ts"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "^1.4.0",

@@ -208,3 +208,28 @@ update tasks set completed_at = updated_at where status = 'completed';
 
 insert into notifications (kind, title, body, task_id, read, created_at)
 select 'new_task','New request','Private chef — dinner for 6 · Villa Sierra', id, false, now() - interval '54 min' from tasks where code = 'REQ-1040';
+
+-- Conversations (WhatsApp threads) so the AI inbox + activity feed are alive on day one
+insert into conversations (id, channel, property_id, guest_id, created_at, last_message_at) values
+  ('44444444-4444-4444-4444-444444444401','whatsapp','11111111-1111-1111-1111-111111111102','22222222-2222-2222-2222-222222222202', now() - interval '40 min', now() - interval '38 min'),
+  ('44444444-4444-4444-4444-444444444402','whatsapp','11111111-1111-1111-1111-111111111101','22222222-2222-2222-2222-222222222201', now() - interval '5 hour',  now() - interval '4 hour');
+
+-- Messages — inbound guest messages are linked to the task the AI created from them
+insert into messages (id, conversation_id, direction, channel, body, author, task_id, created_at) values
+  ('55555555-5555-5555-5555-555555555501','44444444-4444-4444-4444-444444444401','inbound','whatsapp','Bonjour, can you arrange an airport transfer for 4 this evening?','Sophie Laurent',(select id from tasks where code='REQ-1041'), now() - interval '40 min'),
+  ('55555555-5555-5555-5555-555555555502','44444444-4444-4444-4444-444444444401','outbound','whatsapp','Of course Sophie — booking a transfer for 4 now. I''ll confirm the driver shortly.','LUXA',null, now() - interval '38 min'),
+  ('55555555-5555-5555-5555-555555555503','44444444-4444-4444-4444-444444444402','inbound','whatsapp','Could we book a couples massage at the villa this afternoon?','James Whitmore',(select id from tasks where code='REQ-1035'), now() - interval '5 hour'),
+  ('55555555-5555-5555-5555-555555555504','44444444-4444-4444-4444-444444444402','outbound','whatsapp','Absolutely — I''ve reserved a couples massage for 17:00.','LUXA',null, now() - interval '4 hour');
+
+-- Link the AI-sourced tasks back to their originating message + conversation
+update tasks set source_message_id='55555555-5555-5555-5555-555555555501', conversation_id='44444444-4444-4444-4444-444444444401' where code='REQ-1041';
+update tasks set source_message_id='55555555-5555-5555-5555-555555555503', conversation_id='44444444-4444-4444-4444-444444444402' where code='REQ-1035';
+
+-- Activity timeline for the transfer request (created → assigned → staff note)
+insert into activity_log (task_id, actor_id, actor_name, type, body, is_system, created_at) values
+  ((select id from tasks where code='REQ-1041'), null, 'LUXA AI', 'created', 'Created from WhatsApp · Concierge · Transport', true, now() - interval '38 min'),
+  ((select id from tasks where code='REQ-1041'), null, 'System', 'assignment', 'Assigned to Lucía Fernández', true, now() - interval '36 min'),
+  ((select id from tasks where code='REQ-1041'), '33333333-3333-3333-3333-333333333305', 'Lucía Fernández', 'note', 'Mercedes V-Class booked, driver Pablo. ETA 19:45.', false, now() - interval '12 min');
+
+insert into notifications (kind, title, body, task_id, read, created_at)
+select 'assignment','Task assigned','Airport transfer — 4 guests → Lucía', id, true, now() - interval '36 min' from tasks where code = 'REQ-1041';
