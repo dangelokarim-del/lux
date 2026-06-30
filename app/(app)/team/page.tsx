@@ -1,9 +1,23 @@
+"use client";
+
+import { useMemo } from "react";
 import { Topbar } from "@/components/app/Topbar";
-import { Card, Avatar, PresenceTag } from "@/components/ui";
-import { team } from "@/lib/data";
+import { Card, Avatar, StatusPill } from "@/components/ui";
+import { departmentMeta, presenceMeta, statusMeta } from "@/lib/domain";
+import { useDatabase } from "@/lib/store/hooks";
 
 export default function TeamPage() {
-  const available = team.filter((m) => m.presence === "Available").length;
+  const db = useDatabase();
+
+  const team = useMemo(
+    () =>
+      db.staff.map((s) => ({
+        ...s,
+        load: db.tasks.filter((t) => t.assigneeId === s.id && statusMeta[t.status].open).length,
+      })),
+    [db.staff, db.tasks]
+  );
+  const available = team.filter((m) => m.presence === "available").length;
 
   return (
     <>
@@ -14,15 +28,17 @@ export default function TeamPage() {
             <Card key={m.id} hover className="p-5">
               <div className="flex items-start justify-between">
                 <Avatar name={m.name} size={48} />
-                <PresenceTag presence={m.presence} />
+                <StatusPill tone={presenceMeta[m.presence].tone} pulse={m.presence === "available"}>
+                  {presenceMeta[m.presence].label}
+                </StatusPill>
               </div>
               <div className="mt-4 text-[15px] font-medium">{m.name}</div>
               <div className="text-[13px] text-ink-3">{m.role}</div>
 
               <div className="mt-4 flex items-center justify-between border-t border-line pt-4">
-                <span className="text-[12px] text-ink-3">{m.department}</span>
+                <span className="text-[12px] text-ink-3">{departmentMeta[m.department].label}</span>
                 <span className="text-[12px] text-ink-2">
-                  <span className="font-medium text-ink">{m.load}</span> open tasks
+                  <span className="font-medium text-ink tabular-nums">{m.load}</span> open {m.load === 1 ? "task" : "tasks"}
                 </span>
               </div>
             </Card>

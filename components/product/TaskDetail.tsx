@@ -16,6 +16,7 @@ import {
   type TaskStatus,
 } from "@/lib/domain";
 import { useConversation, useLuxa, useNotesForTask, useStaff, useTask } from "@/lib/store/hooks";
+import { useToast } from "./Toast";
 import { SlideOver } from "./SlideOver";
 import { clockTime, timeAgo } from "./format";
 
@@ -24,6 +25,7 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
   const store = useLuxa();
   const staff = useStaff();
   const notes = useNotesForTask(taskId);
+  const toast = useToast();
   const { messages } = useConversation(task?.conversationId ?? null);
   const [noteDraft, setNoteDraft] = useState("");
   const [assignOpen, setAssignOpen] = useState(false);
@@ -40,6 +42,16 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
     setNoteDraft("");
   }
 
+  function toggleComplete() {
+    if (!task) return;
+    if (completed) {
+      store.setTaskStatus(task.id, "in_progress");
+    } else {
+      store.setTaskStatus(task.id, "completed");
+      toast.show({ kind: "success", title: "Request completed", body: `${task.code} · ${task.title}` });
+    }
+  }
+
   return (
     <SlideOver
       open={!!task}
@@ -50,7 +62,7 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
       footer={
         task && (
           <button
-            onClick={() => store.setTaskStatus(task.id, completed ? "in_progress" : "completed")}
+            onClick={toggleComplete}
             className={buttonVariants({ variant: completed ? "secondary" : "accent", size: "md", className: "w-full justify-center" })}
           >
             {completed ? "Reopen task" : (<><Check size={16} /> Mark completed</>)}

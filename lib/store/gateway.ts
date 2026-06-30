@@ -17,6 +17,8 @@ export interface OpsGateway {
   /** realtime subscription surface (React via useSyncExternalStore) */
   subscribe(cb: () => void): () => void;
   getSnapshot(): Database;
+  /** false until the initial dataset has loaded (drives loading skeletons) */
+  ready(): boolean;
 
   /** resolved lookups used across the UI */
   propertyById(id: string | null): Property | null;

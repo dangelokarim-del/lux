@@ -54,6 +54,7 @@ export class LuxaStore implements OpsGateway {
     return () => this.listeners.delete(cb);
   };
   getSnapshot = (): Database => this.db;
+  ready = (): boolean => true;
 
   private commit(patch: Partial<Database>) {
     this.db = { ...this.db, ...patch };

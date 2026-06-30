@@ -45,6 +45,7 @@ export class SupabaseLiveStore implements OpsGateway {
   private db: Database = EMPTY;
   private listeners = new Set<() => void>();
   private sb = browserSupabase();
+  private _ready = false;
 
   constructor() {
     if (typeof window !== "undefined") void this.init();
@@ -55,6 +56,7 @@ export class SupabaseLiveStore implements OpsGateway {
     return () => this.listeners.delete(cb);
   };
   getSnapshot = () => this.db;
+  ready = () => this._ready;
   private emit() {
     this.listeners.forEach((l) => l());
   }
@@ -68,6 +70,8 @@ export class SupabaseLiveStore implements OpsGateway {
     const { data } = await this.sb.auth.getSession();
     if (!data.session) await this.sb.auth.signInAnonymously().catch((e) => console.error("[luxa] anon auth", e));
     await this.load();
+    this._ready = true;
+    this.emit();
     this.openRealtime();
   }
 
@@ -118,15 +122,15 @@ export class SupabaseLiveStore implements OpsGateway {
   }
 
   /* ----------------------------- staff actions --------------------------- */
+  // every action patches the local snapshot first (instant UI), then persists;
+  // realtime echoes the authoritative row, and a failed write reloads to reconcile.
   setTaskStatus(taskId: string, status: TaskStatus) {
     const task = this.db.tasks.find((t) => t.id === taskId);
     if (!task || task.status === status) return;
+    const now = new Date().toISOString();
+    this.patch({ tasks: this.db.tasks.map((t) => (t.id === taskId ? { ...t, status, completedAt: status === "completed" ? now : null, updatedAt: now } : t)) });
     void this.run(async () => {
-      await this.sb.from("tasks").update({
-        status,
-        completed_at: status === "completed" ? new Date().toISOString() : null,
-        updated_at: new Date().toISOString(),
-      }).eq("id", taskId);
+      await this.sb.from("tasks").update({ status, completed_at: status === "completed" ? now : null, updated_at: now }).eq("id", taskId);
       await this.sb.from("activity_log").insert({ task_id: taskId, actor_name: "You", type: "status_change", is_system: true, body: `Status → ${statusMeta[status].label}` });
       await this.sb.from("notifications").insert({ kind: "status_change", title: "Status updated", body: `${task.title} → ${statusMeta[status].label}`, task_id: taskId });
     });
@@ -136,8 +140,10 @@ export class SupabaseLiveStore implements OpsGateway {
     const task = this.db.tasks.find((t) => t.id === taskId);
     if (!task) return;
     const staff = this.staffById(staffId);
+    const now = new Date().toISOString();
+    this.patch({ tasks: this.db.tasks.map((t) => (t.id === taskId ? { ...t, assigneeId: staffId, updatedAt: now } : t)) });
     void this.run(async () => {
-      await this.sb.from("tasks").update({ assignee_id: staffId, updated_at: new Date().toISOString() }).eq("id", taskId);
+      await this.sb.from("tasks").update({ assignee_id: staffId, updated_at: now }).eq("id", taskId);
       await this.sb.from("activity_log").insert({ task_id: taskId, actor_name: "You", type: "assignment", is_system: true, body: staff ? `Assigned to ${staff.name}` : "Unassigned" });
       if (staff) await this.sb.from("notifications").insert({ kind: "assignment", title: "Task assigned", body: `${task.title} → ${staff.name}`, task_id: taskId });
     });
@@ -146,24 +152,34 @@ export class SupabaseLiveStore implements OpsGateway {
   addNote(taskId: string, body: string, author: { id?: string; name: string }) {
     const text = body.trim();
     if (!text) return;
+    const now = new Date().toISOString();
+    const optimistic = { id: `tmp_${Math.random().toString(36).slice(2)}`, taskId, authorId: author.id ?? null, authorName: author.name, body: text, createdAt: now, system: false };
+    this.patch({ notes: [...this.db.notes, optimistic] });
     void this.run(async () => {
       await this.sb.from("activity_log").insert({ task_id: taskId, actor_id: author.id ?? null, actor_name: author.name, type: "note", is_system: false, body: text });
-      await this.sb.from("tasks").update({ updated_at: new Date().toISOString() }).eq("id", taskId);
+      await this.sb.from("tasks").update({ updated_at: now }).eq("id", taskId);
     });
   }
 
   markNotificationRead(id: string) {
+    this.patch({ notifications: this.db.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) });
     void this.run(() => this.sb.from("notifications").update({ read: true }).eq("id", id));
   }
   markAllNotificationsRead() {
+    this.patch({ notifications: this.db.notifications.map((n) => ({ ...n, read: true })) });
     void this.run(() => this.sb.from("notifications").update({ read: true }).eq("read", false));
+  }
+
+  private patch(p: Partial<Database>) {
+    this.set({ ...this.db, ...p });
   }
 
   private async run(fn: () => Promise<unknown> | unknown) {
     try {
       await fn();
     } catch (e) {
-      console.error("[luxa] write failed", e);
+      console.error("[luxa] write failed — reconciling", e);
+      await this.load();
     }
   }
 }

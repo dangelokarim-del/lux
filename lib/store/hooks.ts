@@ -19,6 +19,11 @@ export function useDatabase(): Database {
   return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 }
 
+/** false until the initial dataset has loaded — drives loading skeletons */
+export function useReady(): boolean {
+  return useSyncExternalStore(store.subscribe, store.ready, store.ready);
+}
+
 /** the store's action surface — stable identity, safe to use in deps */
 export function useLuxa() {
   return store;

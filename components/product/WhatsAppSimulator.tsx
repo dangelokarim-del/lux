@@ -13,6 +13,7 @@ import {
 } from "@/lib/domain";
 import { useDatabase, useGuests, useLuxa } from "@/lib/store/hooks";
 import { buildWhatsAppWebhook, parseWhatsAppWebhook } from "@/lib/services/whatsapp/inbound";
+import { useToast } from "./Toast";
 import { SlideOver } from "./SlideOver";
 import { clockTime } from "./format";
 
@@ -30,6 +31,7 @@ export function WhatsAppSimulator({ open, onClose, onOpenTask }: { open: boolean
   const db = useDatabase();
   const guests = useGuests();
   const store = useLuxa();
+  const toast = useToast();
 
   const occupants = useMemo(() => guests.filter((g) => g.propertyId), [guests]);
   const [guestId, setGuestId] = useState(occupants[0]?.id ?? "");
@@ -50,12 +52,21 @@ export function WhatsAppSimulator({ open, onClose, onOpenTask }: { open: boolean
     if (!guest || !body.trim() || phase === "analyzing") return;
     setPhase("analyzing");
     setResult(null);
-    const payload = buildWhatsAppWebhook({ from: guest.phone, body: body.trim(), name: guest.name });
-    const [inbound] = parseWhatsAppWebhook(payload);
-    const res = await store.ingestWhatsApp(inbound);
-    setResult({ extraction: res.extraction, taskId: res.taskId, code: res.code });
-    setPhase("done");
-    setBody("");
+    try {
+      const payload = buildWhatsAppWebhook({ from: guest.phone, body: body.trim(), name: guest.name });
+      const [inbound] = parseWhatsAppWebhook(payload);
+      const res = await store.ingestWhatsApp(inbound);
+      setResult({ extraction: res.extraction, taskId: res.taskId, code: res.code });
+      setPhase("done");
+      setBody("");
+    } catch (err) {
+      setPhase("compose");
+      toast.show({
+        kind: "error",
+        title: "Couldn't process the message",
+        body: err instanceof Error ? err.message : "Please try again.",
+      });
+    }
   }
 
   function reset() {
@@ -65,7 +76,7 @@ export function WhatsAppSimulator({ open, onClose, onOpenTask }: { open: boolean
   }
 
   return (
-    <SlideOver open={open} onClose={onClose} width={480} subtitle="WhatsApp · inbound" title="Guest message simulator">
+    <SlideOver open={open} onClose={onClose} width={480} subtitle="WhatsApp · inbound" title="New guest message">
       <div className="flex h-full flex-col">
         {/* guest selector */}
         <div className="flex items-center gap-3 border-b border-line px-5 py-3">
@@ -85,7 +96,14 @@ export function WhatsAppSimulator({ open, onClose, onOpenTask }: { open: boolean
         {/* chat thread */}
         <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto bg-[#070809] px-4 py-4">
           {thread.length === 0 && phase === "compose" && (
-            <p className="mt-6 text-center text-[12.5px] text-ink-4">No messages yet — send one to see LUXA work.</p>
+            <div className="mt-10 flex flex-col items-center gap-2 px-6 text-center">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-[#25D366]/12 text-[#43d178]">
+                <Sparkles size={16} />
+              </span>
+              <p className="text-[12.5px] leading-relaxed text-ink-4">
+                Send a message as {guest?.name?.split(" ")[0] ?? "the guest"} — LUXA reads it and creates a structured request instantly.
+              </p>
+            </div>
           )}
           {thread.map((m) => (
             <Bubble key={m.id} side={m.direction === "inbound" ? "left" : "right"} time={clockTime(m.createdAt)}>
