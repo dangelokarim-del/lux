@@ -46,22 +46,24 @@ export function FinalCTA() {
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.9, delay: 0.35, ease }}
-          className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row"
+          className="mt-12 flex items-center justify-center"
         >
           <Magnetic className="inline-block" strength={0.3}>
-            <Link href="/login" className={`${buttonVariants({ variant: "accent", size: "lg" })} transition-transform duration-300 hover:-translate-y-0.5`}>
-              Book a Demo
-            </Link>
-          </Magnetic>
-          <Link
-            href="/login"
-            className="group inline-flex h-12 items-center justify-center gap-2.5 rounded-[var(--radius-control)] border border-white/15 bg-white/[0.03] px-6 text-[15px] font-medium text-white/80 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/25 hover:text-white"
-          >
-            <span className="grid h-5 w-5 place-items-center rounded-full border border-white/30 transition-colors group-hover:border-white/55">
-              <span className="ml-[1.5px] h-0 w-0 border-y-[3.5px] border-l-[6px] border-y-transparent border-l-white/75" />
+            <span className="relative inline-block">
+              {/* a stronger, calm blue glow behind the single primary CTA */}
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -inset-5 -z-10 rounded-full opacity-90"
+                style={{ background: "radial-gradient(closest-side, rgba(46,125,255,0.5), transparent 72%)", filter: "blur(6px)" }}
+              />
+              <Link
+                href="/login"
+                className={`${buttonVariants({ variant: "accent", size: "lg" })} h-[54px] px-9 text-[16px] shadow-[0_18px_50px_-12px_rgba(46,125,255,0.6)] transition-transform duration-300 hover:-translate-y-0.5`}
+              >
+                Book a Demo
+              </Link>
             </span>
-            Watch Live Demo
-          </Link>
+          </Magnetic>
         </motion.div>
       </div>
     </section>
