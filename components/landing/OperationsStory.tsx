@@ -14,7 +14,7 @@ import { LiveNumber } from "./anim/LiveNumber";
 const ease = [0.62, 0.04, 0.2, 1] as const;
 
 // top step captions (empty = the beat carries its own heading)
-const STEP = ["Incoming request", "", "Live dashboard"];
+const STEP = ["", "Live dashboard"];
 
 const TIMELINE = [
   { t: "Guest Message", d: "A request arrives by WhatsApp." },
@@ -23,23 +23,6 @@ const TIMELINE = [
   { t: "Assigned", d: "Routed to the right team." },
   { t: "Completed", d: "Tracked and confirmed." },
 ];
-
-/* the WhatsApp request — large and readable, the main focus of its beat */
-function WhatsAppCard() {
-  return (
-    <div className="glass edge-light relative w-full rounded-[22px] border border-white/12 bg-[#0b0d12]/75 px-6 py-5 shadow-[0_40px_100px_-40px_rgba(0,0,0,0.9)] backdrop-blur-xl">
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#43d178]">
-          <span className="h-2 w-2 rounded-full bg-[#25D366]" /> WhatsApp
-        </span>
-        <span className="text-[11px] text-white/40">Villa Ocean · now</span>
-      </div>
-      <p className="mt-3 text-[clamp(1.05rem,2.4vw,1.5rem)] font-medium leading-snug tracking-[-0.01em] text-white">
-        Hi, the AC is not working in the master bedroom.
-      </p>
-    </div>
-  );
-}
 
 /* the "finished operation" — a minimal, centered vertical timeline. Steps rise
    in sequence along one continuous electric-blue rail. */
@@ -233,44 +216,45 @@ function Dashboard({ active }: { active: boolean }) {
 }
 
 /* ------------------------------------------------------------------ *
- *  OPERATIONS STORY — one continuous cinematic beat: the WhatsApp request
- *  arrives, resolves through a minimal vertical timeline ("a finished
- *  operation"), then lands live in the operations dashboard in real time.
- *  Dark and cinematic; electric blue is the connective thread throughout.
+ *  OPERATIONS STORY — two connected beats in one continuous cinematic scroll:
+ *  the "finished operation" vertical timeline resolves, then the live operations
+ *  dashboard fades in directly beneath it and receives the request in real time.
+ *  Dark throughout; the electric-blue line carries straight into the dashboard.
  * ------------------------------------------------------------------ */
 export function OperationsStory() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const [beat, setBeat] = useState(0);
 
+  // 0 = timeline · 1 = live dashboard
   useMotionValueEvent(p, "change", (v) => {
-    setBeat(v < 0.3 ? 0 : v < 0.64 ? 1 : 2);
+    setBeat(v < 0.46 ? 0 : 1);
   });
 
   return (
-    <section ref={ref} id="product" className="relative h-[440vh]">
+    <section ref={ref} id="product" className="relative h-[340vh]">
       <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
-        {/* soft electric key light grows as the system comes alive */}
-        <motion.div aria-hidden className="pointer-events-none absolute inset-0" animate={{ opacity: beat === 2 ? 1 : beat === 0 ? 0 : 0.5 }} transition={{ duration: 1.2, ease }} style={{ background: "radial-gradient(60% 50% at 50% 48%, rgba(46,125,255,0.06), transparent 70%)" }} />
+        {/* soft electric key light grows as the dashboard comes alive */}
+        <motion.div aria-hidden className="pointer-events-none absolute inset-0" animate={{ opacity: beat === 1 ? 1 : 0.4 }} transition={{ duration: 1.2, ease }} style={{ background: "radial-gradient(60% 50% at 50% 48%, rgba(46,125,255,0.06), transparent 70%)" }} />
 
-        {/* a single, quiet electric-blue thread connecting the beats — dimmed on
-            the timeline beat, which carries its own (brighter) rail */}
+        {/* the electric-blue thread — present through both beats so the line runs
+            continuously from the timeline straight into the dashboard */}
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 h-[58vh] w-px -translate-x-1/2 -translate-y-1/2"
-          animate={{ opacity: beat === 2 ? 0.12 : beat === 1 ? 0.05 : 0.3 }}
+          className="pointer-events-none absolute left-1/2 top-1/2 h-[62vh] w-px -translate-x-1/2 -translate-y-1/2"
+          animate={{ opacity: beat === 1 ? 0.18 : 0.26 }}
           transition={{ duration: 1, ease }}
-          style={{ background: "linear-gradient(180deg, transparent, rgba(46,125,255,0.55) 26%, rgba(46,125,255,0.55) 74%, transparent)" }}
+          style={{ background: "linear-gradient(180deg, transparent, rgba(46,125,255,0.55) 22%, rgba(46,125,255,0.55) 78%, transparent)" }}
         />
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 h-[58vh] w-[3px] -translate-x-1/2 -translate-y-1/2 blur-[7px]"
-          animate={{ opacity: beat === 2 ? 0.08 : beat === 1 ? 0.04 : 0.2 }}
+          className="pointer-events-none absolute left-1/2 top-1/2 h-[62vh] w-[3px] -translate-x-1/2 -translate-y-1/2 blur-[7px]"
+          animate={{ opacity: beat === 1 ? 0.12 : 0.16 }}
           transition={{ duration: 1, ease }}
           style={{ background: "linear-gradient(180deg, transparent, rgba(46,125,255,0.5), transparent)" }}
         />
 
-        {/* step caption (hidden on the timeline beat) */}
+        {/* step caption (hidden on the timeline beat, which carries its heading) */}
         <div className="absolute left-1/2 top-[12%] -translate-x-1/2 text-center">
           <AnimatePresence mode="wait">
             {STEP[beat] && (
@@ -288,31 +272,23 @@ export function OperationsStory() {
           </AnimatePresence>
         </div>
 
-        {/* BEAT 0 — the WhatsApp request, large */}
-        <motion.div
-          className="pointer-events-none absolute left-1/2 top-1/2 w-[min(560px,90vw)] -translate-x-1/2 -translate-y-1/2"
-          animate={{ opacity: beat === 0 ? 1 : 0, y: beat === 0 ? 0 : -30, scale: beat === 0 ? 1 : 0.97, filter: beat === 0 ? "blur(0px)" : "blur(6px)" }}
-          transition={{ duration: 1.05, ease }}
-        >
-          <WhatsAppCard />
-        </motion.div>
-
-        {/* BEAT 1 — "A finished operation out." vertical timeline */}
+        {/* BEAT 0 — "A finished operation out." vertical timeline */}
         <motion.div
           className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-          animate={{ opacity: beat === 1 ? 1 : 0, y: beat === 1 ? 0 : beat < 1 ? 30 : -30, scale: beat === 1 ? 1 : 0.97, filter: beat === 1 ? "blur(0px)" : "blur(6px)" }}
+          animate={{ opacity: beat === 0 ? 1 : 0, y: beat === 0 ? 0 : -34, scale: beat === 0 ? 1 : 0.97, filter: beat === 0 ? "blur(0px)" : "blur(6px)" }}
           transition={{ duration: 1.05, ease }}
         >
-          <OperationTimeline active={beat === 1} />
+          <OperationTimeline active={beat === 0} />
         </motion.div>
 
-        {/* BEAT 2 — the live operations dashboard receiving the request */}
+        {/* BEAT 1 — the live operations dashboard, fading in directly beneath the
+            timeline and receiving the request in real time */}
         <motion.div
           className="pointer-events-none absolute left-1/2 top-1/2 w-[min(900px,94vw)] -translate-x-1/2 -translate-y-1/2"
-          animate={{ opacity: beat === 2 ? 1 : 0, y: beat === 2 ? 0 : 30 }}
-          transition={{ duration: 1.05, ease }}
+          animate={{ opacity: beat === 1 ? 1 : 0, y: beat === 1 ? 0 : 34 }}
+          transition={{ duration: 1.15, ease }}
         >
-          <Dashboard active={beat === 2} />
+          <Dashboard active={beat === 1} />
         </motion.div>
       </div>
     </section>
