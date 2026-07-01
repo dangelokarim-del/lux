@@ -13,8 +13,16 @@ import { LiveNumber } from "./anim/LiveNumber";
 // keynote motion language — smooth ease-in-out cubic
 const ease = [0.62, 0.04, 0.2, 1] as const;
 
-const CHIPS = ["AC Issue", "Master Bedroom", "Maintenance", "High Priority"];
-const STEP = ["Incoming request", "LUXA understands", "Task created", "Live operations"];
+// top step captions (empty = the beat carries its own heading)
+const STEP = ["Incoming request", "", "Live dashboard"];
+
+const TIMELINE = [
+  { t: "Guest Message", d: "A request arrives by WhatsApp." },
+  { t: "AI understands", d: "Intent, villa and urgency parsed." },
+  { t: "Task Created", d: "Structured automatically." },
+  { t: "Assigned", d: "Routed to the right team." },
+  { t: "Completed", d: "Tracked and confirmed." },
+];
 
 /* the WhatsApp request — large and readable, the main focus of its beat */
 function WhatsAppCard() {
@@ -33,51 +41,40 @@ function WhatsAppCard() {
   );
 }
 
-/* the structured task LUXA builds from the message — High Priority lands after */
-function TaskCard({ active }: { active: boolean }) {
-  const [hp, setHp] = useState(false);
-  useEffect(() => {
-    if (!active) {
-      setHp(false);
-      return;
-    }
-    const t = setTimeout(() => setHp(true), 1050);
-    return () => clearTimeout(t);
-  }, [active]);
-
+/* the "finished operation" — a minimal, centered vertical timeline. Steps rise
+   in sequence along one continuous electric-blue rail. */
+function OperationTimeline({ active }: { active: boolean }) {
   return (
-    <div className="glass edge-light relative w-full overflow-hidden rounded-[20px] border border-[#2E7DFF]/20 bg-[#2E7DFF]/[0.04] px-5 py-4 shadow-[0_44px_100px_-40px_rgba(0,0,0,0.88)] backdrop-blur-xl">
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8fbcff]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#2E7DFF]" /> LUXA · Task
-        </span>
-        <AnimatePresence>
-          {hp && (
-            <motion.span
-              initial={{ opacity: 0, scale: 0.82, filter: "blur(4px)" }}
-              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-              transition={{ duration: 0.7, ease }}
-              className="rounded-full border border-[#2E7DFF]/30 bg-[#2E7DFF]/15 px-2.5 py-0.5 text-[10px] font-semibold text-[#8fbcff]"
-            >
-              High Priority
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </div>
+    <div className="w-[min(460px,88vw)]">
+      <h3 className="text-center text-[clamp(1.9rem,5vw,3.1rem)] font-semibold leading-[1.03] tracking-[-0.035em] text-white [text-shadow:0_2px_40px_rgba(0,0,0,0.6)]">
+        A finished operation out.
+      </h3>
 
-      <div className="mt-2.5 text-[clamp(1.2rem,2.6vw,1.6rem)] font-semibold tracking-[-0.02em] text-white">AC — Master Bedroom</div>
-      <div className="mt-1 text-[13px] text-white/45">Villa Ocean</div>
-
-      <div className="mt-4 flex items-center justify-between border-t border-white/[0.08] pt-4">
-        <span className="flex items-center gap-2.5 text-[13.5px] text-white/85">
-          <span className="grid h-7 w-7 place-items-center rounded-full border border-white/15 bg-white/[0.06] text-[10px] text-white/75">CN</span>
-          Assigned to Carlos
-        </span>
-        <span className="flex items-center gap-2 text-[12px] text-white/45">
-          Status
-          <span className="rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/12 px-2.5 py-1 text-[11px] font-medium text-[#8fbcff]">In Progress</span>
-        </span>
-      </div>
+      <ol className="relative mx-auto mt-10 max-w-[380px] space-y-5">
+        {/* the rail — the electric-blue thread, now the spine of the timeline */}
+        <div
+          aria-hidden
+          className="absolute left-[12px] top-1.5 bottom-1.5 w-px"
+          style={{ background: "linear-gradient(180deg, transparent, rgba(46,125,255,0.55) 10%, rgba(46,125,255,0.55) 90%, transparent)" }}
+        />
+        {TIMELINE.map((s, i) => (
+          <motion.li
+            key={s.t}
+            className="relative flex gap-4"
+            initial={false}
+            animate={{ opacity: active ? 1 : 0, x: active ? 0 : -10, filter: active ? "blur(0px)" : "blur(6px)" }}
+            transition={{ duration: 0.65, delay: active ? 0.12 + i * 0.16 : 0, ease }}
+          >
+            <span className="relative z-10 mt-0.5 grid h-[25px] w-[25px] shrink-0 place-items-center rounded-full border border-[#2E7DFF]/35 bg-[#080c14]">
+              <span className="h-[7px] w-[7px] rounded-full bg-[#2E7DFF] shadow-[0_0_8px_rgba(46,125,255,0.8)]" />
+            </span>
+            <div className="pt-0.5">
+              <div className="text-[15px] font-medium leading-tight text-white">{s.t}</div>
+              <div className="mt-0.5 text-[13px] leading-snug text-white/50">{s.d}</div>
+            </div>
+          </motion.li>
+        ))}
+      </ol>
     </div>
   );
 }
@@ -109,8 +106,9 @@ function Cell({ active, index, label, value, accent, live }: {
   );
 }
 
-/* the live operations dashboard — assembles, then behaves like a live system:
-   Open 15→16, Urgent 02→03, then the new AC row slides in */
+/* the live operations dashboard — receives the WhatsApp request in real time:
+   Open 15→16, Urgent 02→03 update, then the new AC row slides in (assigned,
+   In Progress) with a soft blue pulse. */
 function Dashboard({ active }: { active: boolean }) {
   const reduce = useReducedMotion();
   const [phase, setPhase] = useState(0); // 0 assemble · 1 numbers bump · 2 new row
@@ -120,8 +118,8 @@ function Dashboard({ active }: { active: boolean }) {
       setPhase(0);
       return;
     }
-    const t1 = setTimeout(() => setPhase(1), 1600);
-    const t2 = setTimeout(() => setPhase(2), 2700);
+    const t1 = setTimeout(() => setPhase(1), 1500);
+    const t2 = setTimeout(() => setPhase(2), 2500);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -176,7 +174,7 @@ function Dashboard({ active }: { active: boolean }) {
               <span className="text-[10px] text-white/30">Updated just now</span>
             </motion.div>
 
-            {/* the new AC row — slides in as the live system reacts */}
+            {/* the new AC row — slides in as the live system reacts, with a blue pulse */}
             <AnimatePresence>
               {showAC && (
                 <motion.div
@@ -185,9 +183,19 @@ function Dashboard({ active }: { active: boolean }) {
                   animate={{ opacity: 1, height: 52, marginBottom: 4, filter: "blur(0px)" }}
                   exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                   transition={{ duration: 0.9, ease }}
-                  className="flex items-center justify-between overflow-hidden rounded-xl px-3.5"
+                  className="relative flex items-center justify-between overflow-hidden rounded-xl px-3.5"
                   style={{ background: "rgba(46,125,255,0.05)", boxShadow: "inset 0 0 0 1px rgba(46,125,255,0.28)" }}
                 >
+                  {!reduce && (
+                    <motion.span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 rounded-xl"
+                      initial={{ opacity: 0.55 }}
+                      animate={{ opacity: 0 }}
+                      transition={{ duration: 1.8, ease: "easeOut" }}
+                      style={{ boxShadow: "inset 0 0 0 1px rgba(46,125,255,0.8), 0 0 24px rgba(46,125,255,0.35)" }}
+                    />
+                  )}
                   <div className="min-w-0">
                     <div className="truncate text-[13px] font-medium text-white">AC — Master Bedroom</div>
                     <div className="flex items-center gap-1.5 text-[11px] text-white/45">
@@ -197,7 +205,10 @@ function Dashboard({ active }: { active: boolean }) {
                       Carlos
                     </div>
                   </div>
-                  <span className="shrink-0 rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/12 px-2 py-0.5 text-[10px] font-medium text-[#8fbcff]">In Progress</span>
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    <span className="rounded-full border border-[#f5b53d]/30 bg-[#f5b53d]/10 px-2 py-0.5 text-[10px] font-medium text-[#f0b64e]">High</span>
+                    <span className="rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/12 px-2 py-0.5 text-[10px] font-medium text-[#8fbcff]">In Progress</span>
+                  </span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -222,10 +233,10 @@ function Dashboard({ active }: { active: boolean }) {
 }
 
 /* ------------------------------------------------------------------ *
- *  OPERATIONS STORY — after the problem, the WhatsApp request becomes
- *  intelligence: the message is read large, parsed into structured data,
- *  becomes a task, then folds into a live operations dashboard. Dark and
- *  cinematic; electric blue only for AI.
+ *  OPERATIONS STORY — one continuous cinematic beat: the WhatsApp request
+ *  arrives, resolves through a minimal vertical timeline ("a finished
+ *  operation"), then lands live in the operations dashboard in real time.
+ *  Dark and cinematic; electric blue is the connective thread throughout.
  * ------------------------------------------------------------------ */
 export function OperationsStory() {
   const ref = useRef<HTMLDivElement>(null);
@@ -233,46 +244,47 @@ export function OperationsStory() {
   const [beat, setBeat] = useState(0);
 
   useMotionValueEvent(p, "change", (v) => {
-    setBeat(v < 0.2 ? 0 : v < 0.38 ? 1 : v < 0.58 ? 2 : 3);
+    setBeat(v < 0.3 ? 0 : v < 0.64 ? 1 : 2);
   });
 
   return (
     <section ref={ref} id="product" className="relative h-[440vh]">
       <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
-        {/* soft electric key light grows as the system assembles */}
-        <motion.div aria-hidden className="pointer-events-none absolute inset-0" animate={{ opacity: beat === 3 ? 1 : beat === 0 ? 0 : 0.5 }} transition={{ duration: 1.2, ease }} style={{ background: "radial-gradient(60% 50% at 50% 48%, rgba(46,125,255,0.06), transparent 70%)" }} />
+        {/* soft electric key light grows as the system comes alive */}
+        <motion.div aria-hidden className="pointer-events-none absolute inset-0" animate={{ opacity: beat === 2 ? 1 : beat === 0 ? 0 : 0.5 }} transition={{ duration: 1.2, ease }} style={{ background: "radial-gradient(60% 50% at 50% 48%, rgba(46,125,255,0.06), transparent 70%)" }} />
 
-        {/* a single, quiet electric-blue thread that runs through the whole
-            sequence — the message, the AI, the task and the dashboard all sit on
-            it, so the beats read as one connected flow rather than separate cards */}
+        {/* a single, quiet electric-blue thread connecting the beats — dimmed on
+            the timeline beat, which carries its own (brighter) rail */}
         <motion.div
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-1/2 h-[58vh] w-px -translate-x-1/2 -translate-y-1/2"
-          animate={{ opacity: beat === 3 ? 0.12 : beat === 0 ? 0.28 : 0.4 }}
+          animate={{ opacity: beat === 2 ? 0.12 : beat === 1 ? 0.05 : 0.3 }}
           transition={{ duration: 1, ease }}
           style={{ background: "linear-gradient(180deg, transparent, rgba(46,125,255,0.55) 26%, rgba(46,125,255,0.55) 74%, transparent)" }}
         />
         <motion.div
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-1/2 h-[58vh] w-[3px] -translate-x-1/2 -translate-y-1/2 blur-[7px]"
-          animate={{ opacity: beat === 3 ? 0.08 : 0.22 }}
+          animate={{ opacity: beat === 2 ? 0.08 : beat === 1 ? 0.04 : 0.2 }}
           transition={{ duration: 1, ease }}
           style={{ background: "linear-gradient(180deg, transparent, rgba(46,125,255,0.5), transparent)" }}
         />
 
-        {/* step caption */}
+        {/* step caption (hidden on the timeline beat) */}
         <div className="absolute left-1/2 top-[12%] -translate-x-1/2 text-center">
           <AnimatePresence mode="wait">
-            <motion.div
-              key={beat}
-              initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
-              transition={{ duration: 0.85, ease }}
-              className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/45"
-            >
-              {STEP[beat]}
-            </motion.div>
+            {STEP[beat] && (
+              <motion.div
+                key={beat}
+                initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
+                transition={{ duration: 0.85, ease }}
+                className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/45"
+              >
+                {STEP[beat]}
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
 
@@ -285,42 +297,22 @@ export function OperationsStory() {
           <WhatsAppCard />
         </motion.div>
 
-        {/* BEAT 1 — structured intelligence */}
+        {/* BEAT 1 — "A finished operation out." vertical timeline */}
         <motion.div
-          className="pointer-events-none absolute left-1/2 top-1/2 flex w-[min(560px,90vw)] -translate-x-1/2 -translate-y-1/2 flex-wrap justify-center gap-2.5"
+          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
           animate={{ opacity: beat === 1 ? 1 : 0, y: beat === 1 ? 0 : beat < 1 ? 30 : -30, scale: beat === 1 ? 1 : 0.97, filter: beat === 1 ? "blur(0px)" : "blur(6px)" }}
           transition={{ duration: 1.05, ease }}
         >
-          {CHIPS.map((c, i) => (
-            <motion.span
-              key={c}
-              animate={{ opacity: beat === 1 ? 1 : 0, y: beat === 1 ? 0 : 14, scale: beat === 1 ? 1 : 0.9, filter: beat === 1 ? "blur(0px)" : "blur(5px)" }}
-              transition={{ duration: 0.85, delay: beat === 1 ? i * 0.15 : 0, ease }}
-              className="glass rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/[0.08] px-4 py-2 text-[clamp(0.82rem,1.7vw,1rem)] font-medium text-white/90"
-            >
-              <span className="mr-1.5 inline-block h-1 w-1 -translate-y-px rounded-full bg-[#2E7DFF]" />
-              {c}
-            </motion.span>
-          ))}
+          <OperationTimeline active={beat === 1} />
         </motion.div>
 
-        {/* BEAT 2 — the structured, assigned task. On the way to the dashboard it
-            fades DOWN as the dashboard rises up underneath it (item 7). */}
-        <motion.div
-          className="pointer-events-none absolute left-1/2 top-1/2 w-[min(460px,90vw)] -translate-x-1/2 -translate-y-1/2"
-          animate={{ opacity: beat === 2 ? 1 : 0, y: beat === 2 ? 0 : beat < 2 ? 30 : 64, scale: beat === 2 ? 1 : 0.97, filter: beat === 2 ? "blur(0px)" : "blur(6px)" }}
-          transition={{ duration: 1.05, ease }}
-        >
-          <TaskCard active={beat === 2} />
-        </motion.div>
-
-        {/* BEAT 3 — the live operations dashboard */}
+        {/* BEAT 2 — the live operations dashboard receiving the request */}
         <motion.div
           className="pointer-events-none absolute left-1/2 top-1/2 w-[min(900px,94vw)] -translate-x-1/2 -translate-y-1/2"
-          animate={{ opacity: beat === 3 ? 1 : 0, y: beat === 3 ? 0 : 30 }}
+          animate={{ opacity: beat === 2 ? 1 : 0, y: beat === 2 ? 0 : 30 }}
           transition={{ duration: 1.05, ease }}
         >
-          <Dashboard active={beat === 3} />
+          <Dashboard active={beat === 2} />
         </motion.div>
       </div>
     </section>
