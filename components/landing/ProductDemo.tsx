@@ -19,11 +19,11 @@ const STEPS = [
 const CHIPS = ["Maintenance", "Villa Ocean", "Master Bedroom", "High Priority"];
 
 /* ------------------------------------------------------------------ *
- *  SECTION 2 — the product demonstration. Five large cards light up one
- *  by one, connected by arrows that draw between them, at a deliberately
- *  slow keynote cadence (~14s loop). Then a real guest message fades in
- *  beneath them and drifts upward — handed off to the live dashboard below.
- *  You understand the whole product without reading a word.
+ *  SECTION 2 — the product demonstration. The real guest message slides up
+ *  and stops; the AI extracts its chips; then the five cards light up one at
+ *  a time on a calm ~0.8s cadence (only ever one step animating), ending on
+ *  Completed. The whole request→completed story reads in under 10 seconds,
+ *  and the live dashboard sits directly below as the result. No words needed.
  * ------------------------------------------------------------------ */
 export function ProductDemo() {
   const ref = useRef<HTMLDivElement>(null);
@@ -31,7 +31,7 @@ export function ProductDemo() {
   const inView = useInView(ref, { amount: 0.3 });
   const [lit, setLit] = useState(0); // how many cards are lit (0–5)
   const [arrows, setArrows] = useState(0); // how many arrows drawn (0–4)
-  const [msg, setMsg] = useState(0); // 0 hidden · 1 message in · 2 AI chips · 3 drifting up into the dashboard
+  const [msg, setMsg] = useState(0); // 0 hidden · 1 message up & held · 2 AI chips shown
   const [cycle, setCycle] = useState(0);
 
   useEffect(() => {
@@ -47,36 +47,34 @@ export function ProductDemo() {
       setMsg(2);
       return;
     }
-    // wait 1.8s · step lights · pause 1.2s · arrow draws · pause 0.8s · next step …
     const t: ReturnType<typeof setTimeout>[] = [];
-    t.push(setTimeout(() => setLit(1), 1800));
-    t.push(setTimeout(() => setArrows(1), 3000));
-    t.push(setTimeout(() => setLit(2), 3800));
-    t.push(setTimeout(() => setArrows(2), 5000));
-    t.push(setTimeout(() => setLit(3), 5800));
-    t.push(setTimeout(() => setArrows(3), 7000));
-    t.push(setTimeout(() => setLit(4), 7800));
-    t.push(setTimeout(() => setArrows(4), 9000));
-    t.push(setTimeout(() => setLit(5), 9800));
-    // the concrete request: message fades in · AI extracts the chips · the whole
-    // thing drifts up, becoming the task the dashboard below receives
-    t.push(setTimeout(() => setMsg(1), 11000));
-    t.push(setTimeout(() => setMsg(2), 12600));
-    t.push(setTimeout(() => setMsg(3), 15400));
-    // reset and loop
+    // the request arrives first: message slides up and stops, then the AI chips
+    t.push(setTimeout(() => setMsg(1), 800));
+    t.push(setTimeout(() => setMsg(2), 1900));
+    // then the workflow — one card every ~0.8s, its arrow lighting just after
+    t.push(setTimeout(() => setLit(1), 3200));
+    t.push(setTimeout(() => setArrows(1), 3600));
+    t.push(setTimeout(() => setLit(2), 4000));
+    t.push(setTimeout(() => setArrows(2), 4400));
+    t.push(setTimeout(() => setLit(3), 4800));
+    t.push(setTimeout(() => setArrows(3), 5200));
+    t.push(setTimeout(() => setLit(4), 5600));
+    t.push(setTimeout(() => setArrows(4), 6000));
+    t.push(setTimeout(() => setLit(5), 6400));
+    // hold the completed state, then reset and loop (pause ~0.5s after Completed)
     t.push(
       setTimeout(() => {
         setLit(0);
         setArrows(0);
         setMsg(0);
         setCycle((c) => c + 1);
-      }, 17000)
+      }, 8700)
     );
     return () => t.forEach(clearTimeout);
   }, [inView, cycle, reduce]);
 
   return (
-    <section ref={ref} id="product" className="relative overflow-x-clip px-5 pb-16 pt-28 sm:pb-20 sm:pt-40">
+    <section ref={ref} id="product" className="relative overflow-x-clip px-5 pb-4 pt-28 sm:pb-6 sm:pt-40">
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10" style={{ background: "radial-gradient(60% 46% at 50% 40%, rgba(46,125,255,0.05), transparent 72%)" }} />
 
       <div className="mx-auto max-w-6xl">
@@ -98,34 +96,17 @@ export function ProductDemo() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-120px" }}
             transition={{ duration: 1.1, delay: 0.15, ease }}
-            className="mx-auto mt-6 max-w-lg text-balance text-[15px] leading-relaxed text-white/55 sm:text-[17px]"
+            className="mx-auto mt-6 max-w-xl text-balance text-[15px] leading-relaxed text-white/55 sm:text-[17px]"
           >
-            Watch one guest request become a completed task.
+            Watch one guest request become a completed task in under 10 seconds.
           </motion.p>
         </div>
 
-        {/* the five cards — vertical on mobile, horizontal on desktop */}
-        <div className="mt-16 flex flex-col items-center justify-center gap-0 sm:mt-24 sm:flex-row sm:gap-0">
-          {STEPS.map((s, i) => (
-            <div key={s.label} className="flex flex-col items-center sm:flex-row">
-              <FlowCard step={s} lit={i < lit} pulsing={i === lit - 1} reduce={!!reduce} />
-              {i < STEPS.length - 1 && <Arrow on={i < arrows} reduce={!!reduce} />}
-            </div>
-          ))}
-        </div>
-
-        {/* the concrete request — message fades in, the AI extracts the chips,
-            then the whole thing drifts up and becomes the task below */}
-        <div className="mt-16 flex min-h-[188px] flex-col items-center justify-start gap-4 sm:mt-24">
+        {/* the request — message slides up and stops, then the AI extracts the chips */}
+        <div className="mt-14 flex min-h-[176px] flex-col items-center justify-start gap-4 sm:mt-20">
           <motion.div
-            animate={
-              msg >= 3
-                ? { opacity: 0, y: -60, filter: "blur(9px)" }
-                : msg >= 1
-                ? { opacity: 1, y: 0, filter: "blur(0px)" }
-                : { opacity: 0, y: 20, filter: "blur(9px)" }
-            }
-            transition={{ duration: 1.2, ease }}
+            animate={msg >= 1 ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 26, filter: "blur(9px)" }}
+            transition={{ duration: 1.1, ease }}
             className="flex max-w-[86vw] items-start gap-3.5 rounded-[22px] border border-[#25D366]/22 bg-[#0b0d12]/80 px-5 py-4 shadow-[0_30px_70px_-30px_rgba(0,0,0,0.9)] backdrop-blur-xl sm:px-6 sm:py-5"
           >
             <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#25D366]/15 sm:h-10 sm:w-10">
@@ -137,15 +118,9 @@ export function ProductDemo() {
             </span>
           </motion.div>
 
-          {/* AI detects — the extracted chips that become the task */}
+          {/* AI detects — the extracted chips */}
           <motion.div
-            animate={
-              msg >= 3
-                ? { opacity: 0, y: -60, filter: "blur(9px)" }
-                : msg >= 2
-                ? { opacity: 1, y: 0, filter: "blur(0px)" }
-                : { opacity: 0, y: 14, filter: "blur(9px)" }
-            }
+            animate={msg >= 2 ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 14, filter: "blur(9px)" }}
             transition={{ duration: 1, ease }}
             className="flex flex-col items-center gap-2.5"
           >
@@ -157,8 +132,8 @@ export function ProductDemo() {
                 <motion.span
                   key={c}
                   initial={{ opacity: 0, y: 8, filter: "blur(5px)" }}
-                  animate={msg >= 2 && msg < 3 ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0 }}
-                  transition={{ duration: 0.55, delay: msg >= 2 && msg < 3 ? 0.15 + i * 0.45 : 0, ease }}
+                  animate={msg >= 2 ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0 }}
+                  transition={{ duration: 0.55, delay: msg >= 2 ? 0.15 + i * 0.4 : 0, ease }}
                   className="rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/[0.08] px-3 py-1.5 text-[12.5px] font-medium text-white/90 sm:text-[13.5px]"
                 >
                   {c}
@@ -166,6 +141,16 @@ export function ProductDemo() {
               ))}
             </div>
           </motion.div>
+        </div>
+
+        {/* the five cards — vertical on mobile, horizontal on desktop */}
+        <div className="mt-14 flex flex-col items-center justify-center gap-0 sm:mt-20 sm:flex-row sm:gap-0">
+          {STEPS.map((s, i) => (
+            <div key={s.label} className="flex flex-col items-center sm:flex-row">
+              <FlowCard step={s} lit={i < lit} pulsing={i === lit - 1} reduce={!!reduce} />
+              {i < STEPS.length - 1 && <Arrow on={i < arrows} reduce={!!reduce} />}
+            </div>
+          ))}
         </div>
       </div>
     </section>

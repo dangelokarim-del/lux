@@ -2,8 +2,9 @@ import { SiteHeader } from "@/components/landing/SiteHeader";
 import { VideoHero } from "@/components/landing/VideoHero";
 import { ProductDemo } from "@/components/landing/ProductDemo";
 import { LiveDashboard } from "@/components/landing/LiveDashboard";
-import { Integrations } from "@/components/landing/Integrations";
 import { Benefits } from "@/components/landing/Benefits";
+import { Comparison } from "@/components/landing/Comparison";
+import { Integrations } from "@/components/landing/Integrations";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { SiteFooter } from "@/components/landing/SiteFooter";
 import { Atmosphere } from "@/components/landing/anim/Atmosphere";
@@ -32,20 +33,23 @@ export default function LandingPage() {
             film inside the same screen (one continuous beat, no separate page). */}
         <VideoHero />
 
-        {/* 2 — The product demo: five cards light up one by one, then the guest
-            message drifts up into the dashboard below. */}
+        {/* 2 — The product demo: the request arrives, the AI reads it, the five
+            steps light up one at a time — then the dashboard directly below. */}
         <ProductDemo />
 
         {/* 3 — The live operations dashboard solves the request in real time. */}
         <LiveDashboard />
 
-        {/* 4 — Fits the stack the team already runs. */}
-        <Integrations />
-
-        {/* 5 — The proof, in four large numbers. */}
+        {/* 4 — The proof, in four large numbers that count up. */}
         <Benefits />
 
-        {/* 5 — Final CTA — the natural ending of the same story. */}
+        {/* 5 — Without LUXA vs With LUXA. */}
+        <Comparison />
+
+        {/* 6 — Fits the stack the team already runs. */}
+        <Integrations />
+
+        {/* 7 — Final CTA — the natural ending of the same story. */}
         <FinalCTA />
 
         <SiteFooter />

@@ -137,6 +137,7 @@ export function VideoBackdrop({ fallback, phone }: { fallback: ReactNode; phone?
     vids.forEach((v) => {
       v.muted = true;
       v.style.opacity = "0";
+      v.playbackRate = 0.6; // slow the cinematic camera move ~40% — calmer, more premium
       v.load(); // attach the <source> children
     });
 

@@ -150,7 +150,7 @@ export function VideoHero() {
         <VideoBackdrop fallback={<VillaSpace dolly={p} />} />
 
         {/* readability wash */}
-        <motion.div aria-hidden className="pointer-events-none absolute inset-0" style={{ opacity: readability, background: "radial-gradient(125% 96% at 50% 40%, transparent 30%, rgba(5,6,10,0.62)), linear-gradient(180deg, rgba(5,6,10,0.28), transparent 24%, rgba(5,6,10,0.14) 50%, transparent 66%, rgba(5,6,10,0.55))" }} />
+        <motion.div aria-hidden className="pointer-events-none absolute inset-0" style={{ opacity: readability, background: "radial-gradient(125% 96% at 50% 40%, transparent 26%, rgba(5,6,10,0.74)), linear-gradient(180deg, rgba(5,6,10,0.4), transparent 24%, rgba(5,6,10,0.2) 50%, transparent 64%, rgba(5,6,10,0.62))" }} />
 
         {/* the film darkens into the dark background — grows from the bottom up */}
         <motion.div aria-hidden className="pointer-events-none absolute inset-0" style={{ opacity: darken, background: "linear-gradient(180deg, transparent 8%, rgba(4,6,11,0.5) 46%, rgba(3,6,10,0.94) 80%, #03060a 100%)" }} />
@@ -204,9 +204,21 @@ export function VideoHero() {
                 <Rise delay={2.95}>
                   <div className="pointer-events-auto mt-12 flex items-center justify-center">
                     <Magnetic className="inline-block" strength={0.3}>
-                      <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
-                        Book a Demo
-                      </Link>
+                      <span className="relative inline-block">
+                        {/* a slow breathing glow — calm, never flashy */}
+                        {!reduce && (
+                          <motion.span
+                            aria-hidden
+                            className="pointer-events-none absolute -inset-3 -z-10 rounded-full"
+                            style={{ background: "radial-gradient(closest-side, rgba(46,125,255,0.5), transparent 72%)" }}
+                            animate={{ opacity: [0.35, 0.7, 0.35], scale: [0.96, 1.04, 0.96] }}
+                            transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
+                          />
+                        )}
+                        <Link href="/login" className={`${buttonVariants({ variant: "accent", size: "lg" })} transition-transform duration-300 hover:-translate-y-0.5`}>
+                          Book a Demo
+                        </Link>
+                      </span>
                     </Magnetic>
                   </div>
                 </Rise>

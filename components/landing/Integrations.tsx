@@ -31,8 +31,8 @@ export function Integrations() {
               initial={{ opacity: 0, y: 14, filter: "blur(5px)" }}
               whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.9, delay: i * 0.07, ease }}
-              className="rounded-full border border-white/[0.12] bg-white/[0.03] px-5 py-2.5 text-[14px] font-medium text-white/70 transition-colors duration-300 hover:border-white/25 hover:text-white sm:text-[15px]"
+              transition={{ duration: 0.7, delay: i * 0.16, ease }}
+              className="rounded-full border border-white/[0.12] bg-white/[0.03] px-5 py-2.5 text-[14px] font-medium text-white/70 shadow-[0_10px_30px_-20px_rgba(0,0,0,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:border-white/25 hover:text-white hover:shadow-[0_16px_40px_-20px_rgba(0,0,0,0.9)] sm:text-[15px]"
             >
               {t}
             </motion.span>

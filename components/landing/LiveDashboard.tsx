@@ -107,7 +107,7 @@ export function LiveDashboard() {
   ];
 
   return (
-    <section ref={ref} id="dashboard" className="relative overflow-x-clip px-4 pb-20 pt-4 sm:px-6 sm:pb-28 sm:pt-8">
+    <section ref={ref} id="dashboard" className="relative overflow-x-clip px-4 pb-24 pt-0 sm:px-6 sm:pb-32 sm:pt-2">
       <div className="relative mx-auto max-w-[1200px]">
         <div aria-hidden className="absolute -inset-10 -z-10" style={{ background: "radial-gradient(55% 60% at 50% 24%, rgba(216,230,255,0.08), transparent 72%)", filter: "blur(34px)" }} />
         <motion.div

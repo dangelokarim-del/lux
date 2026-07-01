@@ -24,11 +24,11 @@ export function FinalCTA() {
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 1.5, ease }}
-          className="text-balance text-[clamp(2.7rem,7.8vw,5.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-white"
+          className="text-balance text-[clamp(2.4rem,6.6vw,4.8rem)] font-semibold leading-[0.98] tracking-[-0.045em] text-white"
         >
-          Luxury operations.
+          Ready to automate
           <br />
-          <span className="text-white/45">Perfectly orchestrated.</span>
+          <span className="text-white/45">luxury hospitality?</span>
         </motion.h2>
 
         <motion.p
@@ -38,7 +38,7 @@ export function FinalCTA() {
           transition={{ duration: 1, delay: 0.2, ease }}
           className="mx-auto mt-8 max-w-xl text-balance text-[17px] leading-relaxed text-white/70 sm:text-[18px]"
         >
-          One platform for guests, staff and every request.
+          See how LUXA can automate your operations in days, not months.
         </motion.p>
 
         <motion.div
@@ -46,13 +46,22 @@ export function FinalCTA() {
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.9, delay: 0.35, ease }}
-          className="mt-12"
+          className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row"
         >
           <Magnetic className="inline-block" strength={0.3}>
-            <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
+            <Link href="/login" className={`${buttonVariants({ variant: "accent", size: "lg" })} transition-transform duration-300 hover:-translate-y-0.5`}>
               Book a Demo
             </Link>
           </Magnetic>
+          <Link
+            href="/login"
+            className="group inline-flex h-12 items-center justify-center gap-2.5 rounded-[var(--radius-control)] border border-white/15 bg-white/[0.03] px-6 text-[15px] font-medium text-white/80 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/25 hover:text-white"
+          >
+            <span className="grid h-5 w-5 place-items-center rounded-full border border-white/30 transition-colors group-hover:border-white/55">
+              <span className="ml-[1.5px] h-0 w-0 border-y-[3.5px] border-l-[6px] border-y-transparent border-l-white/75" />
+            </span>
+            Watch Live Demo
+          </Link>
         </motion.div>
       </div>
     </section>
