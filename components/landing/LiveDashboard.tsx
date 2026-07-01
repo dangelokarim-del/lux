@@ -107,7 +107,7 @@ export function LiveDashboard() {
   ];
 
   return (
-    <section ref={ref} id="dashboard" className="relative overflow-x-clip px-4 py-16 sm:px-6 sm:py-24">
+    <section ref={ref} id="dashboard" className="relative overflow-x-clip px-4 pb-20 pt-4 sm:px-6 sm:pb-28 sm:pt-8">
       <div className="relative mx-auto max-w-[1200px]">
         <div aria-hidden className="absolute -inset-10 -z-10" style={{ background: "radial-gradient(55% 60% at 50% 24%, rgba(216,230,255,0.08), transparent 72%)", filter: "blur(34px)" }} />
         <motion.div
@@ -217,7 +217,7 @@ export function LiveDashboard() {
               </AnimatePresence>
 
               {/* the standing rows */}
-              <div className="divide-y divide-white/[0.05]">
+              <div className="divide-y divide-white/[0.05] border-b border-white/[0.05]">
                 {OPS.map((r) => (
                   <div key={r.title} className="flex items-center justify-between gap-3 py-4 sm:py-4.5">
                     <div className="flex min-w-0 items-center gap-3.5">
@@ -240,6 +240,22 @@ export function LiveDashboard() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* team presence — a calm sign the operation is staffed and live */}
+              <div className="mt-5 flex items-center justify-between pt-1">
+                <span className="text-[11px] uppercase tracking-[0.14em] text-white/30">Team online</span>
+                <div className="flex items-center gap-4">
+                  {["Carlos", "Lucia"].map((n) => (
+                    <span key={n} className="flex items-center gap-1.5 text-[12px] text-white/55 sm:text-[13px]">
+                      <span className="relative flex h-1.5 w-1.5">
+                        {!reduce && <motion.span className="absolute inset-0 rounded-full bg-[#4ad48a]" animate={{ scale: [1, 2.4], opacity: [0.5, 0] }} transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut" }} />}
+                        <span className="relative h-1.5 w-1.5 rounded-full bg-[#4ad48a]" />
+                      </span>
+                      {n}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

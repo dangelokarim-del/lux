@@ -7,6 +7,8 @@ const cols = [
   { title: "Legal", items: ["Privacy", "Terms"] },
 ];
 
+const LOCATIONS = ["Marbella", "Ibiza", "Mykonos", "Dubai", "Saint-Tropez", "Lake Como"];
+
 export function SiteFooter() {
   return (
     <footer id="footer" className="border-t border-white/[0.06] px-5 py-16">
@@ -35,7 +37,18 @@ export function SiteFooter() {
         ))}
       </div>
 
-      <div className="mx-auto mt-14 flex max-w-6xl items-center justify-between border-t border-white/[0.06] pt-6 text-[12px] text-white/30">
+      {/* the international footprint — quiet luxury reach */}
+      <div className="mx-auto mt-14 max-w-6xl border-t border-white/[0.06] pt-10">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 sm:gap-x-9">
+          {LOCATIONS.map((l) => (
+            <span key={l} className="text-[12px] uppercase tracking-[0.2em] text-white/40 sm:text-[12.5px]">
+              {l}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="mx-auto mt-10 flex max-w-6xl flex-col items-center justify-between gap-3 border-t border-white/[0.06] pt-6 text-[12px] text-white/30 sm:flex-row">
         <span>© {new Date().getFullYear()} LUXA</span>
         <span>Luxury. Automated.</span>
       </div>

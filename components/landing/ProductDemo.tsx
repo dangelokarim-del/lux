@@ -8,12 +8,15 @@ import { MessageCircle, Sparkles, ClipboardList, UserCheck, CheckCircle2 } from 
 const ease = [0.4, 0, 0.2, 1] as const;
 
 const STEPS = [
-  { label: "WhatsApp", sub: "Guest message", Icon: MessageCircle },
-  { label: "AI understands", sub: "Intent parsed", Icon: Sparkles },
-  { label: "Task Created", sub: "Structured", Icon: ClipboardList },
-  { label: "Assigned", sub: "Right team", Icon: UserCheck },
-  { label: "Completed", sub: "Confirmed", Icon: CheckCircle2 },
+  { label: "WhatsApp", sub: "Guest message", time: "09:14", Icon: MessageCircle },
+  { label: "AI understands", sub: "Intent parsed", time: "09:14:02", Icon: Sparkles },
+  { label: "Task Created", sub: "Structured", time: "09:14:04", Icon: ClipboardList },
+  { label: "Assigned", sub: "To Carlos", time: "09:14:08", Icon: UserCheck },
+  { label: "Completed", sub: "Confirmed", time: "09:14:11", Icon: CheckCircle2 },
 ];
+
+// what the AI extracts from the message — these chips become the task
+const CHIPS = ["Maintenance", "Villa Ocean", "Master Bedroom", "High Priority"];
 
 /* ------------------------------------------------------------------ *
  *  SECTION 2 — the product demonstration. Five large cards light up one
@@ -28,7 +31,7 @@ export function ProductDemo() {
   const inView = useInView(ref, { amount: 0.3 });
   const [lit, setLit] = useState(0); // how many cards are lit (0–5)
   const [arrows, setArrows] = useState(0); // how many arrows drawn (0–4)
-  const [msg, setMsg] = useState(0); // 0 hidden · 1 fading in · 2 drifting up
+  const [msg, setMsg] = useState(0); // 0 hidden · 1 message in · 2 AI chips · 3 drifting up into the dashboard
   const [cycle, setCycle] = useState(0);
 
   useEffect(() => {
@@ -41,7 +44,7 @@ export function ProductDemo() {
     if (reduce) {
       setLit(5);
       setArrows(4);
-      setMsg(1);
+      setMsg(2);
       return;
     }
     // wait 1.8s · step lights · pause 1.2s · arrow draws · pause 0.8s · next step …
@@ -55,9 +58,11 @@ export function ProductDemo() {
     t.push(setTimeout(() => setLit(4), 7800));
     t.push(setTimeout(() => setArrows(4), 9000));
     t.push(setTimeout(() => setLit(5), 9800));
-    // the concrete message: fades in, holds, then drifts up into the dashboard
-    t.push(setTimeout(() => setMsg(1), 11200));
-    t.push(setTimeout(() => setMsg(2), 13600));
+    // the concrete request: message fades in · AI extracts the chips · the whole
+    // thing drifts up, becoming the task the dashboard below receives
+    t.push(setTimeout(() => setMsg(1), 11000));
+    t.push(setTimeout(() => setMsg(2), 12600));
+    t.push(setTimeout(() => setMsg(3), 15400));
     // reset and loop
     t.push(
       setTimeout(() => {
@@ -65,13 +70,13 @@ export function ProductDemo() {
         setArrows(0);
         setMsg(0);
         setCycle((c) => c + 1);
-      }, 15200)
+      }, 17000)
     );
     return () => t.forEach(clearTimeout);
   }, [inView, cycle, reduce]);
 
   return (
-    <section ref={ref} id="product" className="relative overflow-x-clip px-5 py-28 sm:py-40">
+    <section ref={ref} id="product" className="relative overflow-x-clip px-5 pb-16 pt-28 sm:pb-20 sm:pt-40">
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10" style={{ background: "radial-gradient(60% 46% at 50% 40%, rgba(46,125,255,0.05), transparent 72%)" }} />
 
       <div className="mx-auto max-w-6xl">
@@ -109,13 +114,14 @@ export function ProductDemo() {
           ))}
         </div>
 
-        {/* the concrete guest message — fades in, then drifts upward */}
-        <div className="mt-16 flex min-h-[132px] items-start justify-center sm:mt-24">
+        {/* the concrete request — message fades in, the AI extracts the chips,
+            then the whole thing drifts up and becomes the task below */}
+        <div className="mt-16 flex min-h-[188px] flex-col items-center justify-start gap-4 sm:mt-24">
           <motion.div
             animate={
-              msg === 2
-                ? { opacity: 0, y: -52, filter: "blur(9px)" }
-                : msg === 1
+              msg >= 3
+                ? { opacity: 0, y: -60, filter: "blur(9px)" }
+                : msg >= 1
                 ? { opacity: 1, y: 0, filter: "blur(0px)" }
                 : { opacity: 0, y: 20, filter: "blur(9px)" }
             }
@@ -130,6 +136,36 @@ export function ProductDemo() {
               <br className="hidden sm:block" /> in the master bedroom.
             </span>
           </motion.div>
+
+          {/* AI detects — the extracted chips that become the task */}
+          <motion.div
+            animate={
+              msg >= 3
+                ? { opacity: 0, y: -60, filter: "blur(9px)" }
+                : msg >= 2
+                ? { opacity: 1, y: 0, filter: "blur(0px)" }
+                : { opacity: 0, y: 14, filter: "blur(9px)" }
+            }
+            transition={{ duration: 1, ease }}
+            className="flex flex-col items-center gap-2.5"
+          >
+            <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.16em] text-[#8fbcff]/70">
+              <Sparkles className="h-3 w-3" /> AI detects
+            </div>
+            <div className="flex max-w-[92vw] flex-wrap items-center justify-center gap-2">
+              {CHIPS.map((c, i) => (
+                <motion.span
+                  key={c}
+                  initial={{ opacity: 0, y: 8, filter: "blur(5px)" }}
+                  animate={msg >= 2 && msg < 3 ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0 }}
+                  transition={{ duration: 0.55, delay: msg >= 2 && msg < 3 ? 0.15 + i * 0.45 : 0, ease }}
+                  className="rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/[0.08] px-3 py-1.5 text-[12.5px] font-medium text-white/90 sm:text-[13.5px]"
+                >
+                  {c}
+                </motion.span>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </div>
     </section>
@@ -143,7 +179,7 @@ function FlowCard({
   pulsing,
   reduce,
 }: {
-  step: { label: string; sub: string; Icon: typeof MessageCircle };
+  step: { label: string; sub: string; time: string; Icon: typeof MessageCircle };
   lit: boolean;
   pulsing: boolean;
   reduce: boolean;
@@ -189,6 +225,14 @@ function FlowCard({
           {step.label}
         </motion.div>
         <div className="mt-1 text-[12px] text-white/35">{step.sub}</div>
+        {/* the subtle timestamp — appears the moment the step lights */}
+        <motion.div
+          className="mt-2 font-mono text-[10.5px] tabular-nums tracking-tight text-[#8fbcff]"
+          animate={{ opacity: lit ? 0.75 : 0 }}
+          transition={{ duration: 0.7, ease }}
+        >
+          {step.time}
+        </motion.div>
       </div>
     </motion.div>
   );

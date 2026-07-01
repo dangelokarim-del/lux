@@ -2,6 +2,7 @@ import { SiteHeader } from "@/components/landing/SiteHeader";
 import { VideoHero } from "@/components/landing/VideoHero";
 import { ProductDemo } from "@/components/landing/ProductDemo";
 import { LiveDashboard } from "@/components/landing/LiveDashboard";
+import { Integrations } from "@/components/landing/Integrations";
 import { Benefits } from "@/components/landing/Benefits";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { SiteFooter } from "@/components/landing/SiteFooter";
@@ -38,7 +39,10 @@ export default function LandingPage() {
         {/* 3 — The live operations dashboard solves the request in real time. */}
         <LiveDashboard />
 
-        {/* 4 — The proof, in four large numbers. */}
+        {/* 4 — Fits the stack the team already runs. */}
+        <Integrations />
+
+        {/* 5 — The proof, in four large numbers. */}
         <Benefits />
 
         {/* 5 — Final CTA — the natural ending of the same story. */}
