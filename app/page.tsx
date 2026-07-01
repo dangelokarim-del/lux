@@ -1,6 +1,8 @@
 import { SiteHeader } from "@/components/landing/SiteHeader";
 import { VideoHero } from "@/components/landing/VideoHero";
-import { OperationsStory } from "@/components/landing/OperationsStory";
+import { ProductDemo } from "@/components/landing/ProductDemo";
+import { LiveDashboard } from "@/components/landing/LiveDashboard";
+import { Benefits } from "@/components/landing/Benefits";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { SiteFooter } from "@/components/landing/SiteFooter";
 import { Atmosphere } from "@/components/landing/anim/Atmosphere";
@@ -25,15 +27,21 @@ export default function LandingPage() {
       <main className="relative min-h-screen text-white antialiased">
         <SiteHeader />
 
-        {/* 1 — Video hero → 2 — the problem statement emerges from the darkening
+        {/* 1 — Video hero → the problem statement emerges from the darkening
             film inside the same screen (one continuous beat, no separate page). */}
         <VideoHero />
 
-        {/* 3 — The request becomes intelligence → live operations dashboard, one
-            continuous vertical sequence connected by an electric-blue thread. */}
-        <OperationsStory />
+        {/* 2 — The product demo: five cards light up one by one, then the guest
+            message drifts up into the dashboard below. */}
+        <ProductDemo />
 
-        {/* 4 — Final CTA — the natural ending of the same story. */}
+        {/* 3 — The live operations dashboard solves the request in real time. */}
+        <LiveDashboard />
+
+        {/* 4 — The proof, in four large numbers. */}
+        <Benefits />
+
+        {/* 5 — Final CTA — the natural ending of the same story. */}
         <FinalCTA />
 
         <SiteFooter />

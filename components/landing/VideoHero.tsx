@@ -158,12 +158,15 @@ export function VideoHero() {
 
         {/* THE PROBLEM — emerges from the darkening film in the same screen, so the
             hero and the statement are one continuous beat, never separate pages */}
-        <motion.div className="absolute inset-0 z-20 flex items-center justify-center px-5" style={{ opacity: problemOpacity, y: problemY, filter: problemBlur }}>
+        <motion.div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-5" style={{ opacity: problemOpacity, y: problemY, filter: problemBlur }}>
           <h2 className="max-w-6xl text-balance text-center font-semibold leading-[0.94] tracking-[-0.05em] text-white text-[clamp(2.9rem,9.8vw,7.4rem)] [text-shadow:0_2px_60px_rgba(0,0,0,0.72)]">
             Luxury hospitality
             <br />
             still runs on <span className="text-white/35">WhatsApp.</span>
           </h2>
+          <p className="mt-8 max-w-xl text-balance text-center text-[17px] leading-relaxed text-white/75 sm:text-[19px] [text-shadow:0_1px_24px_rgba(0,0,0,0.6)]">
+            LUXA transforms every guest message into an automated operation.
+          </p>
         </motion.div>
 
         {/* brand identity — fades as you scroll */}
