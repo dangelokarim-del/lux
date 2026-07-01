@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion";
-import { MessageCircle, Sparkles, ClipboardList, UserCheck, CheckCircle2, Check } from "lucide-react";
+import { MessageCircle, Sparkles, ClipboardList, UserCheck, CheckCircle2, Check, Wind, Car, UtensilsCrossed, Waves, ClipboardCheck } from "lucide-react";
 import { LiveNumber } from "./anim/LiveNumber";
 
 const ease = [0.62, 0.04, 0.2, 1] as const;
@@ -65,10 +65,11 @@ export function OperationsStory() {
   }, [inView, cycle, reduce]);
 
   // dashboard state derived from the phase
-  const status: "NEW" | "IN PROGRESS" | "COMPLETED" | null =
-    phase >= 5 ? "COMPLETED" : phase >= 4 ? "IN PROGRESS" : phase >= 3 ? "NEW" : null;
+  const status: "New" | "In Progress" | "Completed" | null =
+    phase >= 5 ? "Completed" : phase >= 4 ? "In Progress" : phase >= 3 ? "New" : null;
   const open = phase >= 3 && phase < 5 ? 16 : 15;
   const urgent = phase >= 3 && phase < 5 ? 3 : 2;
+  const inProgress = phase >= 4 && phase < 5 ? 4 : 3;
   const completedToday = phase >= 5 ? 29 : 28;
 
   return (
@@ -131,9 +132,9 @@ export function OperationsStory() {
           </AnimatePresence>
         </div>
 
-        {/* SECTION 3–5 — the live dashboard */}
-        <div className="w-full max-w-[720px]">
-          <Dashboard open={open} urgent={urgent} completedToday={completedToday} status={status} assigned={phase >= 4} live={phase >= 1 && phase <= 5} reduce={!!reduce} />
+        {/* SECTION 3–5 — the full live operations dashboard */}
+        <div className="w-full max-w-[1040px]">
+          <Dashboard open={open} urgent={urgent} inProgress={inProgress} completedToday={completedToday} status={status} assigned={phase >= 4} live={phase >= 1 && phase <= 5} reduce={!!reduce} />
         </div>
       </div>
     </section>
@@ -205,17 +206,58 @@ function FlowStep({
   );
 }
 
-/* status badge tones */
-const STATUS_TONE: Record<"NEW" | "IN PROGRESS" | "COMPLETED", { bd: string; bg: string; tx: string; row: string; rowbd: string }> = {
-  NEW: { bd: "border-[#2E7DFF]/30", bg: "bg-[#2E7DFF]/12", tx: "text-[#8fbcff]", row: "rgba(46,125,255,0.06)", rowbd: "rgba(46,125,255,0.3)" },
-  "IN PROGRESS": { bd: "border-[#f5b53d]/30", bg: "bg-[#f5b53d]/10", tx: "text-[#f0b64e]", row: "rgba(245,181,61,0.05)", rowbd: "rgba(245,181,61,0.28)" },
-  COMPLETED: { bd: "border-[#4ad48a]/30", bg: "bg-[#4ad48a]/12", tx: "text-[#5fe0a0]", row: "rgba(74,212,138,0.06)", rowbd: "rgba(74,212,138,0.32)" },
+/* status tones — shared by the live task and the static rows */
+type StatusName = "New" | "In Progress" | "Completed" | "Pending";
+const STATUS: Record<StatusName, { bd: string; bg: string; tx: string; dot: string; row: string; rowbd: string }> = {
+  New: { bd: "border-[#2E7DFF]/30", bg: "bg-[#2E7DFF]/12", tx: "text-[#8fbcff]", dot: "#2E7DFF", row: "rgba(46,125,255,0.06)", rowbd: "rgba(46,125,255,0.30)" },
+  "In Progress": { bd: "border-[#f5b53d]/30", bg: "bg-[#f5b53d]/10", tx: "text-[#f0b64e]", dot: "#f5b53d", row: "rgba(245,181,61,0.05)", rowbd: "rgba(245,181,61,0.28)" },
+  Completed: { bd: "border-[#4ad48a]/30", bg: "bg-[#4ad48a]/12", tx: "text-[#5fe0a0]", dot: "#4ad48a", row: "rgba(74,212,138,0.06)", rowbd: "rgba(74,212,138,0.32)" },
+  Pending: { bd: "border-white/15", bg: "bg-white/[0.05]", tx: "text-white/55", dot: "rgba(255,255,255,0.42)", row: "rgba(255,255,255,0.02)", rowbd: "rgba(255,255,255,0.10)" },
 };
 
-/* the live operations dashboard — reacts to every step, Dynamic-Island style */
+/* staff avatars — initials + a personal colour */
+const STAFF: Record<string, { initials: string; color: string }> = {
+  Carlos: { initials: "CA", color: "#2E7DFF" },
+  Lucia: { initials: "LU", color: "#a78bfa" },
+  Marta: { initials: "MA", color: "#fb7185" },
+};
+
+function Avatar({ name }: { name: string }) {
+  const s = STAFF[name];
+  return (
+    <span
+      className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-semibold sm:h-[30px] sm:w-[30px] sm:text-[10.5px]"
+      style={{ color: s.color, background: `${s.color}22`, boxShadow: `inset 0 0 0 1px ${s.color}55` }}
+      title={name}
+    >
+      {s.initials}
+    </span>
+  );
+}
+
+function StatusBadge({ status }: { status: StatusName }) {
+  const s = STATUS[status];
+  return (
+    <span className={`flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10.5px] font-medium sm:text-[11.5px] ${s.bd} ${s.bg} ${s.tx}`}>
+      {status === "Completed" ? <Check className="h-3 w-3" /> : <span className="h-1.5 w-1.5 rounded-full" style={{ background: s.dot }} />}
+      {status}
+    </span>
+  );
+}
+
+/* the static operations that give the board weight (the AC task is the live one) */
+const OPS: { Icon: typeof MessageCircle; title: string; cat: string; villa: string; staff?: string; status: StatusName }[] = [
+  { Icon: Car, title: "Airport transfer — 4 guests", cat: "Transport", villa: "Villa Sol", staff: "Lucia", status: "In Progress" },
+  { Icon: UtensilsCrossed, title: "Private chef — dinner for 6", cat: "Concierge", villa: "Villa Aura", staff: "Marta", status: "Pending" },
+  { Icon: Waves, title: "Beach club reservation", cat: "Concierge", villa: "Villa Brisa", staff: "Lucia", status: "Completed" },
+  { Icon: ClipboardCheck, title: "Pre-arrival inspection", cat: "Housekeeping", villa: "Villa Ocean", staff: "Marta", status: "New" },
+];
+
+/* the full live operations dashboard — the real product surface, reacting live */
 function Dashboard({
   open,
   urgent,
+  inProgress,
   completedToday,
   status,
   assigned,
@@ -224,8 +266,9 @@ function Dashboard({
 }: {
   open: number;
   urgent: number;
+  inProgress: number;
   completedToday: number;
-  status: "NEW" | "IN PROGRESS" | "COMPLETED" | null;
+  status: StatusName | null;
   assigned: boolean;
   live: boolean;
   reduce: boolean;
@@ -233,24 +276,27 @@ function Dashboard({
   const cells = [
     { l: "Open requests", v: open },
     { l: "Urgent", v: urgent, a: true },
+    { l: "In progress", v: inProgress },
     { l: "Completed today", v: completedToday },
     { l: "Arrivals", v: 6 },
   ];
-  const tone = status ? STATUS_TONE[status] : null;
+  const tone = status ? STATUS[status] : null;
 
   return (
     <div className="relative">
-      <div aria-hidden className="absolute -inset-8 -z-10" style={{ background: "radial-gradient(55% 60% at 50% 30%, rgba(216,230,255,0.08), transparent 72%)", filter: "blur(26px)" }} />
-      <div className="relative overflow-hidden rounded-[24px]" style={{ boxShadow: "inset 0 0 0 1px rgba(208,222,244,0.2), inset 0 1px 0 rgba(255,255,255,0.16), 0 60px 130px -44px rgba(0,0,0,0.85)", background: "rgba(255,255,255,0.012)" }}>
+      <div aria-hidden className="absolute -inset-10 -z-10" style={{ background: "radial-gradient(55% 60% at 50% 26%, rgba(216,230,255,0.09), transparent 72%)", filter: "blur(30px)" }} />
+      <div className="relative overflow-hidden rounded-[26px]" style={{ boxShadow: "inset 0 0 0 1px rgba(208,222,244,0.2), inset 0 1px 0 rgba(255,255,255,0.16), 0 70px 150px -46px rgba(0,0,0,0.88)", background: "rgba(255,255,255,0.012)" }}>
         <div className="glass absolute inset-0" aria-hidden />
-        <div className="relative px-4 py-4 sm:px-5">
-          {/* header */}
-          <div className="mb-3 flex items-center justify-between">
-            <span className="flex items-center gap-1 text-[13px] font-semibold tracking-[-0.02em] text-white">
-              LUXA<span className="h-1 w-1 translate-y-1 rounded-full bg-[#2E7DFF]" />
-              <span className="ml-2 text-[11px] font-normal text-white/35">Operations</span>
-            </span>
-            <span className="flex items-center gap-1.5 text-[11px] text-white/60">
+        <div className="relative px-4 py-5 sm:px-7 sm:py-7">
+          {/* header — reads as a real product chrome */}
+          <div className="mb-4 flex items-center justify-between sm:mb-6">
+            <div className="flex items-baseline gap-2.5">
+              <span className="flex items-center gap-1 text-[15px] font-semibold tracking-[-0.02em] text-white sm:text-[17px]">
+                LUXA<span className="h-1 w-1 translate-y-1.5 rounded-full bg-[#2E7DFF]" />
+              </span>
+              <span className="text-[12px] text-white/35 sm:text-[13.5px]">Operations · Marbella</span>
+            </div>
+            <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] text-white/65 sm:text-[12px]">
               <span className="relative flex h-1.5 w-1.5">
                 {live && !reduce && <motion.span className="absolute inset-0 rounded-full bg-[#2E7DFF]" animate={{ scale: [1, 2.6], opacity: [0.5, 0] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }} />}
                 <span className="relative h-1.5 w-1.5 rounded-full bg-[#2E7DFF]" />
@@ -259,36 +305,39 @@ function Dashboard({
             </span>
           </div>
 
-          {/* stat row */}
-          <div className="grid grid-cols-4 gap-2 sm:gap-3">
-            {cells.map((c) => (
-              <div key={c.l} className="relative h-[74px] rounded-xl bg-white/[0.03] px-3 py-2.5" style={{ boxShadow: "inset 0 0 0 1px rgba(208,222,244,0.14)" }}>
-                <div className="text-[8.5px] uppercase tracking-[0.12em] text-white/40 sm:text-[9px]">{c.l}</div>
-                <div className={`mt-1.5 text-[22px] font-semibold leading-none tabular-nums sm:text-[26px] ${c.a && urgent >= 3 ? "text-[#6ba5ff]" : "text-white"}`}>
+          {/* KPI cards */}
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5 sm:gap-3.5">
+            {cells.map((c, i) => (
+              <div
+                key={c.l}
+                className={`relative h-[90px] rounded-2xl bg-white/[0.03] px-3.5 py-3 sm:h-[104px] sm:px-4 sm:py-4 ${i === cells.length - 1 ? "col-span-2 sm:col-span-1" : ""}`}
+                style={{ boxShadow: "inset 0 0 0 1px rgba(208,222,244,0.14)" }}
+              >
+                <div className="text-[9.5px] uppercase tracking-[0.13em] text-white/40 sm:text-[10px]">{c.l}</div>
+                <div className={`mt-2 text-[30px] font-semibold leading-none tabular-nums sm:mt-3.5 sm:text-[40px] ${c.a && urgent >= 3 ? "text-[#7fb0ff]" : "text-white"}`}>
                   <LiveNumber value={c.v} pad={2} duration={1.05} />
                 </div>
               </div>
             ))}
           </div>
 
-          {/* operations list */}
-          <div className="mt-3.5">
-            <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-[12px] font-medium text-white">Live operations</span>
-              <span className="text-[10px] text-white/30">{status ? "Updated just now" : "Up to date"}</span>
+          {/* live operations list */}
+          <div className="mt-5 sm:mt-6">
+            <div className="mb-2.5 flex items-center justify-between">
+              <span className="text-[13px] font-medium text-white sm:text-[14px]">Live operations</span>
+              <span className="text-[10.5px] text-white/30 sm:text-[11px]">{status ? "Updated just now" : "Up to date"}</span>
             </div>
 
-            {/* the AC task — slides in on "Task Created", then steps NEW → IN PROGRESS → COMPLETED */}
+            {/* the AC task — slides in from the left on "Task Created", then steps New → In Progress → Completed */}
             <AnimatePresence>
               {status && tone && (
                 <motion.div
                   key="ac"
-                  layout
-                  initial={{ opacity: 0, height: 0, marginBottom: 0, filter: "blur(6px)" }}
-                  animate={{ opacity: 1, height: 54, marginBottom: 5, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  initial={{ opacity: 0, height: 0, marginBottom: 0, x: -22, filter: "blur(6px)" }}
+                  animate={{ opacity: 1, height: "auto", marginBottom: 8, x: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, height: 0, marginBottom: 0, x: -14 }}
                   transition={reduce ? { duration: 0 } : spring}
-                  className="relative flex items-center justify-between overflow-hidden rounded-xl px-3.5"
+                  className="relative overflow-hidden rounded-2xl"
                   style={{ background: tone.row, boxShadow: `inset 0 0 0 1px ${tone.rowbd}` }}
                 >
                   {/* soft pulse each time the status changes */}
@@ -296,57 +345,74 @@ function Dashboard({
                     <motion.span
                       key={status}
                       aria-hidden
-                      className="pointer-events-none absolute inset-0 rounded-xl"
+                      className="pointer-events-none absolute inset-0 rounded-2xl"
                       initial={{ opacity: 0.5 }}
                       animate={{ opacity: 0 }}
                       transition={{ duration: 1.5, ease: "easeOut" }}
-                      style={{ boxShadow: `inset 0 0 0 1px ${tone.rowbd.replace(/0\.\d+\)/, "0.8)")}, 0 0 24px ${tone.row.replace(/0\.\d+\)/, "0.4)")}` }}
+                      style={{ boxShadow: `inset 0 0 0 1px ${tone.rowbd.replace(/0\.\d+\)/, "0.8)")}, 0 0 26px ${tone.row.replace(/0\.\d+\)/, "0.4)")}` }}
                     />
                   )}
-                  <div className="min-w-0">
-                    <div className="truncate text-[13px] font-medium text-white">AC — Master Bedroom</div>
-                    <div className="flex items-center gap-1.5 text-[11px] text-white/45">
-                      Villa Ocean
+                  <div className="relative flex items-center justify-between gap-3 px-3.5 py-3.5 sm:px-4 sm:py-4">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl sm:h-10 sm:w-10" style={{ color: tone.dot, background: `${tone.dot === "rgba(255,255,255,0.42)" ? "rgba(255,255,255,0.06)" : tone.dot + "1f"}`, boxShadow: `inset 0 0 0 1px ${tone.rowbd}` }}>
+                        <Wind className="h-[18px] w-[18px]" />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="truncate text-[13.5px] font-medium text-white sm:text-[15px]">AC — Master Bedroom</div>
+                        <div className="truncate text-[11.5px] text-white/45 sm:text-[12.5px]">Maintenance · Villa Ocean</div>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
                       <AnimatePresence>
                         {assigned && (
-                          <motion.span key="carlos" initial={{ opacity: 0, x: -4, scale: 0.8 }} animate={{ opacity: 1, x: 0, scale: 1 }} transition={spring} className="flex items-center gap-1.5">
-                            <span className="text-white/20">·</span>
-                            <span className="grid h-4 w-4 place-items-center rounded-full border border-white/15 bg-white/[0.06] text-[7px] text-white/70">CN</span>
-                            Carlos
+                          <motion.span key="carlos" initial={{ opacity: 0, x: -6, scale: 0.8 }} animate={{ opacity: 1, x: 0, scale: 1 }} transition={spring} className="flex items-center gap-2">
+                            <Avatar name="Carlos" />
+                            <span className="hidden text-[12px] text-white/55 sm:inline">Carlos</span>
                           </motion.span>
                         )}
                       </AnimatePresence>
+                      <AnimatePresence mode="wait">
+                        <motion.span
+                          key={status}
+                          initial={{ opacity: 0, scale: 0.82, y: 2 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.82, y: -2 }}
+                          transition={spring}
+                        >
+                          <StatusBadge status={status} />
+                        </motion.span>
+                      </AnimatePresence>
                     </div>
                   </div>
-                  <AnimatePresence mode="wait">
-                    <motion.span
-                      key={status}
-                      initial={{ opacity: 0, scale: 0.82, y: 2 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.82, y: -2 }}
-                      transition={spring}
-                      className={`flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${tone.bd} ${tone.bg} ${tone.tx}`}
-                    >
-                      {status === "COMPLETED" && <Check size={11} />}
-                      {status}
-                    </motion.span>
-                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {[
-              { t: "Beach club reservation", v: "Villa Aura", s: "Confirmed" },
-              { t: "Private chef · dinner for 6", v: "Villa Sol", s: "Pending" },
-            ].map((r) => (
-              <div key={r.t} className="flex items-center justify-between px-3.5 py-2.5">
-                <div className="min-w-0">
-                  <div className="truncate text-[12.5px] text-white/90">{r.t}</div>
-                  <div className="text-[10.5px] text-white/35">Concierge · {r.v}</div>
+            {/* the standing operations */}
+            <div className="divide-y divide-white/[0.05]">
+              {OPS.map((r) => (
+                <div key={r.title} className="flex items-center justify-between gap-3 py-3.5 sm:py-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[0.05] text-white/45 sm:h-10 sm:w-10" style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08)" }}>
+                      <r.Icon className="h-[18px] w-[18px]" />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="truncate text-[13.5px] font-medium text-white/90 sm:text-[15px]">{r.title}</div>
+                      <div className="truncate text-[11.5px] text-white/40 sm:text-[12.5px]">{r.cat} · {r.villa}</div>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
+                    {r.staff && (
+                      <span className="flex items-center gap-2">
+                        <Avatar name={r.staff} />
+                        <span className="hidden text-[12px] text-white/55 sm:inline">{r.staff}</span>
+                      </span>
+                    )}
+                    <StatusBadge status={r.status} />
+                  </div>
                 </div>
-                <span className="shrink-0 rounded-full border border-white/[0.12] bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-white/55">{r.s}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
