@@ -9,7 +9,7 @@ import { Magnetic } from "./anim/Magnetic";
 export function FinalCTA() {
   const ease = [0.62, 0.04, 0.2, 1] as const;
   return (
-    <section className="relative -mt-[26vh] overflow-hidden px-5 pb-56 pt-40 sm:pb-64 sm:pt-48">
+    <section className="relative overflow-hidden px-5 pb-40 pt-16 sm:pb-48 sm:pt-20">
       {/* the only accent glow on the page lives here, over a soft spotlight */}
       <div aria-hidden className="spotlight pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px]" />
       <div
