@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#05070c",
   width: "device-width",
   initialScale: 1,
 };
@@ -27,8 +27,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
-      <body className="min-h-screen bg-bg text-ink antialiased">{children}</body>
+    // inline deep blue-black so the very first paint is branded, never a black
+    // flash — even before the CSS bundle loads (render-blocking). The hero's
+    // villa poster then resolves over it.
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} style={{ backgroundColor: "#05070c" }}>
+      <body className="min-h-screen bg-bg text-ink antialiased" style={{ backgroundColor: "#05070c" }}>
+        {children}
+      </body>
     </html>
   );
 }

@@ -84,8 +84,8 @@ export function VideoBackdrop({ fallback, phone }: { fallback: ReactNode; phone?
   const v0Ref = useRef<HTMLVideoElement>(null); // part 1
   const v1Ref = useRef<HTMLVideoElement>(null); // part 2
   const [armed, setArmed] = useState(false);
-  const [shown, setShown] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [posterFailed, setPosterFailed] = useState(false);
   const ctrl = useRef({ active: 0, transitioning: false, visible: true });
 
   // lazy: attach sources only when the hero nears the viewport
@@ -149,22 +149,19 @@ export function VideoBackdrop({ fallback, phone }: { fallback: ReactNode; phone?
       }
     };
 
-    const reveal = () => setShown(true);
     const onError = (v: HTMLVideoElement) => () => {
-      // both <source>s for this clip exhausted → fall back to the CSS villa
+      // both <source>s for this clip exhausted → fall back to the poster/CSS villa
       if (v.error) setFailed(true);
     };
     const onErr0 = onError(a);
     const onErr1 = onError(c);
-    a.addEventListener("playing", reveal);
     a.addEventListener("error", onErr0);
     c.addEventListener("error", onErr1);
 
-    // start part 1
+    // start part 1 — it fades in over the poster (crossfade) once it is playing
     a.currentTime = 0;
     a.play().then(() => {
       a.style.opacity = "1";
-      setShown(true);
       upgradeNext();
     }).catch(() => {});
     a.addEventListener("playing", upgradeNext, { once: true });
@@ -231,7 +228,6 @@ export function VideoBackdrop({ fallback, phone }: { fallback: ReactNode; phone?
 
     return () => {
       cancelAnimationFrame(raf);
-      a.removeEventListener("playing", reveal);
       a.removeEventListener("error", onErr0);
       c.removeEventListener("error", onErr1);
     };
@@ -241,20 +237,35 @@ export function VideoBackdrop({ fallback, phone }: { fallback: ReactNode; phone?
     "pointer-events-none absolute inset-0 h-full w-full object-cover";
   const videoStyle = {
     opacity: 0,
+    // the very first reveal (poster → video) crossfades over ~450ms, exactly
+    // like Apple.com; inter-clip crossfades set their own (shorter) timing
+    transition: "opacity 450ms ease",
     transform: "translate3d(0,0,0)",
     willChange: "opacity",
     backfaceVisibility: "hidden" as const,
   };
 
   return (
-    <div ref={holderRef} className="absolute inset-0 overflow-hidden bg-[#070809]">
-      {/* CSS villa underneath: paints instantly, and stays if H.264 can't decode */}
-      <div
-        className="absolute inset-0 transition-opacity duration-[1200ms] ease-out"
-        style={{ opacity: shown && !failed ? 0 : 1 }}
-      >
-        {fallback}
-      </div>
+    <div ref={holderRef} className="absolute inset-0 overflow-hidden bg-[#05070c]">
+      {/* deepest instant fallback: the hand-built CSS villa (zero network) — it
+          paints on the very first frame so the container is never empty/black */}
+      <div aria-hidden className="absolute inset-0">{fallback}</div>
+
+      {/* the villa poster photo: eager + high-priority so it is the first real
+          frame, and stays as the base the video crossfades over. If it or the
+          video fails, the CSS villa beneath still shows — never a black hero. */}
+      {!posterFailed && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={POSTER}
+          alt=""
+          aria-hidden
+          decoding="async"
+          fetchPriority="high"
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={() => setPosterFailed(true)}
+        />
+      )}
 
       {!failed && (
         <>

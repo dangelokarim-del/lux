@@ -126,6 +126,26 @@ export function VideoHero() {
 
   return (
     <section ref={ref} className="relative h-[200vh]">
+      {/* SSR, inline-styled villa layer: paints the poster on the very first
+          frame — before the CSS bundle or any JS — so the hero is never black or
+          empty. The video backdrop below fades over it (identical poster) once
+          ready. Scoped to the first viewport so it never leaks into lower sections. */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "100vh",
+          zIndex: 0,
+          backgroundColor: "#05070c",
+          backgroundImage: "url(/hero/villa-poster.jpg)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
       <motion.div className="sticky top-0 h-screen overflow-hidden">
         <VideoBackdrop fallback={<VillaSpace dolly={p} />} />
 
@@ -179,23 +199,10 @@ export function VideoHero() {
                   </Rise>
                 </div>
                 <Rise delay={2.95}>
-                  <div className="pointer-events-auto mt-12 flex flex-wrap items-center justify-center gap-3.5">
+                  <div className="pointer-events-auto mt-12 flex items-center justify-center">
                     <Magnetic className="inline-block" strength={0.3}>
                       <Link href="/login" className={buttonVariants({ variant: "accent", size: "lg" })}>
                         Book a Demo
-                      </Link>
-                    </Magnetic>
-                    <Magnetic className="inline-block" strength={0.25}>
-                      <Link
-                        href="/login"
-                        className="glass edge-light inline-flex h-12 items-center gap-2 rounded-[var(--radius-control)] border border-white/[0.18] px-6 text-[15px] font-medium text-white/90 transition-colors duration-300 hover:border-white/30 hover:text-white"
-                      >
-                        <span aria-hidden className="grid h-5 w-5 place-items-center rounded-full border border-white/25">
-                          <svg width="8" height="9" viewBox="0 0 8 9" fill="none" className="translate-x-px">
-                            <path d="M0 0.5L8 4.5L0 8.5V0.5Z" fill="currentColor" />
-                          </svg>
-                        </span>
-                        Watch Demo
                       </Link>
                     </Magnetic>
                   </div>

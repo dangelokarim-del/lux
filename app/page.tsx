@@ -8,6 +8,10 @@ import { Atmosphere } from "@/components/landing/anim/Atmosphere";
 export default function LandingPage() {
   return (
     <>
+      {/* Preload the villa poster so the hero's first frame is the villa itself —
+          never a black flash or empty container (React 19 hoists this to <head>). */}
+      <link rel="preload" as="image" href="/hero/villa-poster.jpg" fetchPriority="high" />
+
       {/* ONE shared deep blue-black background for the whole landing page, so the
           scroll reads as a single continuous cinematic sequence — never separate
           slides or sudden black blocks. */}
