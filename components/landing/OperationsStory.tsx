@@ -6,7 +6,7 @@ import { MessageCircle, Sparkles, ClipboardList, UserCheck, CheckCircle2, Check 
 import { LiveNumber } from "./anim/LiveNumber";
 
 const ease = [0.62, 0.04, 0.2, 1] as const;
-const spring = { type: "spring" as const, stiffness: 300, damping: 26 };
+const spring = { type: "spring" as const, stiffness: 170, damping: 24 };
 
 /* the five stages of the operation, shown as one horizontal flow */
 const FLOW = [
@@ -22,10 +22,11 @@ const MESSAGE = "Hi, the AC is not working in the master bedroom.";
 
 /* ------------------------------------------------------------------ *
  *  One WhatsApp → entire operation. A single scene that auto-plays forever
- *  while in view, stage by stage, at a calm ~0.8s cadence:
+ *  while in view, stage by stage, at a slow ~2–2.5s cadence so a first-time
+ *  viewer follows every beat one at a time:
  *   1 WhatsApp message arrives · 2 AI extracts chips · 3 task created (NEW) ·
- *   4 assigned (IN PROGRESS) · 5 completed (green) — then a 2s hold and loop.
- *  The dashboard reacts live at every step. The product explains itself.
+ *   4 assigned (IN PROGRESS) · 5 completed (green) — then a ~7s hold and loop
+ *   (~18s total). The dashboard reacts live at every step. It explains itself.
  * ------------------------------------------------------------------ */
 export function OperationsStory() {
   const ref = useRef<HTMLDivElement>(null);
@@ -43,18 +44,20 @@ export function OperationsStory() {
       setPhase(5); // static finished state for reduced motion
       return;
     }
+    // slow, deliberate pacing — one change at a time so a first-time viewer
+    // always knows exactly what just happened. Total loop ~18s.
     const seq: [number, number][] = [
-      [1, 350],   // WhatsApp message arrives
-      [2, 1150],  // +0.8s — AI understands (chips)
-      [3, 1950],  // +0.8s — Task Created → dashboard: NEW, Open 15→16, Urgent 02→03
-      [4, 2750],  // +0.8s — Assigned → IN PROGRESS, Carlos appears
-      [5, 3750],  // +1.0s — Completed → COMPLETED, counters settle, green
+      [1, 600],    // WhatsApp message appears
+      [2, 3100],   // hold 2.5s → AI understands (chips then animate one by one)
+      [3, 6300],   // hold ~2s + chips → Task Created → dashboard: NEW, Open 15→16, Urgent 02→03
+      [4, 8800],   // hold 2s → Assigned → IN PROGRESS, Carlos fades in
+      [5, 11300],  // hold 2s → Completed → COMPLETED, counters settle, green
     ];
     const ids = seq.map(([ph, t]) => setTimeout(() => setPhase(ph), t));
     const loop = setTimeout(() => {
       setPhase(0);
       setCycle((c) => c + 1);
-    }, 5750); // hold the finished state ~2s, then restart
+    }, 18300); // hold the finished state ~7s (3s settle + 4s), then restart
     return () => {
       ids.forEach(clearTimeout);
       clearTimeout(loop);
@@ -117,7 +120,7 @@ export function OperationsStory() {
                     key={c}
                     initial={{ opacity: 0, y: 8, scale: 0.9, filter: "blur(5px)" }}
                     animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-                    transition={{ duration: 0.45, delay: i * 0.12, ease }}
+                    transition={{ duration: 0.5, delay: 0.15 + i * 0.42, ease }}
                     className="flex items-center gap-1.5 rounded-full border border-[#2E7DFF]/25 bg-[#2E7DFF]/[0.08] px-3 py-1.5 text-[12px] font-medium text-white/90 sm:text-[13px]"
                   >
                     <Check className="h-3 w-3 text-[#6ba5ff]" /> {c}
@@ -262,7 +265,7 @@ function Dashboard({
               <div key={c.l} className="relative h-[74px] rounded-xl bg-white/[0.03] px-3 py-2.5" style={{ boxShadow: "inset 0 0 0 1px rgba(208,222,244,0.14)" }}>
                 <div className="text-[8.5px] uppercase tracking-[0.12em] text-white/40 sm:text-[9px]">{c.l}</div>
                 <div className={`mt-1.5 text-[22px] font-semibold leading-none tabular-nums sm:text-[26px] ${c.a && urgent >= 3 ? "text-[#6ba5ff]" : "text-white"}`}>
-                  <LiveNumber value={c.v} pad={2} duration={0.7} />
+                  <LiveNumber value={c.v} pad={2} duration={1.05} />
                 </div>
               </div>
             ))}
