@@ -12,6 +12,7 @@ import {
   statusMeta,
   type Database,
   type Note,
+  type Settings,
   type Task,
 } from "@/lib/domain";
 
@@ -56,6 +57,11 @@ export function useStaff() {
 
 export function useProperties() {
   return useDatabase().properties;
+}
+
+/** portfolio configuration (branding, departments, rules, KPIs, …) */
+export function useSettings(): Settings {
+  return useDatabase().settings;
 }
 
 export function useGuests() {

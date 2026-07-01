@@ -12,7 +12,7 @@ import type { GuestRow, PropertyRow, TaskRow } from "@/lib/supabase/types";
 import { getExtractor } from "@/lib/services/ai";
 import { sendWhatsAppText } from "@/lib/services/whatsapp/send";
 import type { InboundMessage } from "@/lib/services/whatsapp/inbound";
-import { categoryMeta, departmentMeta, type Extraction } from "@/lib/domain";
+import { categoryMeta, deptLabel, type Extraction } from "@/lib/domain";
 
 const firstName = (n: string) => n.split(" ")[0];
 
@@ -114,7 +114,7 @@ export async function ingestInbound(inbound: InboundMessage): Promise<IngestResu
     actor_name: "LUXA AI",
     type: "created",
     is_system: true,
-    body: `Created from WhatsApp · ${departmentMeta[task.department].label} · ${categoryMeta[task.category].label}`,
+    body: `Created from WhatsApp · ${deptLabel(task.department)} · ${categoryMeta[task.category].label}`,
   });
   await db.from("notifications").insert({
     kind: "new_task",
@@ -124,7 +124,7 @@ export async function ingestInbound(inbound: InboundMessage): Promise<IngestResu
   });
 
   // 8 — auto-reply (persisted + actually sent if WhatsApp is configured)
-  const replyBody = `Thank you ${firstName(guest.name)} — I've logged this with our ${departmentMeta[task.department].label} team and we're on it.`;
+  const replyBody = `Thank you ${firstName(guest.name)} — I've logged this with our ${deptLabel(task.department)} team and we're on it.`;
   await db.from("messages").insert({
     conversation_id: conversation.id,
     direction: "outbound",

@@ -87,9 +87,9 @@ export function Sidebar() {
 
       <div className="mt-auto p-3">
         <div className="panel p-4">
-          <div className="text-[13px] font-medium">Marbella Portfolio</div>
+          <div className="truncate text-[13px] font-medium">{db.settings.portfolioName}</div>
           <div className="mt-1 text-[12px] tabular-nums text-ink-3">
-            {live.villas} villas · {live.staff} staff
+            {live.villas} {live.villas === 1 ? "property" : "properties"} · {live.staff} staff
           </div>
           <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
             <div

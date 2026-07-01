@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, MessageSquareText, Sparkles } from "lucide-react";
 import { Topbar } from "@/components/app/Topbar";
 import { Avatar, Badge, Card } from "@/components/ui";
-import { categoryMeta, departmentMeta, intentMeta, priorityMeta, statusMeta, type Task } from "@/lib/domain";
+import { categoryMeta, deptLabel, intentMeta, priorityMeta, statusMeta, type Task } from "@/lib/domain";
 import { useDatabase, useReady } from "@/lib/store/hooks";
 import { TaskDetail } from "@/components/product/TaskDetail";
 import { timeAgo } from "@/components/product/format";
@@ -122,7 +122,7 @@ function RequestCard({ req, analyzing, onOpen }: { req: Req; analyzing: boolean;
         t.intent ? { k: "Intent", v: intentMeta[t.intent].label } : null,
         { k: "Villa", v: req.villaName ?? "—" },
         t.room ? { k: "Room", v: t.room } : null,
-        { k: "Department", v: departmentMeta[t.department].label },
+        { k: "Department", v: deptLabel(t.department) },
         { k: "Priority", v: priorityMeta[t.priority].label },
         t.aiConfidence != null ? { k: "Confidence", v: `${Math.round(t.aiConfidence * 100)}%` } : null,
         { k: "Category", v: categoryMeta[t.category].label },

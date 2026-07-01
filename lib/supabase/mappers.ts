@@ -2,17 +2,18 @@
  * The serialization boundary: Postgres rows ⇄ domain models. Everything that
  * leaves Supabase is mapped here so the UI only ever sees clean domain types.
  */
-import type {
-  Conversation,
-  Database,
-  Extraction,
-  Guest,
-  Message,
-  Note,
-  Notification,
-  Property,
-  Staff,
-  Task,
+import {
+  createDefaultSettings,
+  type Conversation,
+  type Database,
+  type Extraction,
+  type Guest,
+  type Message,
+  type Note,
+  type Notification,
+  type Property,
+  type Staff,
+  type Task,
 } from "@/lib/domain";
 import type {
   ActivityRow,
@@ -28,6 +29,7 @@ import type {
 export const rowToProperty = (r: PropertyRow): Property => ({
   id: r.id,
   name: r.name,
+  type: (r as { type?: string }).type ?? "Villa",
   area: r.area,
   bedrooms: r.bedrooms,
   status: r.status,
@@ -139,5 +141,7 @@ export function rowsToDatabase(rows: {
     tasks: rows.tasks.map(rowToTask),
     notes: rows.activity_log.map(rowToNote),
     notifications: rows.notifications.map(rowToNotification),
+    // settings live in the app config layer; callers may override with a persisted copy
+    settings: createDefaultSettings(),
   };
 }

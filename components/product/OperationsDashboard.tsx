@@ -13,7 +13,7 @@ import {
   type Task,
   type TaskStatus,
 } from "@/lib/domain";
-import { useDatabase, useReady, useTasks } from "@/lib/store/hooks";
+import { useDatabase, useReady, useSettings, useTasks } from "@/lib/store/hooks";
 import { computeKpis, fmtDuration } from "@/lib/store/insights";
 import { useToast } from "./Toast";
 import { TaskRow } from "./TaskRow";
@@ -35,6 +35,7 @@ export function OperationsDashboard() {
 
   const db = useDatabase();
   const tasks = useTasks();
+  const settings = useSettings();
   const kpis = useMemo(() => computeKpis(db), [db]);
   const toast = useToast();
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
@@ -133,7 +134,7 @@ export function OperationsDashboard() {
               Live
             </span>
           </h1>
-          <p className="truncate text-[12px] text-ink-3">Marbella portfolio · {db.properties.length} villas</p>
+          <p className="truncate text-[12px] text-ink-3">{settings.portfolioName} · {db.properties.length} {db.properties.length === 1 ? "property" : "properties"}</p>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -149,13 +150,9 @@ export function OperationsDashboard() {
         {/* KPI strip */}
         {ready ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7">
-            <Kpi label="Open requests" value={kpis.open} />
-            <Kpi label="Urgent" value={kpis.urgent} tone="urgent" />
-            <Kpi label="In progress" value={kpis.inProgress} tone="accent" />
-            <Kpi label="Completed today" value={kpis.completedToday} tone="ok" />
-            <Kpi label="Team online" value={kpis.teamOnline} />
-            <Kpi label="Villas active" value={kpis.villasActive} />
-            <Kpi label="Avg response" text={fmtDuration(kpis.avgResponse)} />
+            {settings.visibleKpis
+              .map((id) => KPI_BY_ID(kpis)[id])
+              .filter(Boolean)}
           </div>
         ) : (
           <KpiSkeleton />
@@ -240,6 +237,19 @@ function EmptyBoard({ filter, onCompose }: { filter: Filter; onCompose: () => vo
       )}
     </motion.div>
   );
+}
+
+/** the KPI cards keyed by id, so Settings › Portfolio can choose which show, in order */
+function KPI_BY_ID(kpis: ReturnType<typeof computeKpis>): Record<string, React.ReactElement> {
+  return {
+    open: <Kpi key="open" label="Open requests" value={kpis.open} />,
+    urgent: <Kpi key="urgent" label="Urgent" value={kpis.urgent} tone="urgent" />,
+    in_progress: <Kpi key="in_progress" label="In progress" value={kpis.inProgress} tone="accent" />,
+    completed_today: <Kpi key="completed_today" label="Completed today" value={kpis.completedToday} tone="ok" />,
+    team_online: <Kpi key="team_online" label="Team online" value={kpis.teamOnline} />,
+    properties_active: <Kpi key="properties_active" label="Properties active" value={kpis.villasActive} />,
+    avg_response: <Kpi key="avg_response" label="Avg response" text={fmtDuration(kpis.avgResponse)} />,
+  };
 }
 
 function Kpi({ label, value, text, tone = "default" }: { label: string; value?: number; text?: string; tone?: "default" | "urgent" | "accent" | "ok" }) {

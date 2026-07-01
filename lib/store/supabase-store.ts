@@ -9,7 +9,7 @@
  * local snapshot. Staff actions are persisted to Postgres; the realtime echo
  * keeps every connected dashboard in sync. The UI never knows the difference.
  */
-import { priorityMeta, statusMeta, type Database, type Guest, type Priority, type Property, type Staff, type TaskStatus } from "@/lib/domain";
+import { createDefaultSettings, priorityMeta, statusMeta, type Database, type Guest, type Priority, type Property, type Settings, type Staff, type TaskStatus } from "@/lib/domain";
 import type { InboundMessage } from "@/lib/services/whatsapp/inbound";
 import { browserSupabase } from "@/lib/supabase/browser";
 import {
@@ -26,7 +26,7 @@ import {
 import type { IngestOutcome, OpsGateway } from "./gateway";
 
 const EMPTY: Database = {
-  properties: [], guests: [], staff: [], conversations: [], messages: [], tasks: [], notes: [], notifications: [],
+  properties: [], guests: [], staff: [], conversations: [], messages: [], tasks: [], notes: [], notifications: [], settings: createDefaultSettings(),
 };
 
 // table → (snapshot key, mapper)
@@ -81,7 +81,8 @@ export class SupabaseLiveStore implements OpsGateway {
     const tables = ["properties", "guests", "staff", "conversations", "messages", "tasks", "activity_log", "notifications"] as const;
     const results = await Promise.all(tables.map((t) => this.sb.from(t).select("*")));
     const byTable = Object.fromEntries(tables.map((t, i) => [t, results[i].data ?? []]));
-    this.set(rowsToDatabase(byTable as never));
+    // preserve any settings the client edited this session (no settings table yet)
+    this.set({ ...rowsToDatabase(byTable as never), settings: this.db.settings });
   }
 
   private openRealtime() {
@@ -181,6 +182,43 @@ export class SupabaseLiveStore implements OpsGateway {
   markAllNotificationsRead() {
     this.patch({ notifications: this.db.notifications.map((n) => ({ ...n, read: true })) });
     void this.run(() => this.sb.from("notifications").update({ read: true }).eq("read", false));
+  }
+
+  /* ----------------------- configuration (admin) ------------------------- */
+  upsertProperty(property: Property) {
+    const exists = this.db.properties.some((p) => p.id === property.id);
+    this.patch({ properties: exists ? this.db.properties.map((p) => (p.id === property.id ? property : p)) : [...this.db.properties, property] });
+    void this.run(() =>
+      this.sb.from("properties").upsert({
+        id: property.id, name: property.name, area: property.area, bedrooms: property.bedrooms,
+        status: property.status, current_guest_id: property.currentGuestId, rooms: property.rooms,
+      })
+    );
+  }
+
+  deleteProperty(id: string) {
+    this.patch({ properties: this.db.properties.filter((p) => p.id !== id), tasks: this.db.tasks.map((t) => (t.propertyId === id ? { ...t, propertyId: null } : t)) });
+    void this.run(() => this.sb.from("properties").delete().eq("id", id));
+  }
+
+  upsertStaff(staff: Staff) {
+    const exists = this.db.staff.some((s) => s.id === staff.id);
+    this.patch({ staff: exists ? this.db.staff.map((s) => (s.id === staff.id ? staff : s)) : [...this.db.staff, staff] });
+    void this.run(() =>
+      this.sb.from("staff").upsert({
+        id: staff.id, name: staff.name, role: staff.role, department: staff.department, presence: staff.presence, initials: staff.initials,
+      })
+    );
+  }
+
+  deleteStaff(id: string) {
+    this.patch({ staff: this.db.staff.filter((s) => s.id !== id), tasks: this.db.tasks.map((t) => (t.assigneeId === id ? { ...t, assigneeId: null } : t)) });
+    void this.run(() => this.sb.from("staff").delete().eq("id", id));
+  }
+
+  updateSettings(patch: Partial<Settings>) {
+    // held in the app config layer for now (no settings table); realtime-safe locally
+    this.patch({ settings: { ...this.db.settings, ...patch } });
   }
 
   private patch(p: Partial<Database>) {

@@ -18,12 +18,18 @@ import type {
 export interface Property {
   id: string;
   name: string;
-  area: string; // e.g. "Sierra Blanca"
+  /** property type — villa, apartment, hotel, room, suite, yacht, or any custom */
+  type: string;
+  area: string; // location, e.g. "Sierra Blanca"
   bedrooms: number;
   status: PropertyStatus;
   currentGuestId: string | null;
   /** rooms the AI can map a request to */
   rooms: string[];
+  /** staff ids permanently attached to this property */
+  assignedTeamIds?: string[];
+  /** free-text operational notes */
+  notes?: string;
 }
 
 /* -------------------------------- Guest --------------------------------- */
@@ -43,9 +49,19 @@ export interface Staff {
   id: string;
   name: string;
   role: string;
-  department: Department;
+  /** department id — one of the configured departments (built-in or custom) */
+  department: string;
   presence: Presence;
   initials: string;
+  phone?: string;
+  email?: string;
+  /** most tasks this person should hold at once (assignment engine caps here) */
+  maxActiveTasks?: number;
+  /** e.g. "08:00–16:00" */
+  workingHours?: string;
+  languages?: string[];
+  /** properties this person is dedicated to (empty = whole portfolio) */
+  assignedPropertyIds?: string[];
 }
 
 /* ----------------------------- Conversation ----------------------------- */
@@ -80,7 +96,7 @@ export interface Message {
 export interface Extraction {
   intent: Intent;
   category: TaskCategory;
-  department: Department;
+  department: string;
   priority: Priority;
   propertyId: string | null;
   propertyName: string | null;
@@ -112,7 +128,7 @@ export interface Task {
   title: string;
   description: string | null;
   category: TaskCategory;
-  department: Department;
+  department: string;
   priority: Priority;
   intent: Intent | null;
   status: TaskStatus;
@@ -142,6 +158,46 @@ export interface Notification {
   read: boolean;
 }
 
+/* ------------------------- Configuration models ------------------------- */
+/** a department the client operates — built-in or custom */
+export interface DepartmentDef {
+  id: string; // slug, e.g. "maintenance" | "pool_service"
+  label: string;
+  custom?: boolean;
+}
+
+/** a customizable assignment rule: match keywords → category/department (+ priority) */
+export interface AssignmentRule {
+  id: string;
+  /** friendly name, e.g. "Air conditioning" */
+  label: string;
+  /** matches if the message contains ANY of these (case-insensitive) */
+  keywords: string[];
+  category: TaskCategory;
+  department: string;
+  priority?: Priority;
+  enabled: boolean;
+}
+
+/**
+ * Portfolio-wide, client-configurable settings. This is what turns LUXA from a
+ * fixed demo into a per-client operations system. Held in the store like any
+ * other table so every page reads from one source.
+ */
+export interface Settings {
+  portfolioName: string; // e.g. "Marbella Portfolio"
+  location: string; // e.g. "Marbella"
+  language: string; // e.g. "en"
+  timezone: string; // e.g. "Europe/Madrid"
+  brandMark: string; // the wordmark shown in-app, e.g. "LUXA"
+  /** the assignment engine auto-assigns new tasks when true */
+  autoAssign: boolean;
+  /** which KPI cards are visible, by id, in order */
+  visibleKpis: string[];
+  departments: DepartmentDef[];
+  rules: AssignmentRule[];
+}
+
 /** The full in-memory database shape (one array per future table). */
 export interface Database {
   properties: Property[];
@@ -152,6 +208,7 @@ export interface Database {
   tasks: Task[];
   notes: Note[];
   notifications: Notification[];
+  settings: Settings;
 }
 
 // re-export the enum unions so consumers can import models + types from one place

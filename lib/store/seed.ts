@@ -2,16 +2,18 @@
  * Seed dataset — a believable Marbella villa portfolio. Stable, readable ids so
  * cross-references are obvious; this is the only place demo data lives.
  */
-import type {
-  Conversation,
-  Database,
-  Guest,
-  Message,
-  Note,
-  Notification,
-  Property,
-  Staff,
-  Task,
+import {
+  createDefaultSettings,
+  type Conversation,
+  type Database,
+  type Guest,
+  type Message,
+  type Note,
+  type Notification,
+  type Property,
+  type Settings,
+  type Staff,
+  type Task,
 } from "@/lib/domain";
 
 const minsAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
@@ -32,12 +34,12 @@ const ROOMS = [
 ];
 
 const properties: Property[] = [
-  { id: "prop_ocean", name: "Villa Ocean", area: "Golden Mile", bedrooms: 6, status: "occupied", currentGuestId: "guest_james", rooms: ROOMS },
-  { id: "prop_sol", name: "Villa Sol", area: "Sierra Blanca", bedrooms: 5, status: "occupied", currentGuestId: "guest_sophie", rooms: ROOMS },
-  { id: "prop_sierra", name: "Villa Sierra", area: "El Madroñal", bedrooms: 7, status: "occupied", currentGuestId: "guest_mohammed", rooms: ROOMS },
-  { id: "prop_aura", name: "Villa Aura", area: "La Zagaleta", bedrooms: 7, status: "arriving", currentGuestId: null, rooms: ROOMS },
-  { id: "prop_mar", name: "Villa Mar", area: "Puerto Banús", bedrooms: 4, status: "cleaning", currentGuestId: null, rooms: ROOMS },
-  { id: "prop_luz", name: "Villa Luz", area: "Nueva Andalucía", bedrooms: 5, status: "vacant", currentGuestId: null, rooms: ROOMS },
+  { id: "prop_ocean", name: "Villa Ocean", type: "Villa", area: "Golden Mile", bedrooms: 6, status: "occupied", currentGuestId: "guest_james", rooms: ROOMS },
+  { id: "prop_sol", name: "Villa Sol", type: "Villa", area: "Sierra Blanca", bedrooms: 5, status: "occupied", currentGuestId: "guest_sophie", rooms: ROOMS },
+  { id: "prop_sierra", name: "Villa Sierra", type: "Villa", area: "El Madroñal", bedrooms: 7, status: "occupied", currentGuestId: "guest_mohammed", rooms: ROOMS },
+  { id: "prop_aura", name: "Villa Aura", type: "Villa", area: "La Zagaleta", bedrooms: 7, status: "arriving", currentGuestId: null, rooms: ROOMS },
+  { id: "prop_mar", name: "Villa Mar", type: "Villa", area: "Puerto Banús", bedrooms: 4, status: "cleaning", currentGuestId: null, rooms: ROOMS },
+  { id: "prop_luz", name: "Villa Luz", type: "Villa", area: "Nueva Andalucía", bedrooms: 5, status: "vacant", currentGuestId: null, rooms: ROOMS },
 ];
 
 const guests: Guest[] = [
@@ -47,13 +49,14 @@ const guests: Guest[] = [
 ];
 
 const staff: Staff[] = [
-  { id: "staff_carlos", name: "Carlos Núñez", role: "Maintenance Lead", department: "maintenance", presence: "available", initials: "CN" },
-  { id: "staff_diego", name: "Diego Romero", role: "Maintenance Technician", department: "maintenance", presence: "busy", initials: "DR" },
-  { id: "staff_marta", name: "Marta Gil", role: "Head Housekeeper", department: "housekeeping", presence: "available", initials: "MG" },
-  { id: "staff_elena", name: "Elena Costa", role: "Housekeeper", department: "housekeeping", presence: "busy", initials: "EC" },
-  { id: "staff_lucia", name: "Lucía Fernández", role: "Lead Concierge", department: "concierge", presence: "available", initials: "LF" },
-  { id: "staff_sofia", name: "Sofía Vidal", role: "Concierge", department: "concierge", presence: "off", initials: "SV" },
-  { id: "staff_andres", name: "Andrés Soto", role: "Security", department: "security", presence: "available", initials: "AS" },
+  { id: "staff_carlos", name: "Carlos Núñez", role: "Maintenance Lead", department: "maintenance", presence: "available", initials: "CN", phone: "+34600111222", email: "carlos@portfolio.com", maxActiveTasks: 5, workingHours: "08:00–18:00", languages: ["es", "en"] },
+  { id: "staff_diego", name: "Diego Romero", role: "Maintenance Technician", department: "maintenance", presence: "busy", initials: "DR", phone: "+34600111223", maxActiveTasks: 4, workingHours: "08:00–16:00", languages: ["es"] },
+  { id: "staff_marta", name: "Marta Gil", role: "Head Housekeeper", department: "housekeeping", presence: "available", initials: "MG", phone: "+34600111224", maxActiveTasks: 6, workingHours: "07:00–15:00", languages: ["es", "en"] },
+  { id: "staff_elena", name: "Elena Costa", role: "Housekeeper", department: "housekeeping", presence: "busy", initials: "EC", maxActiveTasks: 5, languages: ["es"] },
+  { id: "staff_lucia", name: "Lucía Fernández", role: "Lead Concierge", department: "concierge", presence: "available", initials: "LF", phone: "+34600111225", email: "lucia@portfolio.com", maxActiveTasks: 8, workingHours: "09:00–20:00", languages: ["es", "en", "fr"] },
+  { id: "staff_sofia", name: "Sofía Vidal", role: "Concierge", department: "concierge", presence: "off", initials: "SV", maxActiveTasks: 6, languages: ["es", "en"] },
+  { id: "staff_pablo", name: "Pablo Ruiz", role: "Head Driver", department: "transport", presence: "available", initials: "PR", phone: "+34600111226", maxActiveTasks: 4, languages: ["es", "en"] },
+  { id: "staff_andres", name: "Andrés Soto", role: "Security", department: "security", presence: "available", initials: "AS", maxActiveTasks: 5, languages: ["es"] },
 ];
 
 const tasks: Task[] = [
@@ -117,6 +120,12 @@ const notifications: Notification[] = [
   { id: "ntf_seed_2", kind: "assignment", title: "Task assigned", body: "Airport transfer — 4 guests → Lucía", taskId: "task_seed_1", createdAt: minsAgo(36), read: true },
 ];
 
+const settings: Settings = {
+  ...createDefaultSettings(),
+  portfolioName: "Marbella Portfolio",
+  location: "Marbella",
+};
+
 export function createSeed(): Database {
   return {
     properties: structuredClone(properties),
@@ -127,5 +136,6 @@ export function createSeed(): Database {
     tasks: structuredClone(tasks),
     notes: structuredClone(notes),
     notifications: structuredClone(notifications),
+    settings: structuredClone(settings),
   };
 }

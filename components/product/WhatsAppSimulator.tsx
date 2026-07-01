@@ -6,7 +6,7 @@ import { ArrowRight, Send, Sparkles } from "lucide-react";
 import { buttonVariants } from "@/components/ui";
 import {
   categoryMeta,
-  departmentMeta,
+  deptLabel,
   intentMeta,
   priorityMeta,
   type Extraction,
@@ -138,7 +138,7 @@ export function WhatsAppSimulator({ open, onClose, onOpenTask }: { open: boolean
                   <Field k="Property" v={result.extraction.propertyName ?? property?.name ?? "—"} delay={0.19} />
                   <Field k="Room" v={result.extraction.room ?? "—"} delay={0.26} />
                   <Field k="Priority" v={priorityMeta[result.extraction.priority].label} delay={0.33} />
-                  <Field k="Department" v={departmentMeta[result.extraction.department].label} delay={0.4} />
+                  <Field k="Department" v={deptLabel(result.extraction.department)} delay={0.4} />
                 </div>
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-3 flex items-center justify-between rounded-lg border border-ok/30 bg-[rgba(74,212,138,0.06)] px-3 py-2">
                   <span className="flex items-center gap-1.5 text-[12.5px] text-ok"><span className="h-1.5 w-1.5 rounded-full bg-ok" /> Task {result.code} created</span>

@@ -12,22 +12,24 @@
  */
 import {
   categoryMeta,
-  departmentMeta,
+  deptLabel,
   priorityMeta,
   newId,
   nextTaskCode,
   primeTaskSeq,
   type Database,
-  type Extraction,
   type Note,
   type Notification,
   type NotificationKind,
+  type Property,
+  type Settings,
   type Staff,
   type Task,
   type TaskStatus,
   statusMeta,
 } from "@/lib/domain";
 import { extractor } from "@/lib/services/ai/extractor";
+import { applyRules, chooseAssignee } from "@/lib/services/assignment/engine";
 import type { InboundMessage } from "@/lib/services/whatsapp/inbound";
 import type { IngestOutcome, OpsGateway } from "./gateway";
 
@@ -103,20 +105,33 @@ export class LuxaStore implements OpsGateway {
       properties: this.db.properties,
     });
 
+    // → configurable routing: client rules can override the AI's department/category
+    const routed = applyRules(
+      inbound.body,
+      { category: extraction.category, department: extraction.department, priority: extraction.priority },
+      this.db.settings.rules
+    );
+    const routedExtraction = { ...extraction, category: routed.category, department: routed.department, priority: routed.priority };
+
+    // → assignment engine picks the right person (respecting availability + workload)
+    const propertyId = extraction.propertyId ?? guest.propertyId;
+    const assigneeId = chooseAssignee(this.db, routed.department, { autoAssign: this.db.settings.autoAssign, propertyId });
+    const assignee = this.staffById(assigneeId);
+
     // → Task
     const task: Task = {
       id: newId("task"),
       code: nextTaskCode(),
       title: extraction.title,
       description: extraction.summary,
-      category: extraction.category,
-      department: extraction.department,
-      priority: extraction.priority,
+      category: routed.category,
+      department: routed.department,
+      priority: routed.priority,
       intent: extraction.intent,
       status: "new",
-      propertyId: extraction.propertyId ?? guest.propertyId,
+      propertyId,
       room: extraction.room,
-      assigneeId: null,
+      assigneeId,
       guestId: guest.id,
       conversationId: conversation.id,
       sourceMessageId: message.id,
@@ -126,40 +141,54 @@ export class LuxaStore implements OpsGateway {
       completedAt: null,
     };
 
-    const systemNote: Note = {
-      id: newId("note"),
-      taskId: task.id,
-      authorId: null,
-      authorName: "LUXA AI",
-      body: `Created from WhatsApp · ${departmentMeta[task.department].label} · ${categoryMeta[task.category].label}`,
-      createdAt: nowIso(),
-      system: true,
-    };
+    const notes: Note[] = [
+      {
+        id: newId("note"),
+        taskId: task.id,
+        authorId: null,
+        authorName: "LUXA AI",
+        body: `Created from WhatsApp · ${deptLabel(task.department)} · ${categoryMeta[task.category].label}${routed.matchedRule ? ` · rule: ${routed.matchedRule.label}` : ""}`,
+        createdAt: nowIso(),
+        system: true,
+      },
+    ];
+    if (assignee) {
+      notes.push({
+        id: newId("note"),
+        taskId: task.id,
+        authorId: null,
+        authorName: "System",
+        body: `Auto-assigned to ${assignee.name}`,
+        createdAt: nowIso(),
+        system: true,
+      });
+    }
 
     const reply = {
       id: newId("msg"),
       conversationId: conversation.id,
       direction: "outbound" as const,
       channel: "whatsapp" as const,
-      body: `Thank you ${firstName(guest.name)} — I've logged this with our ${departmentMeta[task.department].label} team and we're on it.`,
+      body: `Thank you ${firstName(guest.name)} — I've logged this with our ${deptLabel(task.department)} team and we're on it.`,
       author: "LUXA",
       createdAt: nowIso(),
     };
 
     this.commit({
       messages: this.db.messages
-        .map((m) => (m.id === message.id ? { ...m, extraction, taskId: task.id } : m))
+        .map((m) => (m.id === message.id ? { ...m, extraction: routedExtraction, taskId: task.id } : m))
         .concat(reply),
       tasks: [task, ...this.db.tasks],
-      notes: [...this.db.notes, systemNote],
+      notes: [...this.db.notes, ...notes],
       conversations: this.db.conversations.map((c) =>
         c.id === conversation.id ? { ...c, lastMessageAt: reply.createdAt } : c
       ),
     });
 
-    this.notify("new_task", "New request", `${task.title} · ${property?.name ?? "Unknown villa"}`, task.id);
+    this.notify("new_task", "New request", `${task.title} · ${property?.name ?? "Unknown property"}`, task.id);
+    if (assignee) this.notify("assignment", "Task assigned", `${task.title} → ${assignee.name}`, task.id);
 
-    return { taskId: task.id, code: task.code, extraction, conversationId: conversation.id };
+    return { taskId: task.id, code: task.code, extraction: routedExtraction, conversationId: conversation.id };
   }
 
   private resolveGuest(inbound: InboundMessage) {
@@ -278,5 +307,42 @@ export class LuxaStore implements OpsGateway {
   /** staff sorted by department then load — for assignment pickers */
   staffForDepartment(dept: Staff["department"]): Staff[] {
     return this.db.staff.filter((s) => s.department === dept);
+  }
+
+  /* ----------------------- configuration (admin) ------------------------- */
+  upsertProperty(property: Property) {
+    const exists = this.db.properties.some((p) => p.id === property.id);
+    this.commit({
+      properties: exists
+        ? this.db.properties.map((p) => (p.id === property.id ? property : p))
+        : [...this.db.properties, property],
+    });
+  }
+
+  deleteProperty(id: string) {
+    this.commit({
+      properties: this.db.properties.filter((p) => p.id !== id),
+      // unlink tasks pointing at the removed property (keep the tasks)
+      tasks: this.db.tasks.map((t) => (t.propertyId === id ? { ...t, propertyId: null } : t)),
+    });
+  }
+
+  upsertStaff(staff: Staff) {
+    const exists = this.db.staff.some((s) => s.id === staff.id);
+    this.commit({
+      staff: exists ? this.db.staff.map((s) => (s.id === staff.id ? staff : s)) : [...this.db.staff, staff],
+    });
+  }
+
+  deleteStaff(id: string) {
+    this.commit({
+      staff: this.db.staff.filter((s) => s.id !== id),
+      // unassign their open tasks so nothing is orphaned
+      tasks: this.db.tasks.map((t) => (t.assigneeId === id ? { ...t, assigneeId: null } : t)),
+    });
+  }
+
+  updateSettings(patch: Partial<Settings>) {
+    this.commit({ settings: { ...this.db.settings, ...patch } });
   }
 }

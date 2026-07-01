@@ -2,3 +2,4 @@
 export * from "./enums";
 export * from "./models";
 export * from "./ids";
+export * from "./settings";

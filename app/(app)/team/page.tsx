@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Topbar } from "@/components/app/Topbar";
 import { Card, Avatar, StatusPill } from "@/components/ui";
-import { departmentMeta, presenceMeta } from "@/lib/domain";
+import { deptLabel, presenceMeta } from "@/lib/domain";
 import { useDatabase } from "@/lib/store/hooks";
 import { staffContext } from "@/lib/store/insights";
 import { timeAgo } from "@/components/product/format";
@@ -53,7 +53,7 @@ export default function TeamPage() {
               </div>
 
               <div className="mt-4 flex items-center justify-between border-t border-line pt-4 text-[12px]">
-                <span className="text-ink-3">{departmentMeta[m.department].label}</span>
+                <span className="text-ink-3">{deptLabel(m.department)}</span>
                 <span className="flex items-center gap-3 text-ink-3">
                   <span>
                     <span className="font-medium text-ink tabular-nums">{m.ctx.openTasks}</span> open

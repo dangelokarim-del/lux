@@ -8,7 +8,7 @@ import {
   BOARD_STATUSES,
   PRIORITIES,
   categoryMeta,
-  departmentMeta,
+  deptLabel,
   intentMeta,
   presenceMeta,
   priorityMeta,
@@ -156,7 +156,7 @@ export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose
           <section className="grid grid-cols-2 gap-x-4 gap-y-3.5 rounded-xl border border-line bg-white/[0.012] p-4">
             <Meta label="Villa">{property ? `${property.name}` : "—"}</Meta>
             <Meta label="Room">{task.room ?? "—"}</Meta>
-            <Meta label="Department">{departmentMeta[task.department].label}</Meta>
+            <Meta label="Department">{deptLabel(task.department)}</Meta>
             <Meta label="Category">{categoryMeta[task.category].label}</Meta>
             <Meta label="Priority"><StatusPill tone={priorityMeta[task.priority].tone}>{priorityMeta[task.priority].label}</StatusPill></Meta>
             <Meta label="Guest">{guest?.name ?? "—"}</Meta>

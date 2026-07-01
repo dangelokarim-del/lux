@@ -5,7 +5,7 @@ import { publicEnv, isLive } from "@/lib/config";
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 /** Routes that require an authenticated staff session. */
-const PROTECTED = ["/dashboard", "/tasks", "/villas", "/team", "/requests", "/analytics"];
+const PROTECTED = ["/dashboard", "/tasks", "/villas", "/team", "/requests", "/analytics", "/settings"];
 
 /**
  * Refreshes the Supabase session cookie on every request and gates the app:

@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { Avatar, Badge, StatusDot } from "@/components/ui";
-import { departmentMeta, priorityMeta, statusMeta, type Task } from "@/lib/domain";
+import { deptLabel, priorityMeta, statusMeta, type Task } from "@/lib/domain";
 import { useLuxa } from "@/lib/store/hooks";
 import { timeAgo } from "./format";
 
@@ -60,7 +60,7 @@ export function TaskRow({ task, onOpen, fresh, selected }: { task: Task; onOpen:
       </div>
 
       <Badge tone="muted" variant="outline" size="sm" className="hidden shrink-0 sm:inline-flex">
-        {departmentMeta[task.department].label}
+        {deptLabel(task.department)}
       </Badge>
 
       <div className="hidden w-[88px] shrink-0 justify-center md:flex">

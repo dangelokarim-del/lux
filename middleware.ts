@@ -7,5 +7,5 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   // Run on the app routes + login; skip the marketing page, api, and static assets.
-  matcher: ["/dashboard/:path*", "/tasks/:path*", "/villas/:path*", "/team/:path*", "/requests/:path*", "/analytics/:path*", "/login"],
+  matcher: ["/dashboard/:path*", "/tasks/:path*", "/villas/:path*", "/team/:path*", "/requests/:path*", "/analytics/:path*", "/settings/:path*", "/login"],
 };

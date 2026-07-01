@@ -25,7 +25,7 @@ export default function VillasPage() {
 
   return (
     <>
-      <Topbar title="Villas" subtitle={`${villas.length} properties · Marbella`} />
+      <Topbar title="Villas" subtitle={`${villas.length} ${villas.length === 1 ? "property" : "properties"}${db.settings.location ? ` · ${db.settings.location}` : ""}`} />
       <div className="p-5 sm:p-7">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {villas.map((v) => {

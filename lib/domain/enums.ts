@@ -9,7 +9,8 @@
 import type { Tone } from "@/lib/tone";
 
 /* ----------------------------- Departments ----------------------------- */
-export const DEPARTMENTS = ["maintenance", "housekeeping", "concierge", "security", "front_desk"] as const;
+/** the built-in departments — clients can also add custom ones via Settings */
+export const DEPARTMENTS = ["maintenance", "housekeeping", "concierge", "security", "front_desk", "transport", "reservations"] as const;
 export type Department = (typeof DEPARTMENTS)[number];
 
 export const departmentMeta: Record<Department, { label: string }> = {
@@ -18,7 +19,19 @@ export const departmentMeta: Record<Department, { label: string }> = {
   concierge: { label: "Concierge" },
   security: { label: "Security" },
   front_desk: { label: "Front Desk" },
+  transport: { label: "Transport" },
+  reservations: { label: "Reservations" },
 };
+
+/**
+ * Resolve a department id to a human label. Works for built-in departments and
+ * for any custom department a client added (falls back to a title-cased slug),
+ * so the UI never crashes on a configurable value.
+ */
+export function deptLabel(id: string): string {
+  if (id in departmentMeta) return departmentMeta[id as Department].label;
+  return id.replace(/[_-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 /* ------------------------------ Categories ------------------------------ */
 export const CATEGORIES = ["maintenance", "housekeeping", "concierge", "fnb", "transport", "security", "other"] as const;
@@ -29,12 +42,12 @@ export const categoryMeta: Record<TaskCategory, { label: string; department: Dep
   housekeeping: { label: "Housekeeping", department: "housekeeping" },
   concierge: { label: "Concierge", department: "concierge" },
   fnb: { label: "Food & Beverage", department: "concierge" },
-  transport: { label: "Transport", department: "concierge" },
+  transport: { label: "Transport", department: "transport" },
   security: { label: "Security", department: "security" },
   other: { label: "General", department: "front_desk" },
 };
 
-/** the department that should own a given category */
+/** the default department that should own a given category (rules can override) */
 export const departmentForCategory = (c: TaskCategory): Department => categoryMeta[c].department;
 
 /* ------------------------------- Priority ------------------------------- */

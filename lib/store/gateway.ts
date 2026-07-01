@@ -3,7 +3,7 @@
  * — `LuxaStore` (in-memory demo) and `SupabaseLiveStore` (realtime Postgres) are
  * interchangeable behind it.
  */
-import type { Database, Extraction, Guest, Priority, Property, Staff, TaskStatus } from "@/lib/domain";
+import type { Database, Extraction, Guest, Priority, Property, Settings, Staff, TaskStatus } from "@/lib/domain";
 import type { InboundMessage } from "@/lib/services/whatsapp/inbound";
 
 export interface IngestOutcome {
@@ -36,4 +36,14 @@ export interface OpsGateway {
 
   markNotificationRead(id: string): void;
   markAllNotificationsRead(): void;
+
+  /* ---- configuration: the admin/settings layer (add/edit/delete) ---- */
+  /** create or update a property (id decides which) */
+  upsertProperty(property: Property): void;
+  deleteProperty(id: string): void;
+  /** create or update a team member */
+  upsertStaff(staff: Staff): void;
+  deleteStaff(id: string): void;
+  /** patch portfolio settings (departments, rules, KPIs, branding, …) */
+  updateSettings(patch: Partial<Settings>): void;
 }
