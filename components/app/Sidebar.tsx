@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Check, ChevronsUpDown, Globe } from "lucide-react";
 import { LuxaMark } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { statusMeta } from "@/lib/domain";
-import { useDatabase } from "@/lib/store/hooks";
+import { useDatabase, useWorkspace, useLuxa } from "@/lib/store/hooks";
 import { navItems } from "./nav-items";
 
 export function Sidebar() {
@@ -31,6 +32,11 @@ export function Sidebar() {
         <Link href="/" aria-label="LUXA" className="focus-ring rounded-md">
           <LuxaMark className="h-[22px] w-auto" />
         </Link>
+      </div>
+
+      {/* organization switcher — switching changes every page's data */}
+      <div className="px-3">
+        <OrgSwitcher />
       </div>
 
       <div className="px-3 pb-2">
@@ -101,5 +107,56 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+  );
+}
+
+/** dark, premium organization switcher — the visible face of multi-tenancy */
+function OrgSwitcher() {
+  const ws = useWorkspace();
+  const store = useLuxa();
+  const [open, setOpen] = useState(false);
+  const current = ws.organizations.find((o) => o.id === ws.currentOrgId) ?? ws.organizations[0];
+  if (!current) return null;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2.5 rounded-[var(--radius-control)] border border-line bg-white/[0.02] px-2.5 py-2 text-left transition-colors hover:bg-white/[0.04]"
+      >
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-accent/15 text-accent"><Globe size={15} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[13px] font-medium text-ink">{current.name}</span>
+          <span className="block text-[11px] text-ink-3">{current.plan} plan</span>
+        </span>
+        <ChevronsUpDown size={15} className="shrink-0 text-ink-4" />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} aria-hidden />
+          <div className="absolute left-0 right-0 top-full z-20 mt-1.5 overflow-hidden rounded-[var(--radius-control)] border border-line bg-[#0b0d12] shadow-[var(--shadow-card)]">
+            <div className="px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-ink-4">Organizations</div>
+            {ws.organizations.map((o) => {
+              const active = o.id === ws.currentOrgId;
+              return (
+                <button
+                  key={o.id}
+                  onClick={() => { store.switchOrg(o.id); setOpen(false); }}
+                  className={cn("flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-white/[0.05]", active && "bg-white/[0.03]")}
+                >
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-white/[0.05] text-ink-3"><Globe size={13} /></span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13px] text-ink">{o.name}</span>
+                    <span className="block text-[11px] text-ink-4">{o.plan}</span>
+                  </span>
+                  {active && <Check size={15} className="shrink-0 text-accent" />}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
   );
 }

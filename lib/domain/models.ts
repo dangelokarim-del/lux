@@ -158,6 +158,35 @@ export interface Notification {
   read: boolean;
 }
 
+/* -------------------------- Workspace / tenancy ------------------------- */
+/** a customer workspace — one tenant of the platform */
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  /** commercial plan, shown in the switcher: Starter · Growth · Enterprise */
+  plan: string;
+}
+
+/** a WhatsApp Business number connected to an organization */
+export interface WhatsAppAccount {
+  id: string;
+  organizationId: string;
+  /** Meta's routing key — incoming messages route to the org by this */
+  phoneNumberId: string;
+  displayNumber: string;
+  label: string;
+  active: boolean;
+  lastMessageAt: string | null;
+}
+
+/** the cross-org state the app needs to render the switcher + admin */
+export interface Workspace {
+  organizations: Organization[];
+  whatsappAccounts: WhatsAppAccount[];
+  currentOrgId: string;
+}
+
 /* ------------------------- Configuration models ------------------------- */
 /** a department the client operates — built-in or custom */
 export interface DepartmentDef {

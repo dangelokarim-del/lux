@@ -12,6 +12,7 @@
  */
 import {
   categoryMeta,
+  createDefaultSettings,
   deptLabel,
   priorityMeta,
   newId,
@@ -21,34 +22,58 @@ import {
   type Note,
   type Notification,
   type NotificationKind,
+  type Organization,
   type Property,
   type Settings,
   type Staff,
   type Task,
   type TaskStatus,
+  type WhatsAppAccount,
+  type Workspace,
   statusMeta,
 } from "@/lib/domain";
 import { extractor } from "@/lib/services/ai/extractor";
 import { applyRules, chooseAssignee } from "@/lib/services/assignment/engine";
 import type { InboundMessage } from "@/lib/services/whatsapp/inbound";
+import type { WorkspaceSeed } from "./seed";
 import type { IngestOutcome, OpsGateway } from "./gateway";
 
 type Listener = () => void;
 
 const nowIso = () => new Date().toISOString();
 const firstName = (n: string) => n.split(" ")[0];
+const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
+const emptyDb = (settings: Settings): Database => ({
+  properties: [], guests: [], staff: [], conversations: [], messages: [], tasks: [], notes: [], notifications: [], settings,
+});
+
+/**
+ * The in-memory demo backend, now multi-tenant: it holds several organizations,
+ * each with its own Database, plus the WhatsApp numbers routing to them. The
+ * active org's Database is what `getSnapshot` returns, so every page and hook
+ * works unchanged and simply re-renders the moment you switch organization.
+ */
 export class LuxaStore implements OpsGateway {
-  private db: Database;
+  private dbByOrg = new Map<string, Database>();
+  private orgs: Organization[];
+  private waAccounts: WhatsAppAccount[];
+  private currentOrgId: string;
+  private workspace: Workspace;
   private listeners = new Set<Listener>();
 
-  constructor(seed: Database) {
-    this.db = seed;
-    const highest = seed.tasks
+  constructor(seed: WorkspaceSeed) {
+    this.orgs = seed.organizations;
+    this.waAccounts = seed.whatsappAccounts;
+    this.currentOrgId = seed.currentOrgId;
+    for (const [id, db] of Object.entries(seed.dbByOrg)) this.dbByOrg.set(id, db);
+    const highest = [...this.dbByOrg.values()]
+      .flatMap((db) => db.tasks)
       .map((t) => Number(t.code.replace(/\D/g, "")))
       .filter((n) => !Number.isNaN(n))
       .reduce((a, b) => Math.max(a, b), 0);
     primeTaskSeq(highest);
+    this.workspace = this.buildWorkspace();
   }
 
   /* --------------------------- realtime surface --------------------------- */
@@ -56,12 +81,74 @@ export class LuxaStore implements OpsGateway {
     this.listeners.add(cb);
     return () => this.listeners.delete(cb);
   };
-  getSnapshot = (): Database => this.db;
+  /** the ACTIVE organization's database */
+  getSnapshot = (): Database => this.dbByOrg.get(this.currentOrgId)!;
   ready = (): boolean => true;
 
-  private commit(patch: Partial<Database>) {
-    this.db = { ...this.db, ...patch };
+  private get db(): Database {
+    return this.dbByOrg.get(this.currentOrgId)!;
+  }
+
+  private emit() {
     this.listeners.forEach((l) => l());
+  }
+
+  private commit(patch: Partial<Database>) {
+    this.dbByOrg.set(this.currentOrgId, { ...this.db, ...patch });
+    this.emit();
+  }
+
+  /* --------------------------- workspace surface -------------------------- */
+  private buildWorkspace(): Workspace {
+    this.workspace = { organizations: this.orgs, whatsappAccounts: this.waAccounts, currentOrgId: this.currentOrgId };
+    return this.workspace;
+  }
+  getWorkspaceSnapshot = (): Workspace => this.workspace;
+
+  switchOrg(id: string) {
+    if (!this.dbByOrg.has(id) || id === this.currentOrgId) return;
+    this.currentOrgId = id;
+    this.buildWorkspace();
+    this.emit(); // getSnapshot now returns the new org's db → whole app updates
+  }
+
+  createOrg({ name, plan = "Starter" }: { name: string; plan?: string }) {
+    const id = newId("org");
+    const org: Organization = { id, name: name.trim() || "New Organization", slug: slugify(name) || id, plan };
+    this.orgs = [...this.orgs, org];
+    this.dbByOrg.set(id, emptyDb({ ...createDefaultSettings(), portfolioName: org.name }));
+    this.currentOrgId = id;
+    this.buildWorkspace();
+    this.emit();
+  }
+
+  updateOrg(org: Organization) {
+    this.orgs = this.orgs.map((o) => (o.id === org.id ? org : o));
+    // keep the org's portfolio name in sync with its display name
+    const db = this.dbByOrg.get(org.id);
+    if (db) this.dbByOrg.set(org.id, { ...db, settings: { ...db.settings, portfolioName: org.name } });
+    this.buildWorkspace();
+    this.emit();
+  }
+
+  addWhatsAppAccount(input: { phoneNumberId: string; displayNumber: string; label: string; organizationId: string; active?: boolean }) {
+    const account: WhatsAppAccount = {
+      id: newId("wa"), organizationId: input.organizationId, phoneNumberId: input.phoneNumberId.trim(),
+      displayNumber: input.displayNumber.trim(), label: input.label.trim(), active: input.active ?? true, lastMessageAt: null,
+    };
+    this.waAccounts = [...this.waAccounts, account];
+    this.buildWorkspace();
+    this.emit();
+  }
+  updateWhatsAppAccount(account: WhatsAppAccount) {
+    this.waAccounts = this.waAccounts.map((a) => (a.id === account.id ? account : a));
+    this.buildWorkspace();
+    this.emit();
+  }
+  deleteWhatsAppAccount(id: string) {
+    this.waAccounts = this.waAccounts.filter((a) => a.id !== id);
+    this.buildWorkspace();
+    this.emit();
   }
 
   /* ------------------------------ selectors ------------------------------ */
@@ -187,6 +274,13 @@ export class LuxaStore implements OpsGateway {
 
     this.notify("new_task", "New request", `${task.title} · ${property?.name ?? "Unknown property"}`, task.id);
     if (assignee) this.notify("assignment", "Task assigned", `${task.title} → ${assignee.name}`, task.id);
+
+    // reflect "last message received" on this org's active WhatsApp number
+    const wa = this.waAccounts.find((a) => a.organizationId === this.currentOrgId && a.active);
+    if (wa) {
+      this.waAccounts = this.waAccounts.map((a) => (a.id === wa.id ? { ...a, lastMessageAt: nowIso() } : a));
+      this.buildWorkspace();
+    }
 
     return { taskId: task.id, code: task.code, extraction: routedExtraction, conversationId: conversation.id };
   }

@@ -9,7 +9,7 @@
  * local snapshot. Staff actions are persisted to Postgres; the realtime echo
  * keeps every connected dashboard in sync. The UI never knows the difference.
  */
-import { createDefaultSettings, priorityMeta, statusMeta, type Database, type Guest, type Priority, type Property, type Settings, type Staff, type TaskStatus } from "@/lib/domain";
+import { createDefaultSettings, priorityMeta, statusMeta, type Database, type Guest, type Organization, type Priority, type Property, type Settings, type Staff, type TaskStatus, type WhatsAppAccount, type Workspace } from "@/lib/domain";
 import type { InboundMessage } from "@/lib/services/whatsapp/inbound";
 import { browserSupabase } from "@/lib/supabase/browser";
 import {
@@ -52,6 +52,7 @@ export class SupabaseLiveStore implements OpsGateway {
   private _ready = false;
   /** the organization this session operates in (multi-tenant scope) */
   private orgId: string | null = null;
+  private workspace: Workspace = { organizations: [], whatsappAccounts: [], currentOrgId: "" };
 
   constructor() {
     if (typeof window !== "undefined") void this.init();
@@ -94,10 +95,22 @@ export class SupabaseLiveStore implements OpsGateway {
     // RLS already isolates by org; scoping the query too keeps payloads tight.
     const scope = <T,>(q: T): T => (this.orgId ? (q as { eq: (c: string, v: string) => T }).eq("organization_id", this.orgId) : q);
     const tables = ["properties", "guests", "team_members", "conversations", "messages", "tasks", "task_history", "notifications", "settings", "departments", "assignment_rules"] as const;
-    const results = await Promise.all(tables.map((t) => scope(this.sb.from(t).select("*"))));
+    const [results, orgsRes, waRes] = await Promise.all([
+      Promise.all(tables.map((t) => scope(this.sb.from(t).select("*")))),
+      this.sb.from("organizations").select("*"), // RLS → only the orgs this user is a member of
+      this.sb.from("whatsapp_accounts_safe").select("*"),
+    ]);
     const byTable = Object.fromEntries(tables.map((t, i) => [t, results[i].data ?? []]));
+    this.buildWorkspace((orgsRes.data as never[]) ?? [], (waRes.data as never[]) ?? []);
     this.set(rowsToDatabase(byTable as never));
   }
+
+  private buildWorkspace(orgRows: Array<{ id: string; name: string; slug: string; plan?: string }>, waRows: Array<{ id: string; organization_id: string; phone_number_id: string; display_number: string | null; label: string | null; active: boolean }>) {
+    const organizations: Organization[] = orgRows.map((o) => ({ id: o.id, name: o.name, slug: o.slug, plan: o.plan ?? "—" }));
+    const whatsappAccounts: WhatsAppAccount[] = waRows.map((w) => ({ id: w.id, organizationId: w.organization_id, phoneNumberId: w.phone_number_id, displayNumber: w.display_number ?? "", label: w.label ?? "", active: w.active, lastMessageAt: null }));
+    this.workspace = { organizations, whatsappAccounts, currentOrgId: this.orgId ?? organizations[0]?.id ?? "" };
+  }
+  getWorkspaceSnapshot = (): Workspace => this.workspace;
 
   private openRealtime() {
     // one channel; RLS + a client-side org guard keep other tenants' rows out.
@@ -275,6 +288,49 @@ export class SupabaseLiveStore implements OpsGateway {
         await this.sb.from("assignment_rules").insert(next.rules.map((r, i) => ({ organization_id: org, label: r.label, keywords: r.keywords, category: r.category, department: r.department, priority: r.priority ?? null, enabled: r.enabled, position: i })));
       }
     });
+  }
+
+  /* ----------------------- workspace / multi-tenant ---------------------- */
+  switchOrg(id: string) {
+    if (id === this.orgId) return;
+    this.orgId = id;
+    this.workspace = { ...this.workspace, currentOrgId: id };
+    void this.load(); // reload every table scoped to the newly-active org
+  }
+
+  createOrg(input: { name: string; plan?: string }) {
+    void this.run(async () => {
+      const slug = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const { data: org } = await this.sb.from("organizations").insert({ name: input.name, slug }).select("id").single<{ id: string }>();
+      const { data: { user } } = await this.sb.auth.getUser();
+      if (org && user) {
+        await this.sb.from("memberships").insert({ organization_id: org.id, user_id: user.id, email: user.email, role: "owner" });
+        this.switchOrg(org.id);
+      }
+    });
+  }
+
+  updateOrg(org: Organization) {
+    this.workspace = { ...this.workspace, organizations: this.workspace.organizations.map((o) => (o.id === org.id ? org : o)) };
+    this.emit();
+    void this.run(() => this.sb.from("organizations").update({ name: org.name, slug: org.slug }).eq("id", org.id));
+  }
+
+  addWhatsAppAccount(input: { phoneNumberId: string; displayNumber: string; label: string; organizationId: string; active?: boolean }) {
+    void this.run(async () => {
+      await this.sb.from("whatsapp_accounts").insert({ organization_id: input.organizationId, phone_number_id: input.phoneNumberId, display_number: input.displayNumber, label: input.label, active: input.active ?? true });
+      await this.load();
+    });
+  }
+  updateWhatsAppAccount(account: WhatsAppAccount) {
+    this.workspace = { ...this.workspace, whatsappAccounts: this.workspace.whatsappAccounts.map((a) => (a.id === account.id ? account : a)) };
+    this.emit();
+    void this.run(() => this.sb.from("whatsapp_accounts").update({ display_number: account.displayNumber, label: account.label, active: account.active }).eq("id", account.id));
+  }
+  deleteWhatsAppAccount(id: string) {
+    this.workspace = { ...this.workspace, whatsappAccounts: this.workspace.whatsappAccounts.filter((a) => a.id !== id) };
+    this.emit();
+    void this.run(() => this.sb.from("whatsapp_accounts").delete().eq("id", id));
   }
 
   /** stamp a write with the current organization (multi-tenant scope) */

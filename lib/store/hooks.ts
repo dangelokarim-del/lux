@@ -14,6 +14,7 @@ import {
   type Note,
   type Settings,
   type Task,
+  type Workspace,
 } from "@/lib/domain";
 
 export function useDatabase(): Database {
@@ -62,6 +63,11 @@ export function useProperties() {
 /** portfolio configuration (branding, departments, rules, KPIs, …) */
 export function useSettings(): Settings {
   return useDatabase().settings;
+}
+
+/** cross-org workspace: organizations + WhatsApp numbers + the active org */
+export function useWorkspace(): Workspace {
+  return useSyncExternalStore(store.subscribe, store.getWorkspaceSnapshot, store.getWorkspaceSnapshot);
 }
 
 export function useGuests() {

@@ -8,12 +8,13 @@
  */
 import { useMemo, useState } from "react";
 import {
-  Building2, Users, Boxes, GitBranch, Plug, Palette, SlidersHorizontal,
-  Plus, Trash2, Pencil, Check, X,
+  Building2, Users, Boxes, GitBranch, Plug, Palette, SlidersHorizontal, Globe, Phone,
+  Plus, Trash2, Pencil, Check, X, ArrowRightLeft,
 } from "lucide-react";
 import { Card, Field, Input, Textarea, Avatar, StatusPill, buttonVariants } from "@/components/ui";
-import { useLuxa, useProperties, useStaff, useSettings } from "@/lib/store/hooks";
+import { useLuxa, useProperties, useStaff, useSettings, useWorkspace } from "@/lib/store/hooks";
 import { useToast } from "@/components/product/Toast";
+import { timeAgo } from "@/components/product/format";
 import { cn } from "@/lib/utils";
 import { isLive, hasSupabaseAdmin } from "@/lib/config";
 import {
@@ -24,13 +25,18 @@ import {
   CATEGORIES, categoryMeta,
   KPI_CATALOG,
   type Property, type Staff, type AssignmentRule, type DepartmentDef,
+  type Organization, type WhatsAppAccount,
 } from "@/lib/domain";
+
+const PLANS = ["Starter", "Growth", "Enterprise"];
 
 const DEFAULT_ROOMS = ["Master Bedroom", "Guest Bedroom", "Bathroom", "Kitchen", "Living Room", "Pool", "Terrace", "Garden"];
 const selectClass = "h-10 w-full rounded-[var(--radius-control)] border border-line-2 bg-bg-elev px-3 text-[14px] text-ink outline-none transition-colors focus:border-accent";
 
-type SectionId = "portfolio" | "properties" | "team" | "departments" | "rules" | "integrations" | "branding";
+type SectionId = "workspaces" | "whatsapp" | "portfolio" | "properties" | "team" | "departments" | "rules" | "integrations" | "branding";
 const SECTIONS: { id: SectionId; label: string; icon: typeof Building2 }[] = [
+  { id: "workspaces", label: "Workspaces", icon: Globe },
+  { id: "whatsapp", label: "WhatsApp Numbers", icon: Phone },
   { id: "portfolio", label: "Portfolio", icon: SlidersHorizontal },
   { id: "properties", label: "Properties", icon: Building2 },
   { id: "team", label: "Team", icon: Users },
@@ -41,7 +47,7 @@ const SECTIONS: { id: SectionId; label: string; icon: typeof Building2 }[] = [
 ];
 
 export function SettingsWorkspace() {
-  const [section, setSection] = useState<SectionId>("portfolio");
+  const [section, setSection] = useState<SectionId>("workspaces");
   return (
     <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[220px_1fr]">
       {/* section rail */}
@@ -66,6 +72,8 @@ export function SettingsWorkspace() {
       </nav>
 
       <div className="min-w-0">
+        {section === "workspaces" && <WorkspacesPanel />}
+        {section === "whatsapp" && <WhatsAppPanel />}
         {section === "portfolio" && <PortfolioPanel />}
         {section === "properties" && <PropertiesPanel />}
         {section === "team" && <TeamPanel />}
@@ -103,6 +111,182 @@ function IconBtn({ onClick, children, label, danger }: { onClick: () => void; ch
     >
       {children}
     </button>
+  );
+}
+
+/* ------------------------------ Workspaces ------------------------------- */
+function WorkspacesPanel() {
+  const ws = useWorkspace();
+  const store = useLuxa();
+  const { show } = useToast();
+  const [draft, setDraft] = useState<Organization | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newPlan, setNewPlan] = useState("Starter");
+
+  const current = ws.organizations.find((o) => o.id === ws.currentOrgId);
+
+  function saveEdit() {
+    if (!draft) return;
+    store.updateOrg({ ...draft, name: draft.name.trim() || "Organization" });
+    show({ kind: "success", title: "Workspace updated", body: draft.name });
+    setDraft(null);
+  }
+  function create() {
+    if (!newName.trim()) return show({ kind: "error", title: "Name is required" });
+    store.createOrg({ name: newName.trim(), plan: newPlan });
+    show({ kind: "success", title: "Workspace created", body: `${newName} · now active` });
+    setNewName(""); setCreating(false);
+  }
+
+  return (
+    <div className="max-w-2xl">
+      <PanelHead
+        title="Workspaces"
+        subtitle="Each customer is an isolated organization. Switch between them — the whole dashboard changes."
+        action={!creating && <button onClick={() => setCreating(true)} className={buttonVariants({ variant: "accent", size: "sm" })}><Plus size={15} /> New workspace</button>}
+      />
+
+      {/* current org banner */}
+      {current && (
+        <div className="mb-5 flex items-center justify-between rounded-[var(--radius-control)] border border-accent/25 bg-accent/[0.06] px-4 py-3.5">
+          <div className="flex items-center gap-3">
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-accent/15 text-accent"><Globe size={17} /></span>
+            <div>
+              <div className="text-[14px] font-medium text-ink">{current.name}</div>
+              <div className="text-[12px] text-ink-3">Active workspace · {current.plan} plan</div>
+            </div>
+          </div>
+          <StatusPill tone="accent">Current</StatusPill>
+        </div>
+      )}
+
+      {creating && (
+        <Card className="mb-5 p-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Workspace name"><Input autoFocus value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Monaco Estates" /></Field>
+            <Field label="Plan">
+              <select className={selectClass} value={newPlan} onChange={(e) => setNewPlan(e.target.value)}>{PLANS.map((p) => <option key={p} value={p}>{p}</option>)}</select>
+            </Field>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <button onClick={create} className={buttonVariants({ variant: "accent", size: "sm" })}><Check size={15} /> Create & switch</button>
+            <button onClick={() => setCreating(false)} className={buttonVariants({ variant: "secondary", size: "sm" })}><X size={15} /> Cancel</button>
+          </div>
+        </Card>
+      )}
+
+      <Card className="divide-y divide-line">
+        {ws.organizations.map((o) => {
+          const active = o.id === ws.currentOrgId;
+          const editing = draft?.id === o.id;
+          return (
+            <div key={o.id} className="px-4 py-3.5">
+              {editing ? (
+                <div className="grid gap-3 sm:grid-cols-[1fr_160px_auto]">
+                  <Input value={draft!.name} onChange={(e) => setDraft({ ...draft!, name: e.target.value })} />
+                  <select className={selectClass} value={draft!.plan} onChange={(e) => setDraft({ ...draft!, plan: e.target.value })}>{PLANS.map((p) => <option key={p} value={p}>{p}</option>)}</select>
+                  <div className="flex gap-1.5">
+                    <IconBtn label="Save" onClick={saveEdit}><Check size={14} /></IconBtn>
+                    <IconBtn label="Cancel" onClick={() => setDraft(null)}><X size={14} /></IconBtn>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-[14px] font-medium text-ink">{o.name}</span>
+                      {active && <StatusPill tone="accent">Active</StatusPill>}
+                    </div>
+                    <div className="text-[12px] text-ink-3">{o.plan} plan</div>
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    {!active && (
+                      <button onClick={() => store.switchOrg(o.id)} className={buttonVariants({ variant: "secondary", size: "sm" })}>
+                        <ArrowRightLeft size={14} /> Switch
+                      </button>
+                    )}
+                    <IconBtn label="Edit" onClick={() => setDraft(o)}><Pencil size={14} /></IconBtn>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </Card>
+    </div>
+  );
+}
+
+/* ---------------------------- WhatsApp Numbers --------------------------- */
+function WhatsAppPanel() {
+  const ws = useWorkspace();
+  const store = useLuxa();
+  const { show } = useToast();
+  const orgName = (id: string) => ws.organizations.find((o) => o.id === id)?.name ?? "—";
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({ phoneNumberId: "", displayNumber: "", label: "", organizationId: ws.currentOrgId });
+
+  function add() {
+    if (!form.phoneNumberId.trim() || !form.displayNumber.trim()) return show({ kind: "error", title: "Number and phone_number_id are required" });
+    store.addWhatsAppAccount({ ...form });
+    show({ kind: "success", title: "WhatsApp number connected", body: `${form.displayNumber} → ${orgName(form.organizationId)}` });
+    setForm({ phoneNumberId: "", displayNumber: "", label: "", organizationId: ws.currentOrgId });
+    setAdding(false);
+  }
+
+  return (
+    <div className="max-w-3xl">
+      <PanelHead
+        title="WhatsApp Numbers"
+        subtitle="Each Business number routes incoming messages to one organization by its phone_number_id."
+        action={!adding && <button onClick={() => setAdding(true)} className={buttonVariants({ variant: "accent", size: "sm" })}><Plus size={15} /> Add number</button>}
+      />
+
+      {adding && (
+        <Card className="mb-5 p-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Display number"><Input autoFocus value={form.displayNumber} onChange={(e) => setForm({ ...form, displayNumber: e.target.value })} placeholder="+34 600 000 000" /></Field>
+            <Field label="phone_number_id" hint="Meta's routing key"><Input value={form.phoneNumberId} onChange={(e) => setForm({ ...form, phoneNumberId: e.target.value })} placeholder="1049385729…" /></Field>
+            <Field label="Label"><Input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Main line" /></Field>
+            <Field label="Connect to workspace">
+              <select className={selectClass} value={form.organizationId} onChange={(e) => setForm({ ...form, organizationId: e.target.value })}>
+                {ws.organizations.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </select>
+            </Field>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <button onClick={add} className={buttonVariants({ variant: "accent", size: "sm" })}><Check size={15} /> Connect</button>
+            <button onClick={() => setAdding(false)} className={buttonVariants({ variant: "secondary", size: "sm" })}><X size={15} /> Cancel</button>
+          </div>
+        </Card>
+      )}
+
+      <Card className="divide-y divide-line">
+        {ws.whatsappAccounts.length === 0 && <div className="px-4 py-8 text-center text-[13px] text-ink-3">No numbers connected yet.</div>}
+        {ws.whatsappAccounts.map((w) => (
+          <div key={w.id} className="flex items-center justify-between gap-3 px-4 py-3.5">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#25D366]/12 text-[#43d178]"><Phone size={16} /></span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="truncate text-[14px] font-medium text-ink">{w.displayNumber}</span>
+                  <StatusPill tone={w.active ? "ok" : "muted"}>{w.active ? "Active" : "Inactive"}</StatusPill>
+                </div>
+                <div className="truncate font-mono text-[11px] text-ink-4">id {w.phoneNumberId} · {orgName(w.organizationId)}</div>
+                <div className="text-[11px] text-ink-3">{w.lastMessageAt ? `Last message ${timeAgo(w.lastMessageAt)}` : "No messages yet"}{w.label ? ` · ${w.label}` : ""}</div>
+              </div>
+            </div>
+            <div className="flex shrink-0 gap-1.5">
+              <button onClick={() => store.updateWhatsAppAccount({ ...w, active: !w.active })} className={buttonVariants({ variant: "secondary", size: "sm" })}>
+                {w.active ? "Deactivate" : "Activate"}
+              </button>
+              <IconBtn label="Delete" danger onClick={() => store.deleteWhatsAppAccount(w.id)}><Trash2 size={14} /></IconBtn>
+            </div>
+          </div>
+        ))}
+      </Card>
+    </div>
   );
 }
 
