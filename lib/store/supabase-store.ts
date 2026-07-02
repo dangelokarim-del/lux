@@ -13,6 +13,7 @@ import { createDefaultSettings, priorityMeta, statusMeta, type Database, type Gu
 import type { InboundMessage } from "@/lib/services/whatsapp/inbound";
 import { browserSupabase } from "@/lib/supabase/browser";
 import {
+  buildSettings,
   rowToConversation,
   rowToGuest,
   rowToMessage,
@@ -29,23 +30,28 @@ const EMPTY: Database = {
   properties: [], guests: [], staff: [], conversations: [], messages: [], tasks: [], notes: [], notifications: [], settings: createDefaultSettings(),
 };
 
-// table → (snapshot key, mapper)
+// canonical table → (snapshot key, mapper) for the realtime row fan-out
 const TABLE_MAP = {
   properties: { key: "properties", map: rowToProperty },
   guests: { key: "guests", map: rowToGuest },
-  staff: { key: "staff", map: rowToStaff },
+  team_members: { key: "staff", map: rowToStaff },
   conversations: { key: "conversations", map: rowToConversation },
   messages: { key: "messages", map: rowToMessage },
   tasks: { key: "tasks", map: rowToTask },
-  activity_log: { key: "notes", map: rowToNote },
+  task_history: { key: "notes", map: rowToNote },
   notifications: { key: "notifications", map: rowToNotification },
 } as const;
+
+// tables that, when they change, mean "reload the settings object"
+const CONFIG_TABLES = new Set(["settings", "departments", "assignment_rules"]);
 
 export class SupabaseLiveStore implements OpsGateway {
   private db: Database = EMPTY;
   private listeners = new Set<() => void>();
   private sb = browserSupabase();
   private _ready = false;
+  /** the organization this session operates in (multi-tenant scope) */
+  private orgId: string | null = null;
 
   constructor() {
     if (typeof window !== "undefined") void this.init();
@@ -66,35 +72,53 @@ export class SupabaseLiveStore implements OpsGateway {
   }
 
   private async init() {
-    // The middleware guarantees an authenticated staff session before any
-    // protected route renders, so we can load straight away. RLS scopes every
-    // read/write to active staff members.
+    // The middleware guarantees an authenticated session before any protected
+    // route renders. Resolve which organization this user belongs to; RLS then
+    // scopes every read/write to that org so tenants never see each other.
+    await this.resolveOrg();
     await this.load();
     this._ready = true;
     this.emit();
     this.openRealtime();
-    // reload when the session changes (sign-in / token refresh / sign-out)
-    this.sb.auth.onAuthStateChange(() => void this.load());
+    this.sb.auth.onAuthStateChange(() => void this.init());
+  }
+
+  private async resolveOrg() {
+    const { data: { user } } = await this.sb.auth.getUser();
+    if (!user) return;
+    const { data } = await this.sb.from("memberships").select("organization_id").eq("user_id", user.id).limit(1).maybeSingle();
+    this.orgId = (data as { organization_id: string } | null)?.organization_id ?? null;
   }
 
   private async load() {
-    const tables = ["properties", "guests", "staff", "conversations", "messages", "tasks", "activity_log", "notifications"] as const;
-    const results = await Promise.all(tables.map((t) => this.sb.from(t).select("*")));
+    // RLS already isolates by org; scoping the query too keeps payloads tight.
+    const scope = <T,>(q: T): T => (this.orgId ? (q as { eq: (c: string, v: string) => T }).eq("organization_id", this.orgId) : q);
+    const tables = ["properties", "guests", "team_members", "conversations", "messages", "tasks", "task_history", "notifications", "settings", "departments", "assignment_rules"] as const;
+    const results = await Promise.all(tables.map((t) => scope(this.sb.from(t).select("*"))));
     const byTable = Object.fromEntries(tables.map((t, i) => [t, results[i].data ?? []]));
-    // preserve any settings the client edited this session (no settings table yet)
-    this.set({ ...rowsToDatabase(byTable as never), settings: this.db.settings });
+    this.set(rowsToDatabase(byTable as never));
   }
 
   private openRealtime() {
+    // one channel; RLS + a client-side org guard keep other tenants' rows out.
     this.sb
-      .channel("luxa-ops")
+      .channel(`luxa-ops-${this.orgId ?? "all"}`)
       .on("postgres_changes", { event: "*", schema: "public" }, (payload) => this.applyChange(payload))
       .subscribe();
   }
 
   private applyChange(payload: { table: string; eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) {
+    // configuration edits: cheapest to just reload the settings object
+    if (CONFIG_TABLES.has(payload.table)) {
+      void this.reloadSettings();
+      return;
+    }
     const entry = TABLE_MAP[payload.table as keyof typeof TABLE_MAP];
     if (!entry) return;
+    // never let another tenant's row leak in through realtime
+    const row = payload.eventType === "DELETE" ? payload.old : payload.new;
+    if (this.orgId && row?.organization_id && row.organization_id !== this.orgId) return;
+
     const key = entry.key as keyof Database;
     const list = this.db[key] as Array<{ id: string }>;
     let next: Array<{ id: string }>;
@@ -106,6 +130,16 @@ export class SupabaseLiveStore implements OpsGateway {
       next = i >= 0 ? list.map((r) => (r.id === mapped.id ? mapped : r)) : [mapped, ...list];
     }
     this.set({ ...this.db, [key]: next });
+  }
+
+  private async reloadSettings() {
+    const scope = <T,>(q: T): T => (this.orgId ? (q as { eq: (c: string, v: string) => T }).eq("organization_id", this.orgId) : q);
+    const [s, d, r] = await Promise.all([
+      scope(this.sb.from("settings").select("*")),
+      scope(this.sb.from("departments").select("*")),
+      scope(this.sb.from("assignment_rules").select("*")),
+    ]);
+    this.set({ ...this.db, settings: buildSettings((s.data?.[0] as never) ?? null, (d.data as never) ?? [], (r.data as never) ?? []) });
   }
 
   /* ------------------------------ selectors ------------------------------ */
@@ -134,8 +168,8 @@ export class SupabaseLiveStore implements OpsGateway {
     this.patch({ tasks: this.db.tasks.map((t) => (t.id === taskId ? { ...t, status, completedAt: status === "completed" ? now : null, updatedAt: now } : t)) });
     void this.run(async () => {
       await this.sb.from("tasks").update({ status, completed_at: status === "completed" ? now : null, updated_at: now }).eq("id", taskId);
-      await this.sb.from("activity_log").insert({ task_id: taskId, actor_name: "You", type: "status_change", is_system: true, body: `Status → ${statusMeta[status].label}` });
-      await this.sb.from("notifications").insert({ kind: "status_change", title: "Status updated", body: `${task.title} → ${statusMeta[status].label}`, task_id: taskId });
+      await this.sb.from("task_history").insert(this.stamp({ task_id: taskId, actor_name: "You", type: "status_change", is_system: true, body: `Status → ${statusMeta[status].label}` }));
+      await this.sb.from("notifications").insert(this.stamp({ kind: "status_change", title: "Status updated", body: `${task.title} → ${statusMeta[status].label}`, task_id: taskId }));
     });
   }
 
@@ -146,7 +180,7 @@ export class SupabaseLiveStore implements OpsGateway {
     this.patch({ tasks: this.db.tasks.map((t) => (t.id === taskId ? { ...t, priority, updatedAt: now } : t)) });
     void this.run(async () => {
       await this.sb.from("tasks").update({ priority, updated_at: now }).eq("id", taskId);
-      await this.sb.from("activity_log").insert({ task_id: taskId, actor_name: "You", type: "status_change", is_system: true, body: `Priority → ${priorityMeta[priority].label}` });
+      await this.sb.from("task_history").insert(this.stamp({ task_id: taskId, actor_name: "You", type: "status_change", is_system: true, body: `Priority → ${priorityMeta[priority].label}` }));
     });
   }
 
@@ -158,8 +192,8 @@ export class SupabaseLiveStore implements OpsGateway {
     this.patch({ tasks: this.db.tasks.map((t) => (t.id === taskId ? { ...t, assigneeId: staffId, updatedAt: now } : t)) });
     void this.run(async () => {
       await this.sb.from("tasks").update({ assignee_id: staffId, updated_at: now }).eq("id", taskId);
-      await this.sb.from("activity_log").insert({ task_id: taskId, actor_name: "You", type: "assignment", is_system: true, body: staff ? `Assigned to ${staff.name}` : "Unassigned" });
-      if (staff) await this.sb.from("notifications").insert({ kind: "assignment", title: "Task assigned", body: `${task.title} → ${staff.name}`, task_id: taskId });
+      await this.sb.from("task_history").insert(this.stamp({ task_id: taskId, actor_name: "You", type: "assignment", is_system: true, body: staff ? `Assigned to ${staff.name}` : "Unassigned" }));
+      if (staff) await this.sb.from("notifications").insert(this.stamp({ kind: "assignment", title: "Task assigned", body: `${task.title} → ${staff.name}`, task_id: taskId }));
     });
   }
 
@@ -170,7 +204,7 @@ export class SupabaseLiveStore implements OpsGateway {
     const optimistic = { id: `tmp_${Math.random().toString(36).slice(2)}`, taskId, authorId: author.id ?? null, authorName: author.name, body: text, createdAt: now, system: false };
     this.patch({ notes: [...this.db.notes, optimistic] });
     void this.run(async () => {
-      await this.sb.from("activity_log").insert({ task_id: taskId, actor_id: author.id ?? null, actor_name: author.name, type: "note", is_system: false, body: text });
+      await this.sb.from("task_history").insert(this.stamp({ task_id: taskId, actor_id: author.id ?? null, actor_name: author.name, type: "note", is_system: false, body: text }));
       await this.sb.from("tasks").update({ updated_at: now }).eq("id", taskId);
     });
   }
@@ -189,10 +223,11 @@ export class SupabaseLiveStore implements OpsGateway {
     const exists = this.db.properties.some((p) => p.id === property.id);
     this.patch({ properties: exists ? this.db.properties.map((p) => (p.id === property.id ? property : p)) : [...this.db.properties, property] });
     void this.run(() =>
-      this.sb.from("properties").upsert({
-        id: property.id, name: property.name, area: property.area, bedrooms: property.bedrooms,
+      this.sb.from("properties").upsert(this.stamp({
+        id: property.id, name: property.name, type: property.type, area: property.area, bedrooms: property.bedrooms,
         status: property.status, current_guest_id: property.currentGuestId, rooms: property.rooms,
-      })
+        assigned_team_ids: property.assignedTeamIds ?? [], notes: property.notes ?? null,
+      }))
     );
   }
 
@@ -205,20 +240,46 @@ export class SupabaseLiveStore implements OpsGateway {
     const exists = this.db.staff.some((s) => s.id === staff.id);
     this.patch({ staff: exists ? this.db.staff.map((s) => (s.id === staff.id ? staff : s)) : [...this.db.staff, staff] });
     void this.run(() =>
-      this.sb.from("staff").upsert({
+      this.sb.from("team_members").upsert(this.stamp({
         id: staff.id, name: staff.name, role: staff.role, department: staff.department, presence: staff.presence, initials: staff.initials,
-      })
+        phone: staff.phone ?? null, email: staff.email ?? null, max_active_tasks: staff.maxActiveTasks ?? null,
+        working_hours: staff.workingHours ?? null, languages: staff.languages ?? [], assigned_property_ids: staff.assignedPropertyIds ?? [],
+      }))
     );
   }
 
   deleteStaff(id: string) {
     this.patch({ staff: this.db.staff.filter((s) => s.id !== id), tasks: this.db.tasks.map((t) => (t.assigneeId === id ? { ...t, assigneeId: null } : t)) });
-    void this.run(() => this.sb.from("staff").delete().eq("id", id));
+    void this.run(() => this.sb.from("team_members").delete().eq("id", id));
   }
 
   updateSettings(patch: Partial<Settings>) {
-    // held in the app config layer for now (no settings table); realtime-safe locally
-    this.patch({ settings: { ...this.db.settings, ...patch } });
+    const next = { ...this.db.settings, ...patch };
+    this.patch({ settings: next }); // optimistic
+    if (!this.orgId) return;
+    const org = this.orgId;
+    void this.run(async () => {
+      // portfolio identity + dashboard prefs → the single settings row
+      await this.sb.from("settings").upsert({
+        organization_id: org, portfolio_name: next.portfolioName, location: next.location, language: next.language,
+        timezone: next.timezone, brand_mark: next.brandMark, auto_assign: next.autoAssign, visible_kpis: next.visibleKpis,
+      });
+      // departments: replace the org's set with the current list
+      if (patch.departments) {
+        await this.sb.from("departments").delete().eq("organization_id", org);
+        await this.sb.from("departments").insert(next.departments.map((d, i) => ({ organization_id: org, slug: d.id, label: d.label, custom: d.custom ?? false, position: i })));
+      }
+      // assignment rules: replace the org's set, preserving order
+      if (patch.rules) {
+        await this.sb.from("assignment_rules").delete().eq("organization_id", org);
+        await this.sb.from("assignment_rules").insert(next.rules.map((r, i) => ({ organization_id: org, label: r.label, keywords: r.keywords, category: r.category, department: r.department, priority: r.priority ?? null, enabled: r.enabled, position: i })));
+      }
+    });
+  }
+
+  /** stamp a write with the current organization (multi-tenant scope) */
+  private stamp<T extends object>(row: T): T & { organization_id?: string } {
+    return this.orgId ? { ...row, organization_id: this.orgId } : row;
   }
 
   private patch(p: Partial<Database>) {

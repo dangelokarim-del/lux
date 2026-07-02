@@ -20,9 +20,15 @@ export async function POST(req: NextRequest) {
   }
 
   // invite-only auth ⇒ any authenticated session is a staff member
-  const { data: { user } } = await (await serverSupabase()).auth.getUser();
+  const sb = await serverSupabase();
+  const { data: { user } } = await sb.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Not authorized." }, { status: 401 });
+  }
+  // route the simulated message into the caller's own organization
+  const { data: membership } = await sb.from("memberships").select("organization_id").eq("user_id", user.id).limit(1).maybeSingle<{ organization_id: string }>();
+  if (!membership) {
+    return NextResponse.json({ error: "No organization for this user." }, { status: 403 });
   }
   const { phone, name, body } = (await req.json()) as { phone?: string; name?: string; body?: string };
   if (!phone || !body) {
@@ -38,7 +44,7 @@ export async function POST(req: NextRequest) {
   };
 
   try {
-    const result = await ingestInbound(inbound);
+    const result = await ingestInbound(inbound, membership.organization_id);
     return NextResponse.json(result);
   } catch (e) {
     console.error("[simulate] ingest failed", e);

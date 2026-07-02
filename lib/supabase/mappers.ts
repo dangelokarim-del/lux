@@ -4,24 +4,30 @@
  */
 import {
   createDefaultSettings,
+  type AssignmentRule,
   type Conversation,
   type Database,
+  type DepartmentDef,
   type Extraction,
   type Guest,
   type Message,
   type Note,
   type Notification,
   type Property,
+  type Settings,
   type Staff,
   type Task,
 } from "@/lib/domain";
 import type {
   ActivityRow,
+  AssignmentRuleRow,
   ConversationRow,
+  DepartmentRow,
   GuestRow,
   MessageRow,
   NotificationRow,
   PropertyRow,
+  SettingsRow,
   StaffRow,
   TaskRow,
 } from "./types";
@@ -29,12 +35,14 @@ import type {
 export const rowToProperty = (r: PropertyRow): Property => ({
   id: r.id,
   name: r.name,
-  type: (r as { type?: string }).type ?? "Villa",
+  type: r.type ?? "Villa",
   area: r.area,
   bedrooms: r.bedrooms,
   status: r.status,
   currentGuestId: r.current_guest_id,
   rooms: r.rooms ?? [],
+  assignedTeamIds: r.assigned_team_ids ?? [],
+  notes: r.notes ?? undefined,
 });
 
 export const rowToGuest = (r: GuestRow): Guest => ({
@@ -55,7 +63,36 @@ export const rowToStaff = (r: StaffRow): Staff => ({
   department: r.department,
   presence: r.presence,
   initials: r.initials,
+  phone: r.phone ?? undefined,
+  email: r.email ?? undefined,
+  maxActiveTasks: r.max_active_tasks ?? undefined,
+  workingHours: r.working_hours ?? undefined,
+  languages: r.languages ?? undefined,
+  assignedPropertyIds: r.assigned_property_ids ?? undefined,
 });
+
+/* configuration → the Settings domain object */
+export const rowToDepartment = (r: DepartmentRow): DepartmentDef => ({ id: r.slug, label: r.label, custom: r.custom });
+export const rowToRule = (r: AssignmentRuleRow): AssignmentRule => ({
+  id: r.id, label: r.label, keywords: r.keywords ?? [], category: r.category,
+  department: r.department, priority: r.priority ?? undefined, enabled: r.enabled,
+});
+
+export function buildSettings(s: SettingsRow | null, depts: DepartmentRow[], rules: AssignmentRuleRow[]): Settings {
+  const base = createDefaultSettings();
+  return {
+    ...base,
+    portfolioName: s?.portfolio_name ?? base.portfolioName,
+    location: s?.location ?? base.location,
+    language: s?.language ?? base.language,
+    timezone: s?.timezone ?? base.timezone,
+    brandMark: s?.brand_mark ?? base.brandMark,
+    autoAssign: s?.auto_assign ?? base.autoAssign,
+    visibleKpis: s?.visible_kpis?.length ? s.visible_kpis : base.visibleKpis,
+    departments: depts.length ? [...depts].sort((a, b) => a.position - b.position).map(rowToDepartment) : base.departments,
+    rules: rules.length ? [...rules].sort((a, b) => a.position - b.position).map(rowToRule) : base.rules,
+  };
+}
 
 export const rowToConversation = (r: ConversationRow): Conversation => ({
   id: r.id,
@@ -121,27 +158,29 @@ export const rowToNotification = (r: NotificationRow): Notification => ({
   read: r.read,
 });
 
-/** assemble a full client snapshot from a bulk fetch */
+/** assemble a full client snapshot from a bulk, org-scoped fetch */
 export function rowsToDatabase(rows: {
   properties: PropertyRow[];
   guests: GuestRow[];
-  staff: StaffRow[];
+  team_members: StaffRow[];
   conversations: ConversationRow[];
   messages: MessageRow[];
   tasks: TaskRow[];
-  activity_log: ActivityRow[];
+  task_history: ActivityRow[];
   notifications: NotificationRow[];
+  settings: SettingsRow[];
+  departments: DepartmentRow[];
+  assignment_rules: AssignmentRuleRow[];
 }): Database {
   return {
     properties: rows.properties.map(rowToProperty),
     guests: rows.guests.map(rowToGuest),
-    staff: rows.staff.map(rowToStaff),
+    staff: rows.team_members.map(rowToStaff),
     conversations: rows.conversations.map(rowToConversation),
     messages: rows.messages.map(rowToMessage),
     tasks: rows.tasks.map(rowToTask),
-    notes: rows.activity_log.map(rowToNote),
+    notes: rows.task_history.map(rowToNote),
     notifications: rows.notifications.map(rowToNotification),
-    // settings live in the app config layer; callers may override with a persisted copy
-    settings: createDefaultSettings(),
+    settings: buildSettings(rows.settings[0] ?? null, rows.departments, rows.assignment_rules),
   };
 }

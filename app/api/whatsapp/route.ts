@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { hasSupabaseAdmin, serverEnv } from "@/lib/config";
 import { parseWhatsAppWebhook, type WhatsAppWebhook } from "@/lib/services/whatsapp/inbound";
 import { ingestInbound } from "@/lib/server/ingest";
+import { orgForPhoneNumberId } from "@/lib/server/routing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,14 +40,22 @@ export async function POST(req: NextRequest) {
 
   const inbound = parseWhatsAppWebhook(payload);
   // process sequentially; never let one bad message fail the batch
+  let processed = 0;
   for (const m of inbound) {
     try {
-      await ingestInbound(m);
+      // multi-tenant routing: the receiving number decides which org owns this
+      const organizationId = await orgForPhoneNumberId(m.phoneNumberId);
+      if (!organizationId) {
+        console.warn("[whatsapp] no organization for phone_number_id", m.phoneNumberId);
+        continue;
+      }
+      await ingestInbound(m, organizationId);
+      processed += 1;
     } catch (e) {
       console.error("[whatsapp] ingest failed", e);
     }
   }
-  return NextResponse.json({ ok: true, processed: inbound.length });
+  return NextResponse.json({ ok: true, processed });
 }
 
 function safeEqual(a: string, b: string): boolean {

@@ -16,6 +16,9 @@ export interface InboundMessage {
   /** unix seconds, as WhatsApp sends it */
   timestamp: number;
   profileName?: string;
+  /** Meta's routing key — which of our connected numbers received this message.
+   *  Maps to a single organization (whatsapp_accounts.phone_number_id). */
+  phoneNumberId?: string;
 }
 
 /** the subset of the Meta webhook payload we rely on */
@@ -26,6 +29,7 @@ export interface WhatsAppWebhook {
     changes?: Array<{
       value?: {
         messaging_product?: string;
+        metadata?: { phone_number_id?: string; display_phone_number?: string };
         contacts?: Array<{ profile?: { name?: string }; wa_id?: string }>;
         messages?: Array<{
           from?: string;
@@ -47,6 +51,7 @@ export function parseWhatsAppWebhook(payload: WhatsAppWebhook): InboundMessage[]
       const value = change.value;
       if (!value?.messages) continue;
       const profile = value.contacts?.[0]?.profile?.name;
+      const phoneNumberId = value.metadata?.phone_number_id;
       for (const m of value.messages) {
         if (m.type && m.type !== "text") continue; // demo handles text only
         if (!m.from || !m.text?.body) continue;
@@ -56,6 +61,7 @@ export function parseWhatsAppWebhook(payload: WhatsAppWebhook): InboundMessage[]
           body: m.text.body,
           timestamp: Number(m.timestamp) || Math.floor(Date.now() / 1000),
           profileName: profile,
+          phoneNumberId,
         });
       }
     }
@@ -64,7 +70,7 @@ export function parseWhatsAppWebhook(payload: WhatsAppWebhook): InboundMessage[]
 }
 
 /** build a realistic Cloud API webhook payload (used by the demo simulator) */
-export function buildWhatsAppWebhook(args: { from: string; body: string; name?: string; waMessageId?: string }): WhatsAppWebhook {
+export function buildWhatsAppWebhook(args: { from: string; body: string; name?: string; waMessageId?: string; phoneNumberId?: string }): WhatsAppWebhook {
   return {
     object: "whatsapp_business_account",
     entry: [
@@ -74,6 +80,7 @@ export function buildWhatsAppWebhook(args: { from: string; body: string; name?: 
           {
             value: {
               messaging_product: "whatsapp",
+              metadata: { phone_number_id: args.phoneNumberId ?? "DEMO_PHONE_NUMBER_ID", display_phone_number: "+34 600 000 000" },
               contacts: args.name ? [{ profile: { name: args.name }, wa_id: args.from }] : undefined,
               messages: [
                 {
