@@ -11,7 +11,7 @@ import {
   Building2, Users, Boxes, GitBranch, Plug, Palette, SlidersHorizontal, Globe, Phone,
   Plus, Trash2, Pencil, Check, X, ArrowRightLeft,
 } from "lucide-react";
-import { Card, Field, Input, Textarea, Avatar, StatusPill, buttonVariants } from "@/components/ui";
+import { Card, Field, Input, Textarea, Avatar, StatusPill, Switch, buttonVariants } from "@/components/ui";
 import { useLuxa, useProperties, useStaff, useSettings, useWorkspace } from "@/lib/store/hooks";
 import { useToast } from "@/components/product/Toast";
 import { timeAgo } from "@/components/product/format";
@@ -335,10 +335,10 @@ function PortfolioPanel() {
         <h3 className="mb-3 text-[14px] font-medium">Visible dashboard KPIs</h3>
         <Card className="divide-y divide-line">
           {KPI_CATALOG.map((k) => (
-            <label key={k.id} className="flex cursor-pointer items-center justify-between px-4 py-3 text-[14px]">
+            <div key={k.id} className="flex items-center justify-between px-4 py-3 text-[14px]">
               <span className="text-ink">{k.label}</span>
-              <input type="checkbox" checked={kpis.includes(k.id)} onChange={() => toggleKpi(k.id)} className="h-4 w-4 accent-accent" />
-            </label>
+              <Switch checked={kpis.includes(k.id)} onChange={() => toggleKpi(k.id)} label={k.label} />
+            </div>
           ))}
         </Card>
       </div>
@@ -608,11 +608,12 @@ function RulesPanel() {
           </Card>
         ))}
       </div>
-      <div className="mt-5">
-        <label className="flex cursor-pointer items-center gap-2.5 text-[13.5px] text-ink-2">
-          <input type="checkbox" checked={settings.autoAssign} onChange={(e) => store.updateSettings({ autoAssign: e.target.checked })} className="h-4 w-4 accent-accent" />
-          Auto-assign new tasks to the best available team member
-        </label>
+      <div className="mt-5 flex items-center justify-between rounded-[var(--radius-control)] border border-line bg-white/[0.02] px-4 py-3.5">
+        <div>
+          <div className="text-[13.5px] font-medium text-ink">Auto-assign new tasks</div>
+          <div className="text-[12px] text-ink-3">The engine routes each request to the best available team member.</div>
+        </div>
+        <Switch checked={settings.autoAssign} onChange={(v) => store.updateSettings({ autoAssign: v })} label="Auto-assign" />
       </div>
     </div>
   );

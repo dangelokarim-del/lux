@@ -9,6 +9,7 @@ export { StatusDot, PresenceDot } from "./StatusDot";
 export { StatCard } from "./StatCard";
 export { Search, SearchTrigger } from "./Search";
 export { EmptyState } from "./EmptyState";
+export { Switch } from "./Switch";
 export { Spinner, Skeleton, SkeletonText, LoadingState } from "./Loading";
 export { Avatar } from "./Avatar";
 export { Logo, Wordmark } from "./Logo";

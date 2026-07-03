@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { ListChecks } from "lucide-react";
 import { Topbar } from "@/components/app/Topbar";
-import { Card } from "@/components/ui";
+import { Card, EmptyState, buttonVariants } from "@/components/ui";
 import { DEPARTMENTS, departmentMeta, priorityMeta, statusMeta, type Department, type Task } from "@/lib/domain";
 import { useReady, useTasks } from "@/lib/store/hooks";
 import { TaskRow } from "@/components/product/TaskRow";
@@ -48,13 +48,15 @@ export default function TasksPage() {
           <Card className="overflow-hidden p-0">
             <div className="space-y-1.5 p-3">
               {filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-                  <div className="mb-4 grid h-12 w-12 place-items-center rounded-[14px] border border-line bg-bg-elev text-ink-3">
-                    <ListChecks size={20} />
-                  </div>
-                  <h3 className="text-[15px] font-medium text-ink">No tasks in this view</h3>
-                  <p className="mt-1.5 max-w-xs text-[13px] text-ink-3">Try another department or check back as new requests arrive.</p>
-                </div>
+                <EmptyState
+                  icon={<ListChecks size={24} />}
+                  title={filter === "all" ? "No tasks yet" : "Nothing in this department"}
+                  description={filter === "all" ? "A calm board is a good sign — everything is handled." : "No open work for this team right now."}
+                  aiHint="LUXA files new WhatsApp requests here the moment they arrive."
+                  action={filter !== "all" ? (
+                    <button onClick={() => setFilter("all")} className={buttonVariants({ variant: "secondary", size: "sm" })}>Show all tasks</button>
+                  ) : undefined}
+                />
               ) : (
                 <AnimatePresence initial={false}>
                   {filtered.map((t) => (
@@ -79,8 +81,8 @@ function FilterChip({ label, n, active, onClick }: { label: string; n: number; a
     <button
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] transition-colors",
-        active ? "border-line-2 bg-white/[0.06] text-ink" : "border-line text-ink-2 hover:text-ink"
+        "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] transition-all duration-200 ease-[var(--ease-premium)] hover:-translate-y-px",
+        active ? "border-line-2 bg-white/[0.06] text-ink [box-shadow:inset_0_1px_0_rgba(255,255,255,0.06)]" : "border-line text-ink-2 hover:bg-white/[0.03] hover:text-ink"
       )}
     >
       {label}

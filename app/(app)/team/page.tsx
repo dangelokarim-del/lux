@@ -7,6 +7,7 @@ import { deptLabel, presenceMeta } from "@/lib/domain";
 import { useDatabase } from "@/lib/store/hooks";
 import { staffContext } from "@/lib/store/insights";
 import { timeAgo } from "@/components/product/format";
+import { Reveal } from "@/components/product/Reveal";
 
 export default function TeamPage() {
   const [mounted, setMounted] = useState(false);
@@ -24,8 +25,9 @@ export default function TeamPage() {
       <Topbar title="Team" subtitle={`${team.length} staff · ${available} available now`} />
       <div className="p-5 sm:p-7">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {team.map((m) => (
-            <Card key={m.id} hover className="p-5">
+          {team.map((m, i) => (
+            <Reveal key={m.id} index={i}>
+            <Card hover className="p-5">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <Avatar name={m.name} size={44} />
@@ -63,6 +65,7 @@ export default function TeamPage() {
                 </span>
               </div>
             </Card>
+            </Reveal>
           ))}
         </div>
       </div>

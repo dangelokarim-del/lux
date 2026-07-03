@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Topbar } from "@/components/app/Topbar";
 import { Card, StatusPill } from "@/components/ui";
+import { Reveal } from "@/components/product/Reveal";
 import { propertyStatusMeta } from "@/lib/domain";
 import { useDatabase } from "@/lib/store/hooks";
 import { fmtDuration, villaContext } from "@/lib/store/insights";
@@ -28,10 +29,11 @@ export default function VillasPage() {
       <Topbar title="Villas" subtitle={`${villas.length} ${villas.length === 1 ? "property" : "properties"}${db.settings.location ? ` · ${db.settings.location}` : ""}`} />
       <div className="p-5 sm:p-7">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {villas.map((v) => {
+          {villas.map((v, i) => {
             const hk = tones[v.ctx.housekeeping.tone];
             return (
-              <Card key={v.id} hover className="overflow-hidden">
+              <Reveal key={v.id} index={i}>
+              <Card hover className="overflow-hidden">
                 <div className="relative h-24 overflow-hidden border-b border-line bg-bg-elev">
                   <div className="bg-grid absolute inset-0 opacity-50" />
                   <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/[0.03] blur-xl" />
@@ -82,6 +84,7 @@ export default function VillasPage() {
                   </div>
                 </div>
               </Card>
+              </Reveal>
             );
           })}
         </div>
