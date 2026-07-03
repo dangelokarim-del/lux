@@ -5,12 +5,56 @@
  * shows the WHY, not just the what, and (when there's a concrete move) an action
  * the manager can take. Includes the signature "hold vs reassign" call.
  */
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Brain, TriangleAlert, ShieldAlert, PlaneLanding, Hourglass, ArrowRight } from "lucide-react";
 import { useLuxa } from "@/lib/store/hooks";
 import { useToast } from "@/components/product/Toast";
 import type { AiThought } from "@/lib/live/engine";
 import { cn } from "@/lib/utils";
+
+const MONITOR_LINES = [
+  "checking staff availability",
+  "checking workload balance",
+  "checking upcoming arrivals",
+  "scanning urgent requests",
+  "estimating routes & ETAs",
+  "calculating best assignment",
+  "reviewing guest preferences",
+];
+
+function MonitorTicker() {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const iv = setInterval(() => setI((v) => (v + 1) % MONITOR_LINES.length), 2200);
+    return () => clearInterval(iv);
+  }, []);
+  return (
+    <div className="mb-3 overflow-hidden rounded-xl border border-accent/20 bg-accent/[0.05] px-3 py-2">
+      <div className="flex items-center gap-2">
+        <span className="relative flex h-1.5 w-1.5 shrink-0">
+          <span className="absolute inset-0 animate-ping rounded-full bg-accent opacity-70" />
+          <span className="relative h-1.5 w-1.5 rounded-full bg-accent" />
+        </span>
+        <span className="text-[11.5px] font-medium text-ink">LUXA AI is monitoring</span>
+      </div>
+      <div className="relative mt-1 h-[15px]">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            className="absolute inset-0 flex items-center gap-1.5 text-[11.5px] text-accent/90"
+          >
+            <span className="font-mono text-accent/60">›</span> {MONITOR_LINES[i]}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
 
 const SEV = {
   critical: { hex: "#ff5c5c", Icon: ShieldAlert },
@@ -53,6 +97,8 @@ export function AiThinkingStream({ thoughts }: { thoughts: AiThought[] }) {
           live
         </span>
       </div>
+
+      <MonitorTicker />
 
       <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-0.5">
         <AnimatePresence mode="popLayout" initial={false}>

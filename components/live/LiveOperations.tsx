@@ -75,17 +75,17 @@ export function LiveOperations() {
           {/* map + predictions */}
           <div className="order-1 min-w-0 space-y-5 xl:order-2">
             <div className="relative h-[560px]">
-              <LiveMap world={world} selectedId={selected} onSelect={setSelected} />
+              <LiveMap world={world} selectedId={selected} onSelect={setSelected} followId={followId} />
               <VillaPanel propertyId={selected} world={world} onClose={() => { setSelected(null); setFollowId(null); }} />
             </div>
           </div>
 
           {/* AI thinking + timeline */}
           <aside className="order-3 min-w-0 space-y-5">
-            <div className="glass edge-light h-[300px] rounded-[var(--radius-card)] border border-line p-4">
+            <div className="glass edge-light rounded-[var(--radius-card)] border border-line p-4" style={{ height: 344 }}>
               <AiThinkingStream thoughts={world.thoughts} />
             </div>
-            <div className="rounded-[var(--radius-card)] border border-line bg-white/[0.012] p-4" style={{ height: 240 }}>
+            <div className="rounded-[var(--radius-card)] border border-line bg-white/[0.012] p-4" style={{ height: 196 }}>
               <LiveTimeline events={world.timeline} />
             </div>
           </aside>

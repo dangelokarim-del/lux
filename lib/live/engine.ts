@@ -283,8 +283,13 @@ export function think(db: Database, live: LiveStaff[], now: Date): AiThought[] {
   const at = now.getTime();
   const byId = new Map(live.map((l) => [l.id, l]));
 
-  // 1 — overloaded person + a teammate about to free up → recommend WAITING
-  const overloaded = live.filter((l) => l.workloadPct >= 100 && (l.status === "working" || l.status === "busy"));
+  // 1 — heavily-loaded person + a teammate about to free up → recommend WAITING
+  //     (fires when someone is at/over capacity OR clearly carrying the dept load)
+  const active = (l: LiveStaff) => l.status === "working" || l.status === "busy" || l.status === "driving" || l.status === "walking";
+  const overloaded = live
+    .filter((l) => (l.workloadPct >= 90 || l.openTasks >= 3) && active(l))
+    .sort((a, b) => b.openTasks - a.openTasks)
+    .slice(0, 1);
   for (const person of overloaded) {
     const staff = db.staff.find((s) => s.id === person.id);
     if (!staff) continue;
