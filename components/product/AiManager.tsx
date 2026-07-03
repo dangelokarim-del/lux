@@ -8,14 +8,14 @@
  */
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Sparkles, TriangleAlert, PlaneLanding, MessageCircle, ArrowRight, Check, X } from "lucide-react";
+import { Sparkles, TriangleAlert, PlaneLanding, MessageCircle, ArrowRight, Check, X, ShieldAlert } from "lucide-react";
 import { buttonVariants } from "@/components/ui";
 import { useDatabase, useLuxa } from "@/lib/store/hooks";
 import { useToast } from "@/components/product/Toast";
 import { computeRecommendations, type Recommendation } from "@/lib/store/ai-insights";
 import { cn } from "@/lib/utils";
 
-const KIND_ICON = { reassign: TriangleAlert, arrival: PlaneLanding, proactive: MessageCircle } as const;
+const KIND_ICON = { reassign: TriangleAlert, arrival: PlaneLanding, proactive: MessageCircle, escalation: ShieldAlert } as const;
 const ease = [0.4, 0, 0.2, 1] as const;
 
 export function AiManager() {
@@ -29,9 +29,10 @@ export function AiManager() {
   const count = recs.length;
 
   function act(rec: Recommendation) {
-    if (rec.kind === "reassign" && rec.taskId && rec.toStaffId) {
+    if ((rec.kind === "reassign" || rec.kind === "escalation") && rec.taskId && rec.toStaffId) {
       store.assignTask(rec.taskId, rec.toStaffId);
-      show({ kind: "ai", title: "Rebalanced by AI", body: `Reassigned to ${rec.toStaffName}` });
+      store.addNote(rec.taskId, rec.kind === "escalation" ? `LUXA escalated to ${rec.toStaffName}.` : `LUXA rebalanced to ${rec.toStaffName}.`, { name: "LUXA AI" });
+      show({ kind: "ai", title: rec.kind === "escalation" ? "Escalated to manager" : "Rebalanced by AI", body: `Assigned to ${rec.toStaffName}` });
     } else if (rec.kind === "arrival") {
       show({ kind: "ai", title: "Arrival prep started" });
     } else {

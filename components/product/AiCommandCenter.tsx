@@ -9,18 +9,19 @@
  */
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Sparkles, TriangleAlert, PlaneLanding, MessageCircle, ArrowRight, Check, X } from "lucide-react";
+import { Sparkles, TriangleAlert, PlaneLanding, MessageCircle, ArrowRight, Check, X, ShieldAlert, Radar, Clock, Users } from "lucide-react";
 import { Card, buttonVariants } from "@/components/ui";
 import { LiveNumber } from "@/components/landing/anim/LiveNumber";
 import { useDatabase, useLuxa } from "@/lib/store/hooks";
 import { useToast } from "@/components/product/Toast";
-import { computePulse, computeRecommendations, greeting, type Recommendation } from "@/lib/store/ai-insights";
+import { computeAlerts, computePulse, computeRecommendations, greeting, type OpsAlert, type Recommendation } from "@/lib/store/ai-insights";
 import { cn } from "@/lib/utils";
 
 const OPERATOR_NAME = "Karim";
 const ease = [0.4, 0, 0.2, 1] as const;
 
-const KIND_ICON = { reassign: TriangleAlert, arrival: PlaneLanding, proactive: MessageCircle } as const;
+const KIND_ICON = { reassign: TriangleAlert, arrival: PlaneLanding, proactive: MessageCircle, escalation: ShieldAlert } as const;
+const ALERT_ICON = { arrival: PlaneLanding, urgent: TriangleAlert, dept_overload: Users, staff_overload: Users, stale: Clock } as const;
 
 export function AiCommandCenter() {
   const db = useDatabase();
@@ -30,15 +31,19 @@ export function AiCommandCenter() {
 
   const pulse = useMemo(() => computePulse(db), [db]);
   const recs = useMemo(() => computeRecommendations(db).filter((r) => !done.has(r.id)), [db, done]);
+  const alerts = useMemo(() => computeAlerts(db), [db]);
 
   function act(rec: Recommendation) {
-    if (rec.kind === "reassign" && rec.taskId && rec.toStaffId) {
+    if ((rec.kind === "reassign" || rec.kind === "escalation") && rec.taskId && rec.toStaffId) {
       store.assignTask(rec.taskId, rec.toStaffId);
-      show({ kind: "ai", title: "Rebalanced by AI", body: `Reassigned to ${rec.toStaffName}` });
+      store.addNote(rec.taskId, rec.kind === "escalation"
+        ? `LUXA escalated to ${rec.toStaffName} — no ${rec.title.replace("No ", "").replace(" staff available right now.", "")} staff on shift.`
+        : `LUXA rebalanced to ${rec.toStaffName} to keep the team even.`, { name: "LUXA AI" });
+      show({ kind: "ai", title: rec.kind === "escalation" ? "Escalated to manager" : "Rebalanced by AI", body: `Assigned to ${rec.toStaffName}` });
     } else if (rec.kind === "arrival") {
       show({ kind: "ai", title: "Arrival prep started", body: rec.title.replace(" guest arrives soon.", "") });
     } else if (rec.kind === "proactive") {
-      show({ kind: "ai", title: "WhatsApp drafted", body: `Late-checkout offer to ${rec.guestName}` });
+      show({ kind: "ai", title: "WhatsApp drafted", body: `Proactive offer to ${rec.guestName}` });
     }
     setDone((d) => new Set(d).add(rec.id));
   }
@@ -62,9 +67,10 @@ export function AiCommandCenter() {
             <h2 className="mt-2.5 text-[22px] font-semibold tracking-[-0.02em] text-ink sm:text-[24px]">
               {greeting()}, {OPERATOR_NAME}.
             </h2>
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              <Pulse label="Handled" value={pulse.handled} tone="ink" />
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Pulse label="Handled today" value={pulse.handled} tone="ink" />
               <Pulse label="Auto-solved" value={pulse.solvedAuto} tone="ok" />
+              <Pulse label="Need approval" value={pulse.needApproval} tone="accent" />
               <Pulse label="Need you" value={pulse.needAttention} tone="warn" />
             </div>
           </div>
@@ -92,6 +98,17 @@ export function AiCommandCenter() {
                 )}
               </AnimatePresence>
             </div>
+
+            {alerts.length > 0 && (
+              <div className="mt-4 border-t border-line pt-3.5">
+                <div className="mb-2 flex items-center gap-2 text-[12px] font-medium text-ink-2">
+                  <Radar size={14} className="text-accent" /> Predictive alerts
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {alerts.map((a) => <AlertChip key={a.id} alert={a} />)}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </Card>
@@ -99,8 +116,22 @@ export function AiCommandCenter() {
   );
 }
 
-function Pulse({ label, value, tone }: { label: string; value: number; tone: "ink" | "ok" | "warn" }) {
-  const color = tone === "ok" ? "text-ok" : tone === "warn" ? "text-urgent" : "text-ink";
+function AlertChip({ alert }: { alert: OpsAlert }) {
+  const Icon = ALERT_ICON[alert.kind];
+  const tone =
+    alert.severity === "critical" ? "border-urgent/30 bg-urgent/[0.07] text-urgent"
+    : alert.severity === "warn" ? "border-amber-500/25 bg-amber-500/[0.06] text-amber-300"
+    : "border-line bg-white/[0.03] text-ink-2";
+  return (
+    <span title={alert.detail} className={cn("inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px]", tone)}>
+      <Icon size={12} className="shrink-0" />
+      <span className="truncate">{alert.title}</span>
+    </span>
+  );
+}
+
+function Pulse({ label, value, tone }: { label: string; value: number; tone: "ink" | "ok" | "warn" | "accent" }) {
+  const color = tone === "ok" ? "text-ok" : tone === "warn" ? "text-urgent" : tone === "accent" ? "text-accent" : "text-ink";
   return (
     <div className="rounded-[var(--radius-control)] border border-line bg-white/[0.02] px-3 py-2.5">
       <div className={cn("text-[22px] font-semibold leading-none tabular-nums", color)}>

@@ -11,7 +11,7 @@ import { adminSupabase } from "@/lib/supabase/admin";
 import { buildSettings, rowToProperty, rowToStaff, rowToTask } from "@/lib/supabase/mappers";
 import type { AssignmentRuleRow, DepartmentRow, GuestRow, PropertyRow, SettingsRow, StaffRow, TaskRow } from "@/lib/supabase/types";
 import { getExtractor } from "@/lib/services/ai";
-import { applyRules, chooseAssignee } from "@/lib/services/assignment/engine";
+import { applyRules, decideAssignment } from "@/lib/services/assignment/engine";
 import { sendWhatsAppText } from "@/lib/services/whatsapp/send";
 import type { InboundMessage } from "@/lib/services/whatsapp/inbound";
 import { categoryMeta, deptLabel, type Database, type Extraction } from "@/lib/domain";
@@ -84,8 +84,9 @@ export async function ingestInbound(inbound: InboundMessage, organizationId: str
   const settings = buildSettings(sRow ?? null, dRows ?? [], rRows ?? []);
   const routed = applyRules(inbound.body, { category: extraction.category, department: extraction.department, priority: extraction.priority }, settings.rules);
   const propertyId = extraction.propertyId ?? guest.property_id;
-  const engineDb = { staff: (teamRows ?? []).map(rowToStaff), tasks: (openRows ?? []).map(rowToTask) } as unknown as Database;
-  const assigneeId = chooseAssignee(engineDb, routed.department, { autoAssign: settings.autoAssign, propertyId });
+  const engineDb = { staff: (teamRows ?? []).map(rowToStaff), tasks: (openRows ?? []).map(rowToTask), settings } as unknown as Database;
+  const decision = decideAssignment(engineDb, routed.department, routed.priority);
+  const assigneeId = decision.assigneeId;
   const assignee = engineDb.staff.find((s) => s.id === assigneeId) ?? null;
 
   // 7 — create the task
@@ -109,8 +110,8 @@ export async function ingestInbound(inbound: InboundMessage, organizationId: str
     organization_id: org, task_id: task.id, actor_name: "LUXA AI", type: "created", is_system: true,
     body: `Created from WhatsApp · ${deptLabel(task.department)} · ${categoryMeta[task.category].label}${routed.matchedRule ? ` · rule: ${routed.matchedRule.label}` : ""}`,
   });
-  if (assignee) {
-    await db.from("task_history").insert({ organization_id: org, task_id: task.id, actor_name: "System", type: "assignment", is_system: true, body: `Auto-assigned to ${assignee.name}` });
+  if (assignee || decision.reason) {
+    await db.from("task_history").insert({ organization_id: org, task_id: task.id, actor_name: "LUXA AI", type: "assignment", is_system: true, body: decision.reason });
   }
   await db.from("notifications").insert({ organization_id: org, kind: "new_task", title: "New request", body: `${task.title} · ${property?.name ?? "Unknown property"}`, task_id: task.id });
 

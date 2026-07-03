@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, MessageSquareText, Sparkles } from "lucide-react";
+import { ArrowRight, MessageSquareText, Sparkles, Star } from "lucide-react";
 import { Topbar } from "@/components/app/Topbar";
 import { Avatar, Badge, Card } from "@/components/ui";
-import { categoryMeta, deptLabel, intentMeta, priorityMeta, statusMeta, type Task } from "@/lib/domain";
+import { categoryMeta, deptLabel, intentMeta, priorityMeta, statusMeta, type Guest, type Task } from "@/lib/domain";
 import { useDatabase, useReady } from "@/lib/store/hooks";
 import { TaskDetail } from "@/components/product/TaskDetail";
 import { timeAgo } from "@/components/product/format";
@@ -17,6 +17,24 @@ interface Req {
   guestName: string;
   villaName: string | null;
   task: Task | null;
+  /** guest-memory intelligence note, e.g. "Returning guest · usually requests late checkout" */
+  memory: string | null;
+}
+
+/** distil what LUXA remembers about a guest into a single intelligence line */
+function guestMemoryNote(guest: Guest | null): string | null {
+  if (!guest) return null;
+  const returning = (guest.previousPropertyIds?.length ?? 0) > 0;
+  const usual = guest.recurringRequests?.[0];
+  const parts: string[] = [];
+  if (guest.vipLevel) parts.push(`${guest.vipLevel} VIP`);
+  else if (guest.vip) parts.push("VIP");
+  if (returning) parts.push("returning guest");
+  if (usual) parts.push(`usually requests ${usual.toLowerCase()}`);
+  else if (guest.preferences?.[0]) parts.push(`prefers ${guest.preferences[0].toLowerCase()}`);
+  if (!parts.length) return null;
+  const s = parts.join(" · ");
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 export default function RequestsPage() {
@@ -36,7 +54,7 @@ export default function RequestsPage() {
         const guest = db.guests.find((g) => g.id === conv?.guestId) ?? null;
         const property = db.properties.find((p) => p.id === conv?.propertyId) ?? null;
         const task = db.tasks.find((t) => t.id === m.taskId) ?? null;
-        return { id: m.id, body: m.body, createdAt: m.createdAt, guestName: guest?.name ?? m.author, villaName: property?.name ?? null, task };
+        return { id: m.id, body: m.body, createdAt: m.createdAt, guestName: guest?.name ?? m.author, villaName: property?.name ?? null, task, memory: guestMemoryNote(guest) };
       })
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }, [db.messages, db.conversations, db.guests, db.properties, db.tasks]);
@@ -148,6 +166,11 @@ function RequestCard({ req, analyzing, onOpen }: { req: Req; analyzing: boolean;
             <span className="ml-auto shrink-0 text-[11px] text-ink-4">{timeAgo(req.createdAt)}</span>
           </div>
           <p className="mt-1 text-[13px] text-ink-2">{req.body}</p>
+          {req.memory && (
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[rgba(46,125,255,0.25)] bg-accent-soft px-2.5 py-1 text-[11.5px] text-accent">
+              <Star size={11} className="shrink-0" /> {req.memory}
+            </div>
+          )}
         </div>
       </div>
 

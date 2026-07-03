@@ -23,6 +23,7 @@ import { WhatsAppSimulator } from "./WhatsAppSimulator";
 import { NotificationBell } from "./NotificationBell";
 import { ShortcutsHelp } from "./ShortcutsHelp";
 import { IntelligencePanel } from "./IntelligencePanel";
+import { MapReadyPanel } from "./MapReadyPanel";
 import { KpiSkeleton, TaskListSkeleton } from "./Skeletons";
 
 type Filter = "all" | TaskStatus;
@@ -192,8 +193,9 @@ export function OperationsDashboard() {
           </div>
 
           {ready && (
-            <aside className="min-w-0">
+            <aside className="min-w-0 space-y-6">
               <IntelligencePanel />
+              <MapReadyPanel />
             </aside>
           )}
         </div>

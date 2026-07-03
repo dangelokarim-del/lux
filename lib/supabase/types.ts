@@ -27,6 +27,8 @@ export interface PropertyRow {
   current_guest_id: string | null;
   assigned_team_ids: string[] | null;
   notes: string | null;
+  latitude: number | null;
+  longitude: number | null;
   created_at: string;
 }
 
@@ -40,8 +42,16 @@ export interface GuestRow {
   vip: boolean;
   check_in: string | null;
   check_out: string | null;
+  vip_level: string | null;
+  preferences: string[] | null;
+  recurring_requests: string[] | null;
+  previous_property_ids: string[] | null;
+  notes: string | null;
   created_at: string;
 }
+
+export type AvailabilityOverrideValue = "auto" | "available" | "busy" | "off" | "leave";
+export type LocationStatusValue = "unknown" | "active" | "stale";
 
 export interface StaffRow {
   id: string;
@@ -58,6 +68,19 @@ export interface StaffRow {
   working_hours: string | null;
   languages: string[] | null;
   assigned_property_ids: string[] | null;
+  working_days: number[] | null;
+  shift_start: string | null;
+  shift_end: string | null;
+  break_start: string | null;
+  break_end: string | null;
+  fallback_manager_id: string | null;
+  is_manager: boolean | null;
+  availability_override: AvailabilityOverrideValue | null;
+  leave_until: string | null;
+  last_known_lat: number | null;
+  last_known_lng: number | null;
+  last_location_at: string | null;
+  location_status: LocationStatusValue | null;
   created_at: string;
 }
 

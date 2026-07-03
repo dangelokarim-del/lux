@@ -19,6 +19,7 @@ import {
   nextTaskCode,
   primeTaskSeq,
   type Database,
+  type Guest,
   type Note,
   type Notification,
   type NotificationKind,
@@ -33,7 +34,7 @@ import {
   statusMeta,
 } from "@/lib/domain";
 import { extractor } from "@/lib/services/ai/extractor";
-import { applyRules, chooseAssignee } from "@/lib/services/assignment/engine";
+import { applyRules, decideAssignment } from "@/lib/services/assignment/engine";
 import type { InboundMessage } from "@/lib/services/whatsapp/inbound";
 import type { WorkspaceSeed } from "./seed";
 import type { IngestOutcome, OpsGateway } from "./gateway";
@@ -200,9 +201,11 @@ export class LuxaStore implements OpsGateway {
     );
     const routedExtraction = { ...extraction, category: routed.category, department: routed.department, priority: routed.priority };
 
-    // → assignment engine picks the right person (respecting availability + workload)
+    // → assignment engine decides the right person by real-time availability,
+    //   workload, fallback and urgent escalation — and explains the choice
     const propertyId = extraction.propertyId ?? guest.propertyId;
-    const assigneeId = chooseAssignee(this.db, routed.department, { autoAssign: this.db.settings.autoAssign, propertyId });
+    const decision = decideAssignment(this.db, routed.department, routed.priority);
+    const assigneeId = decision.assigneeId;
     const assignee = this.staffById(assigneeId);
 
     // → Task
@@ -239,13 +242,25 @@ export class LuxaStore implements OpsGateway {
         system: true,
       },
     ];
-    if (assignee) {
+    // the AI's assignment decision, explained (why this person / what if nobody)
+    notes.push({
+      id: newId("note"),
+      taskId: task.id,
+      authorId: null,
+      authorName: "LUXA AI",
+      body: decision.reason,
+      createdAt: nowIso(),
+      system: true,
+    });
+    // guest memory: surface who this returning guest is
+    const memory = guest.recurringRequests?.[0] ?? (guest.vipLevel ? `${guest.vipLevel} VIP` : null);
+    if (memory && guest.previousPropertyIds?.length) {
       notes.push({
         id: newId("note"),
         taskId: task.id,
         authorId: null,
-        authorName: "System",
-        body: `Auto-assigned to ${assignee.name}`,
+        authorName: "LUXA AI",
+        body: `Returning guest · usually requests ${memory.toLowerCase()}`,
         createdAt: nowIso(),
         system: true,
       });
@@ -273,7 +288,14 @@ export class LuxaStore implements OpsGateway {
     });
 
     this.notify("new_task", "New request", `${task.title} · ${property?.name ?? "Unknown property"}`, task.id);
-    if (assignee) this.notify("assignment", "Task assigned", `${task.title} → ${assignee.name}`, task.id);
+    if (assignee) {
+      this.notify(
+        "assignment",
+        decision.escalated ? "Escalated" : "Task assigned",
+        decision.escalated ? `${task.title} → ${assignee.name} (Operations Manager)` : `${task.title} → ${assignee.name}`,
+        task.id
+      );
+    }
 
     // reflect "last message received" on this org's active WhatsApp number
     const wa = this.waAccounts.find((a) => a.organizationId === this.currentOrgId && a.active);
@@ -289,7 +311,7 @@ export class LuxaStore implements OpsGateway {
     const existing = this.guestByPhone(inbound.from);
     if (existing) return existing;
     // unknown sender → create a lightweight guest (as a real CRM would)
-    const guest = {
+    const guest: Guest = {
       id: newId("guest"),
       name: inbound.profileName ?? "Guest",
       phone: inbound.from,

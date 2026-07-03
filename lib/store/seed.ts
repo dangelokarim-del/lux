@@ -35,27 +35,48 @@ const emptyDb = (settings: Settings): Database => ({
  * ========================================================================== */
 function marbella(): Database {
   const properties: Property[] = [
-    { id: "prop_ocean", name: "Villa Ocean", type: "Villa", area: "Golden Mile", bedrooms: 6, status: "occupied", currentGuestId: "guest_james", rooms: ROOMS },
-    { id: "prop_sol", name: "Villa Sol", type: "Villa", area: "Sierra Blanca", bedrooms: 5, status: "occupied", currentGuestId: "guest_sophie", rooms: ROOMS },
-    { id: "prop_sierra", name: "Villa Sierra", type: "Villa", area: "El Madroñal", bedrooms: 7, status: "occupied", currentGuestId: "guest_mohammed", rooms: ROOMS },
-    { id: "prop_aura", name: "Villa Aura", type: "Villa", area: "La Zagaleta", bedrooms: 7, status: "arriving", currentGuestId: null, rooms: ROOMS },
-    { id: "prop_mar", name: "Villa Mar", type: "Villa", area: "Puerto Banús", bedrooms: 4, status: "cleaning", currentGuestId: null, rooms: ROOMS },
-    { id: "prop_luz", name: "Villa Luz", type: "Villa", area: "Nueva Andalucía", bedrooms: 5, status: "vacant", currentGuestId: null, rooms: ROOMS },
+    { id: "prop_ocean", name: "Villa Ocean", type: "Villa", area: "Golden Mile", bedrooms: 6, status: "occupied", currentGuestId: "guest_james", rooms: ROOMS, latitude: 36.5015, longitude: -4.9210 },
+    { id: "prop_sol", name: "Villa Sol", type: "Villa", area: "Sierra Blanca", bedrooms: 5, status: "occupied", currentGuestId: "guest_sophie", rooms: ROOMS, latitude: 36.5180, longitude: -4.9080 },
+    { id: "prop_sierra", name: "Villa Sierra", type: "Villa", area: "El Madroñal", bedrooms: 7, status: "occupied", currentGuestId: "guest_mohammed", rooms: ROOMS, latitude: 36.5240, longitude: -4.9800 },
+    { id: "prop_aura", name: "Villa Aura", type: "Villa", area: "La Zagaleta", bedrooms: 7, status: "arriving", currentGuestId: null, rooms: ROOMS, latitude: 36.5100, longitude: -5.0100 },
+    { id: "prop_mar", name: "Villa Mar", type: "Villa", area: "Puerto Banús", bedrooms: 4, status: "cleaning", currentGuestId: null, rooms: ROOMS, latitude: 36.4870, longitude: -4.9530 },
+    { id: "prop_luz", name: "Villa Luz", type: "Villa", area: "Nueva Andalucía", bedrooms: 5, status: "vacant", currentGuestId: null, rooms: ROOMS, latitude: 36.4980, longitude: -4.9600 },
   ];
   const guests: Guest[] = [
-    { id: "guest_james", name: "James Whitmore", phone: "+447700900123", locale: "en", propertyId: "prop_ocean", vip: true, checkIn: hoursAgo(50), checkOut: hoursAgo(-94) },
-    { id: "guest_sophie", name: "Sophie Laurent", phone: "+33612345678", locale: "fr", propertyId: "prop_sol", vip: false, checkIn: hoursAgo(26), checkOut: hoursAgo(-70) },
-    { id: "guest_mohammed", name: "Mohammed Al-Rashid", phone: "+971501234567", locale: "en", propertyId: "prop_sierra", vip: true, checkIn: hoursAgo(74), checkOut: hoursAgo(-46) },
+    { id: "guest_james", name: "James Whitmore", phone: "+447700900123", locale: "en", propertyId: "prop_ocean", vip: true, checkIn: hoursAgo(50), checkOut: hoursAgo(-94),
+      vipLevel: "Platinum", previousPropertyIds: ["prop_ocean", "prop_sol"], preferences: ["Ocean-view suite", "Still water, no ice", "Minimal staff before noon"], recurringRequests: ["Late checkout", "Daily fresh flowers"], notes: "Fifth stay. Prefers to be left undisturbed before midday." },
+    { id: "guest_sophie", name: "Sophie Laurent", phone: "+33612345678", locale: "fr", propertyId: "prop_sol", vip: false, checkIn: hoursAgo(26), checkOut: hoursAgo(-70),
+      previousPropertyIds: ["prop_sol"], preferences: ["Vegan menu", "French-speaking staff"], recurringRequests: ["Airport transfer"], notes: "Returning guest — second stay at Villa Sol." },
+    { id: "guest_mohammed", name: "Mohammed Al-Rashid", phone: "+971501234567", locale: "en", propertyId: "prop_sierra", vip: true, checkIn: hoursAgo(74), checkOut: hoursAgo(-46),
+      vipLevel: "Gold", previousPropertyIds: ["prop_sierra"], preferences: ["Halal menu", "Private chef"], recurringRequests: ["Private chef dinner"], notes: "Travels with a private security detail." },
   ];
+  // schedule note: "today" is computed live; Mon–Sat = [1..6], Mon–Fri = [1..5]
   const staff: Staff[] = [
-    { id: "staff_carlos", name: "Carlos Núñez", role: "Maintenance Lead", department: "maintenance", presence: "available", initials: "CN", phone: "+34600111222", email: "carlos@marbella.luxa.app", maxActiveTasks: 5, workingHours: "08:00–18:00", languages: ["es", "en"] },
-    { id: "staff_diego", name: "Diego Romero", role: "Maintenance Technician", department: "maintenance", presence: "busy", initials: "DR", maxActiveTasks: 4, languages: ["es"] },
-    { id: "staff_marta", name: "Marta Gil", role: "Head Housekeeper", department: "housekeeping", presence: "available", initials: "MG", maxActiveTasks: 6, languages: ["es", "en"] },
-    { id: "staff_elena", name: "Elena Costa", role: "Housekeeper", department: "housekeeping", presence: "busy", initials: "EC", maxActiveTasks: 5, languages: ["es"] },
-    { id: "staff_lucia", name: "Lucía Fernández", role: "Lead Concierge", department: "concierge", presence: "available", initials: "LF", maxActiveTasks: 8, languages: ["es", "en", "fr"] },
-    { id: "staff_sofia", name: "Sofía Vidal", role: "Concierge", department: "concierge", presence: "off", initials: "SV", maxActiveTasks: 6, languages: ["es", "en"] },
-    { id: "staff_pablo", name: "Pablo Ruiz", role: "Head Driver", department: "transport", presence: "available", initials: "PR", maxActiveTasks: 4, languages: ["es", "en"] },
-    { id: "staff_andres", name: "Andrés Soto", role: "Security", department: "security", presence: "available", initials: "AS", maxActiveTasks: 5, languages: ["es"] },
+    // Carlos leads maintenance but is carrying the whole load today → the engine should see him Busy and rebalance
+    { id: "staff_carlos", name: "Carlos Núñez", role: "Maintenance Lead", department: "maintenance", presence: "available", initials: "CN", phone: "+34600111222", email: "carlos@marbella.luxa.app", maxActiveTasks: 5, workingHours: "08:00–18:00", languages: ["es", "en"],
+      workingDays: [1, 2, 3, 4, 5, 6], shiftStart: "08:00", shiftEnd: "18:00", breakStart: "13:00", breakEnd: "14:00", fallbackManagerId: "staff_diego", availabilityOverride: "auto",
+      lastKnownLat: 36.5020, lastKnownLng: -4.9190, locationStatus: "unknown" },
+    // Diego is the Operations Manager — the escalation target — and can absorb overflow maintenance work
+    { id: "staff_diego", name: "Diego Romero", role: "Operations Manager", department: "maintenance", presence: "available", initials: "DR", phone: "+34600111223", email: "diego@marbella.luxa.app", maxActiveTasks: 8, languages: ["es", "en"],
+      workingDays: [1, 2, 3, 4, 5], shiftStart: "08:00", shiftEnd: "20:00", isManager: true, availabilityOverride: "auto",
+      lastKnownLat: 36.5060, lastKnownLng: -4.9240, locationStatus: "unknown" },
+    { id: "staff_marta", name: "Marta Gil", role: "Head Housekeeper", department: "housekeeping", presence: "available", initials: "MG", maxActiveTasks: 6, languages: ["es", "en"],
+      workingDays: [1, 2, 3, 4, 5, 6], shiftStart: "07:00", shiftEnd: "16:00", breakStart: "12:00", breakEnd: "12:45", fallbackManagerId: "staff_diego", availabilityOverride: "auto",
+      lastKnownLat: 36.5120, lastKnownLng: -4.9100, locationStatus: "unknown" },
+    { id: "staff_elena", name: "Elena Costa", role: "Housekeeper", department: "housekeeping", presence: "busy", initials: "EC", maxActiveTasks: 5, languages: ["es"],
+      workingDays: [2, 3, 4, 5, 6], shiftStart: "09:00", shiftEnd: "18:00", fallbackManagerId: "staff_marta", availabilityOverride: "auto" },
+    { id: "staff_lucia", name: "Lucía Fernández", role: "Lead Concierge", department: "concierge", presence: "available", initials: "LF", maxActiveTasks: 8, languages: ["es", "en", "fr"],
+      workingDays: [0, 1, 2, 3, 4, 5, 6], shiftStart: "08:00", shiftEnd: "20:00", breakStart: "14:00", breakEnd: "15:00", fallbackManagerId: "staff_diego", availabilityOverride: "auto",
+      lastKnownLat: 36.4990, lastKnownLng: -4.9330, locationStatus: "unknown" },
+    // Sofía is on leave — the engine must skip her and say why ("On leave · back Monday")
+    { id: "staff_sofia", name: "Sofía Vidal", role: "Concierge", department: "concierge", presence: "off", initials: "SV", maxActiveTasks: 6, languages: ["es", "en"],
+      workingDays: [1, 2, 3, 4, 5], shiftStart: "09:00", shiftEnd: "18:00", availabilityOverride: "leave", leaveUntil: hoursAgo(-72) },
+    { id: "staff_pablo", name: "Pablo Ruiz", role: "Head Driver", department: "transport", presence: "available", initials: "PR", maxActiveTasks: 4, languages: ["es", "en"],
+      workingDays: [0, 1, 2, 3, 4, 5, 6], shiftStart: "07:00", shiftEnd: "22:00", fallbackManagerId: "staff_diego", availabilityOverride: "auto",
+      lastKnownLat: 36.4880, lastKnownLng: -4.9520, locationStatus: "unknown" },
+    // Andrés works nights — outside his shift right now, so LUXA shows "Off shift · next shift 20:00"
+    { id: "staff_andres", name: "Andrés Soto", role: "Security", department: "security", presence: "available", initials: "AS", maxActiveTasks: 5, languages: ["es"],
+      workingDays: [0, 1, 2, 3, 4, 5, 6], shiftStart: "20:00", shiftEnd: "23:59", fallbackManagerId: "staff_diego", availabilityOverride: "auto" },
   ];
   const tasks: Task[] = [
     { id: "m_t1", code: "REQ-1041", title: "Airport transfer — 4 guests", description: "Arrival transfer requested for this evening.", category: "transport", department: "transport", priority: "high", intent: "request", status: "in_progress", propertyId: "prop_sol", room: null, assigneeId: "staff_pablo", guestId: "guest_sophie", conversationId: "conv_sol", sourceMessageId: "msg_sol_1", aiConfidence: 0.94, createdAt: minsAgo(38), updatedAt: minsAgo(12), completedAt: null },
@@ -107,10 +128,10 @@ function ibiza(): Database {
     { id: "ib_g2", name: "Isabella Conti", phone: "+393401122334", locale: "it", propertyId: "ib_vedra", vip: false, checkIn: hoursAgo(20), checkOut: hoursAgo(-52) },
   ];
   db.staff = [
-    { id: "ib_marco", name: "Marco Ferrer", role: "Maintenance Lead", department: "maintenance", presence: "available", initials: "MF", maxActiveTasks: 5, languages: ["es", "en"] },
-    { id: "ib_nuria", name: "Nuria Pons", role: "Head Housekeeper", department: "housekeeping", presence: "busy", initials: "NP", maxActiveTasks: 6, languages: ["es"] },
-    { id: "ib_aitana", name: "Aitana Roig", role: "Lead Concierge", department: "concierge", presence: "available", initials: "AR", maxActiveTasks: 7, languages: ["es", "en", "it"] },
-    { id: "ib_bruno", name: "Bruno Sanz", role: "Driver", department: "transport", presence: "available", initials: "BS", maxActiveTasks: 4, languages: ["es", "en"] },
+    { id: "ib_marco", name: "Marco Ferrer", role: "Maintenance Lead", department: "maintenance", presence: "available", initials: "MF", maxActiveTasks: 5, languages: ["es", "en"], workingDays: [1, 2, 3, 4, 5, 6], shiftStart: "08:00", shiftEnd: "18:00", fallbackManagerId: "ib_aitana", availabilityOverride: "auto" },
+    { id: "ib_nuria", name: "Nuria Pons", role: "Head Housekeeper", department: "housekeeping", presence: "busy", initials: "NP", maxActiveTasks: 6, languages: ["es"], workingDays: [1, 2, 3, 4, 5, 6], shiftStart: "07:00", shiftEnd: "16:00", fallbackManagerId: "ib_aitana", availabilityOverride: "auto" },
+    { id: "ib_aitana", name: "Aitana Roig", role: "Operations Manager", department: "concierge", presence: "available", initials: "AR", maxActiveTasks: 9, languages: ["es", "en", "it"], workingDays: [0, 1, 2, 3, 4, 5, 6], shiftStart: "08:00", shiftEnd: "20:00", isManager: true, availabilityOverride: "auto" },
+    { id: "ib_bruno", name: "Bruno Sanz", role: "Driver", department: "transport", presence: "available", initials: "BS", maxActiveTasks: 4, languages: ["es", "en"], workingDays: [0, 1, 2, 3, 4, 5, 6], shiftStart: "07:00", shiftEnd: "22:00", fallbackManagerId: "ib_aitana", availabilityOverride: "auto" },
   ];
   db.tasks = [
     { id: "ib_t1", code: "REQ-2007", title: "Yacht day charter", description: "Full-day charter for 8, Saturday.", category: "concierge", department: "concierge", priority: "high", intent: "request", status: "in_progress", propertyId: "ib_blanca", room: null, assigneeId: "ib_aitana", guestId: "ib_g1", conversationId: null, sourceMessageId: null, aiConfidence: 0.93, createdAt: minsAgo(25), updatedAt: minsAgo(8), completedAt: null },
@@ -139,10 +160,10 @@ function dubai(): Database {
     { id: "db_g2", name: "Layla Haddad", phone: "+9613112233", locale: "ar", propertyId: "db_marina", vip: true, checkIn: hoursAgo(18), checkOut: hoursAgo(-54) },
   ];
   db.staff = [
-    { id: "db_rashid", name: "Rashid Al-Maktoum", role: "Concierge Lead", department: "concierge", presence: "available", initials: "RA", maxActiveTasks: 8, languages: ["ar", "en"] },
-    { id: "db_priya", name: "Priya Nair", role: "Head Housekeeper", department: "housekeeping", presence: "available", initials: "PN", maxActiveTasks: 6, languages: ["en", "hi"] },
-    { id: "db_omar", name: "Omar Haddad", role: "Maintenance Lead", department: "maintenance", presence: "busy", initials: "OH", maxActiveTasks: 5, languages: ["ar", "en"] },
-    { id: "db_yara", name: "Yara Fahim", role: "Reservations", department: "reservations", presence: "available", initials: "YF", maxActiveTasks: 7, languages: ["ar", "en", "fr"] },
+    { id: "db_rashid", name: "Rashid Al-Maktoum", role: "Operations Manager", department: "concierge", presence: "available", initials: "RA", maxActiveTasks: 10, languages: ["ar", "en"], workingDays: [0, 1, 2, 3, 4, 5, 6], shiftStart: "08:00", shiftEnd: "20:00", isManager: true, availabilityOverride: "auto" },
+    { id: "db_priya", name: "Priya Nair", role: "Head Housekeeper", department: "housekeeping", presence: "available", initials: "PN", maxActiveTasks: 6, languages: ["en", "hi"], workingDays: [0, 1, 2, 3, 4, 5], shiftStart: "07:00", shiftEnd: "16:00", fallbackManagerId: "db_rashid", availabilityOverride: "auto" },
+    { id: "db_omar", name: "Omar Haddad", role: "Maintenance Lead", department: "maintenance", presence: "busy", initials: "OH", maxActiveTasks: 5, languages: ["ar", "en"], workingDays: [0, 1, 2, 3, 4, 5], shiftStart: "08:00", shiftEnd: "18:00", fallbackManagerId: "db_rashid", availabilityOverride: "auto" },
+    { id: "db_yara", name: "Yara Fahim", role: "Reservations", department: "reservations", presence: "available", initials: "YF", maxActiveTasks: 7, languages: ["ar", "en", "fr"], workingDays: [0, 1, 2, 3, 4, 5], shiftStart: "09:00", shiftEnd: "18:00", fallbackManagerId: "db_rashid", availabilityOverride: "auto" },
   ];
   db.tasks = [
     { id: "db_t1", code: "REQ-3012", title: "Restaurant — Nobu, table for 6", description: "Tonight 21:00, terrace preferred.", category: "concierge", department: "concierge", priority: "high", intent: "request", status: "in_progress", propertyId: "db_palm", room: null, assigneeId: "db_rashid", guestId: "db_g1", conversationId: null, sourceMessageId: null, aiConfidence: 0.94, createdAt: minsAgo(22), updatedAt: minsAgo(6), completedAt: null },

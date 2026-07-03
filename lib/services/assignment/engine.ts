@@ -10,7 +10,10 @@
  *
  * No dependencies beyond the domain, so it works identically in demo and live.
  */
-import { statusMeta, type AssignmentRule, type Database, type Priority, type Staff, type TaskCategory } from "@/lib/domain";
+import { deptLabel, statusMeta, type AssignmentRule, type Database, type Priority, type Staff, type TaskCategory } from "@/lib/domain";
+import { computeAvailability, isAvailable, openTaskCount } from "@/lib/services/availability";
+
+const firstName = (n: string) => n.split(" ")[0];
 
 export interface Routing {
   category: TaskCategory;
@@ -18,6 +21,71 @@ export interface Routing {
   priority: Priority;
   /** the rule that matched, if any (for the activity log) */
   matchedRule: AssignmentRule | null;
+}
+
+export interface AssignmentDecision {
+  assigneeId: string | null;
+  /** plain-language explanation for the activity log */
+  reason: string;
+  /** true when routed to a manager because no one in the team was available */
+  escalated: boolean;
+}
+
+/**
+ * The upgraded assignment brain. Given a task's department + priority, it:
+ *  1. considers only staff in that department,
+ *  2. keeps only those Available right now (real-time schedule + workload),
+ *  3. picks the lowest current workload,
+ *  4. if none are available, routes to the department's fallback manager,
+ *  5. if it is urgent and no one is available, escalates to the Operations Manager,
+ *  and always returns a human explanation of the choice.
+ */
+export function decideAssignment(
+  db: Database,
+  department: string,
+  priority: Priority,
+  now = new Date()
+): AssignmentDecision {
+  if (!db.settings.autoAssign) return { assigneeId: null, reason: "Auto-assign is off — left for manual routing", escalated: false };
+
+  const dept = deptLabel(department);
+  const inDept = db.staff.filter((s) => s.department === department);
+
+  const scored = inDept.map((s) => ({ s, av: computeAvailability(s, db, now), load: openTaskCount(db, s.id) }));
+  const available = scored.filter((x) => isAvailable(x.av)).sort((a, b) => a.load - b.load);
+
+  if (available.length) {
+    const pick = available[0];
+    return {
+      assigneeId: pick.s.id,
+      reason: `Assigned to ${firstName(pick.s.name)} — on shift, in ${dept}, lowest workload (${pick.load} active)`,
+      escalated: false,
+    };
+  }
+
+  const opsManager = db.staff.find((s) => s.isManager);
+
+  // urgent + nobody available → escalate immediately to the Operations Manager
+  if (priority === "urgent" && opsManager) {
+    return {
+      assigneeId: opsManager.id,
+      reason: `No ${dept} staff available — URGENT, escalated to ${firstName(opsManager.name)}, Operations Manager`,
+      escalated: true,
+    };
+  }
+
+  // otherwise route to the department's fallback manager (else the Ops Manager)
+  const fallbackId = inDept.map((s) => s.fallbackManagerId).find(Boolean) ?? opsManager?.id ?? null;
+  const fb = fallbackId ? db.staff.find((s) => s.id === fallbackId) ?? null : null;
+  if (fb) {
+    return {
+      assigneeId: fb.id,
+      reason: `No ${dept} staff available — routed to ${firstName(fb.name)}, ${fb.isManager ? "Operations Manager" : "fallback manager"}`,
+      escalated: !!fb.isManager,
+    };
+  }
+
+  return { assigneeId: null, reason: `No ${dept} staff available — left unassigned for the manager`, escalated: false };
 }
 
 /** apply the first enabled rule whose keywords appear in the message */

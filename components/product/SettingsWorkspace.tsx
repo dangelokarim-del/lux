@@ -6,13 +6,14 @@
  * engine's rules, integrations and branding. Everything reads from and writes to
  * the same store the dashboard uses, so edits are live everywhere instantly.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Building2, Users, Boxes, GitBranch, Plug, Palette, SlidersHorizontal, Globe, Phone,
   Plus, Trash2, Pencil, Check, X, ArrowRightLeft,
 } from "lucide-react";
 import { Card, Field, Input, Textarea, Avatar, StatusPill, Switch, buttonVariants } from "@/components/ui";
-import { useLuxa, useProperties, useStaff, useSettings, useWorkspace } from "@/lib/store/hooks";
+import { useLuxa, useProperties, useStaff, useSettings, useWorkspace, useDatabase } from "@/lib/store/hooks";
+import { computeAvailability, type AvailabilityState } from "@/lib/services/availability";
 import { useToast } from "@/components/product/Toast";
 import { timeAgo } from "@/components/product/format";
 import { cn } from "@/lib/utils";
@@ -20,15 +21,24 @@ import { isLive, hasSupabaseAdmin } from "@/lib/config";
 import {
   newId, deptLabel,
   PROPERTY_STATUSES, propertyStatusMeta,
-  PRESENCES, presenceMeta,
   PRIORITIES, priorityMeta,
   CATEGORIES, categoryMeta,
   KPI_CATALOG,
   type Property, type Staff, type AssignmentRule, type DepartmentDef,
-  type Organization, type WhatsAppAccount,
+  type Organization, type WhatsAppAccount, type AvailabilityOverride,
 } from "@/lib/domain";
 
 const PLANS = ["Starter", "Growth", "Enterprise"];
+
+const DAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const OVERRIDES: { v: AvailabilityOverride; label: string }[] = [
+  { v: "auto", label: "Auto (LUXA decides)" },
+  { v: "available", label: "Force available" },
+  { v: "busy", label: "Force busy" },
+  { v: "off", label: "Off shift today" },
+  { v: "leave", label: "On leave" },
+];
+const AVAIL_PILL_TONE: Record<AvailabilityState, "ok" | "warn" | "muted"> = { available: "ok", busy: "warn", off: "muted", leave: "muted" };
 
 const DEFAULT_ROOMS = ["Master Bedroom", "Guest Bedroom", "Bathroom", "Kitchen", "Living Room", "Pool", "Terrace", "Garden"];
 const selectClass = "h-10 w-full rounded-[var(--radius-control)] border border-line-2 bg-bg-elev px-3 text-[14px] text-ink outline-none transition-colors focus:border-accent";
@@ -425,14 +435,22 @@ function PropertiesPanel() {
 /* ---------------------------------- Team --------------------------------- */
 function TeamPanel() {
   const team = useStaff();
+  const db = useDatabase();
   const settings = useSettings();
   const store = useLuxa();
   const { show } = useToast();
   const [draft, setDraft] = useState<Staff | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const depts = settings.departments;
-  const blank = (): Staff => ({ id: newId("staff"), name: "", role: "", department: depts[0]?.id ?? "concierge", presence: "available", initials: "", maxActiveTasks: 5, languages: [] });
+  const blank = (): Staff => ({ id: newId("staff"), name: "", role: "", department: depts[0]?.id ?? "concierge", presence: "available", initials: "", maxActiveTasks: 5, languages: [], workingDays: [1, 2, 3, 4, 5], shiftStart: "09:00", shiftEnd: "18:00", availabilityOverride: "auto" });
   const initialsOf = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("") || "?";
+  const toggleDay = (d: number) => {
+    if (!draft) return;
+    const cur = draft.workingDays ?? [1, 2, 3, 4, 5];
+    setDraft({ ...draft, workingDays: cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort() });
+  };
 
   function save() {
     if (!draft) return;
@@ -449,8 +467,8 @@ function TeamPanel() {
   return (
     <div className="max-w-3xl">
       <PanelHead
-        title="Team"
-        subtitle={`${team.length} members · the assignment engine routes tasks to them.`}
+        title="Team & Schedule"
+        subtitle={`${team.length} members · set each person's shift and LUXA computes availability + routing in real time.`}
         action={!draft && <button onClick={() => setDraft(blank())} className={buttonVariants({ variant: "accent", size: "sm" })}><Plus size={15} /> Add member</button>}
       />
 
@@ -464,17 +482,66 @@ function TeamPanel() {
                 {depts.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
               </select>
             </Field>
-            <Field label="Status">
-              <select className={selectClass} value={draft.presence} onChange={(e) => setDraft({ ...draft, presence: e.target.value as Staff["presence"] })}>
-                {PRESENCES.map((p) => <option key={p} value={p}>{presenceMeta[p].label}</option>)}
-              </select>
-            </Field>
+            <Field label="Max active tasks" hint="engine marks them Busy at this cap"><Input type="number" min={1} value={draft.maxActiveTasks ?? 5} onChange={(e) => setDraft({ ...draft, maxActiveTasks: Number(e.target.value) || 1 })} /></Field>
             <Field label="Phone"><Input value={draft.phone ?? ""} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} placeholder="+34 600 000 000" /></Field>
             <Field label="Email"><Input value={draft.email ?? ""} onChange={(e) => setDraft({ ...draft, email: e.target.value })} placeholder="name@portfolio.com" /></Field>
-            <Field label="Max active tasks"><Input type="number" min={1} value={draft.maxActiveTasks ?? 5} onChange={(e) => setDraft({ ...draft, maxActiveTasks: Number(e.target.value) || 1 })} /></Field>
-            <Field label="Languages" hint="comma separated"><Input value={(draft.languages ?? []).join(", ")} onChange={(e) => setDraft({ ...draft, languages: e.target.value.split(",").map((l) => l.trim()).filter(Boolean) })} placeholder="es, en, fr" /></Field>
+            <Field label="Languages" hint="comma separated" className="sm:col-span-2"><Input value={(draft.languages ?? []).join(", ")} onChange={(e) => setDraft({ ...draft, languages: e.target.value.split(",").map((l) => l.trim()).filter(Boolean) })} placeholder="es, en, fr" /></Field>
           </div>
-          <div className="mt-4 flex gap-2">
+
+          {/* schedule */}
+          <div className="mt-5 border-t border-line pt-5">
+            <div className="mb-3 text-[12px] font-medium uppercase tracking-wider text-ink-4">Shift schedule</div>
+            <Field label="Working days">
+              <div className="flex flex-wrap gap-1.5">
+                {DAY_LABELS.map((lbl, d) => {
+                  const on = (draft.workingDays ?? [1, 2, 3, 4, 5]).includes(d);
+                  return (
+                    <button key={d} type="button" onClick={() => toggleDay(d)}
+                      className={cn("h-9 w-9 rounded-[var(--radius-control)] border text-[12px] font-medium transition-colors",
+                        on ? "border-accent/40 bg-accent/12 text-accent" : "border-line bg-white/[0.02] text-ink-3 hover:text-ink")}>
+                      {lbl}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+            <div className="mt-4 grid gap-4 sm:grid-cols-4">
+              <Field label="Shift start"><Input type="time" value={draft.shiftStart ?? "09:00"} onChange={(e) => setDraft({ ...draft, shiftStart: e.target.value })} /></Field>
+              <Field label="Shift end"><Input type="time" value={draft.shiftEnd ?? "18:00"} onChange={(e) => setDraft({ ...draft, shiftEnd: e.target.value })} /></Field>
+              <Field label="Break start" hint="optional"><Input type="time" value={draft.breakStart ?? ""} onChange={(e) => setDraft({ ...draft, breakStart: e.target.value || undefined })} /></Field>
+              <Field label="Break end" hint="optional"><Input type="time" value={draft.breakEnd ?? ""} onChange={(e) => setDraft({ ...draft, breakEnd: e.target.value || undefined })} /></Field>
+            </div>
+          </div>
+
+          {/* routing + override */}
+          <div className="mt-5 border-t border-line pt-5">
+            <div className="mb-3 text-[12px] font-medium uppercase tracking-wider text-ink-4">Availability & routing</div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Manual override">
+                <select className={selectClass} value={draft.availabilityOverride ?? "auto"} onChange={(e) => setDraft({ ...draft, availabilityOverride: e.target.value as AvailabilityOverride })}>
+                  {OVERRIDES.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+                </select>
+              </Field>
+              {draft.availabilityOverride === "leave" && (
+                <Field label="Back from leave"><Input type="date" value={(draft.leaveUntil ?? "").slice(0, 10)} onChange={(e) => setDraft({ ...draft, leaveUntil: e.target.value ? new Date(e.target.value).toISOString() : null })} /></Field>
+              )}
+              <Field label="Fallback manager" hint="takes work when they're unavailable">
+                <select className={selectClass} value={draft.fallbackManagerId ?? ""} onChange={(e) => setDraft({ ...draft, fallbackManagerId: e.target.value || null })}>
+                  <option value="">— none —</option>
+                  {team.filter((t) => t.id !== draft.id).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </Field>
+            </div>
+            <div className="mt-4 flex items-center justify-between rounded-[var(--radius-control)] border border-line bg-white/[0.02] px-4 py-3">
+              <div>
+                <div className="text-[13.5px] font-medium text-ink">Operations Manager</div>
+                <div className="text-[12px] text-ink-3">Urgent, unstaffed work escalates to this person.</div>
+              </div>
+              <Switch checked={!!draft.isManager} onChange={(v) => setDraft({ ...draft, isManager: v })} label="Operations Manager" />
+            </div>
+          </div>
+
+          <div className="mt-5 flex gap-2">
             <button onClick={save} className={buttonVariants({ variant: "accent", size: "sm" })}><Check size={15} /> Save</button>
             <button onClick={() => setDraft(null)} className={buttonVariants({ variant: "secondary", size: "sm" })}><X size={15} /> Cancel</button>
           </div>
@@ -483,16 +550,19 @@ function TeamPanel() {
 
       <Card className="divide-y divide-line">
         {team.length === 0 && <div className="px-4 py-8 text-center text-[13px] text-ink-3">No team members yet.</div>}
-        {team.map((s) => (
+        {team.map((s) => {
+          const av = computeAvailability(s, db);
+          return (
           <div key={s.id} className="flex items-center justify-between gap-3 px-4 py-3.5">
             <div className="flex min-w-0 items-center gap-3">
               <Avatar name={s.name || "?"} size={36} />
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="truncate text-[14px] font-medium text-ink">{s.name}</span>
-                  <StatusPill tone={presenceMeta[s.presence].tone}>{presenceMeta[s.presence].label}</StatusPill>
+                  {s.isManager && <StatusPill tone="accent">Manager</StatusPill>}
+                  {mounted && <StatusPill tone={AVAIL_PILL_TONE[av.state]}>{av.label}</StatusPill>}
                 </div>
-                <div className="truncate text-[12px] text-ink-3">{s.role || "—"} · {deptLabel(s.department)}</div>
+                <div className="truncate text-[12px] text-ink-3">{s.role || "—"} · {deptLabel(s.department)}{mounted && <span className="text-ink-4"> · {av.reason}</span>}</div>
               </div>
             </div>
             <div className="flex shrink-0 gap-1.5">
@@ -500,7 +570,8 @@ function TeamPanel() {
               <IconBtn label="Delete" danger onClick={() => remove(s)}><Trash2 size={14} /></IconBtn>
             </div>
           </div>
-        ))}
+          );
+        })}
       </Card>
     </div>
   );

@@ -30,6 +30,9 @@ export interface Property {
   assignedTeamIds?: string[];
   /** free-text operational notes */
   notes?: string;
+  /** map-ready coordinates (foundation for the live map) */
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 /* -------------------------------- Guest --------------------------------- */
@@ -37,14 +40,29 @@ export interface Guest {
   id: string;
   name: string;
   phone: string; // E.164, the WhatsApp identity
-  locale: string; // e.g. "en", "es"
+  locale: string; // preferred language, e.g. "en", "es"
   propertyId: string | null;
   vip: boolean;
   checkIn?: string;
   checkOut?: string;
+
+  /* ---- guest memory (personalisation foundation) ---- */
+  /** e.g. "Gold", "Platinum" — richer than the boolean vip flag */
+  vipLevel?: string;
+  /** standing preferences: "Late checkout", "Ocean-view rooms", "Vegan" */
+  preferences?: string[];
+  /** things they ask for on most stays */
+  recurringRequests?: string[];
+  /** properties they have stayed in before */
+  previousPropertyIds?: string[];
+  /** freeform concierge notes */
+  notes?: string;
 }
 
 /* -------------------------------- Staff --------------------------------- */
+/** manager can force a state; "auto" lets LUXA compute it from the schedule */
+export type AvailabilityOverride = "auto" | "available" | "busy" | "off" | "leave";
+
 export interface Staff {
   id: string;
   name: string;
@@ -57,11 +75,33 @@ export interface Staff {
   email?: string;
   /** most tasks this person should hold at once (assignment engine caps here) */
   maxActiveTasks?: number;
-  /** e.g. "08:00–16:00" */
+  /** legacy free-text (kept); the structured schedule below supersedes it */
   workingHours?: string;
   languages?: string[];
   /** properties this person is dedicated to (empty = whole portfolio) */
   assignedPropertyIds?: string[];
+
+  /* ---- shift schedule (drives Smart Availability) ---- */
+  /** days worked, 0=Sun … 6=Sat (default Mon–Fri) */
+  workingDays?: number[];
+  shiftStart?: string; // "08:00"
+  shiftEnd?: string; // "18:00"
+  breakStart?: string; // "13:00"
+  breakEnd?: string; // "14:00"
+  /** who inbound work routes to when this person / their team is unavailable */
+  fallbackManagerId?: string | null;
+  /** the escalation target for urgent, unstaffed work */
+  isManager?: boolean;
+  /** manual override of computed availability */
+  availabilityOverride?: AvailabilityOverride;
+  /** when On leave, the date they return (ISO) */
+  leaveUntil?: string | null;
+
+  /* ---- location (map-ready foundation; no live GPS yet) ---- */
+  lastKnownLat?: number | null;
+  lastKnownLng?: number | null;
+  lastLocationAt?: string | null;
+  locationStatus?: "unknown" | "active" | "stale";
 }
 
 /* ----------------------------- Conversation ----------------------------- */

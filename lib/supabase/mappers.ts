@@ -43,6 +43,8 @@ export const rowToProperty = (r: PropertyRow): Property => ({
   rooms: r.rooms ?? [],
   assignedTeamIds: r.assigned_team_ids ?? [],
   notes: r.notes ?? undefined,
+  latitude: r.latitude ?? undefined,
+  longitude: r.longitude ?? undefined,
 });
 
 export const rowToGuest = (r: GuestRow): Guest => ({
@@ -54,6 +56,11 @@ export const rowToGuest = (r: GuestRow): Guest => ({
   vip: r.vip,
   checkIn: r.check_in ?? undefined,
   checkOut: r.check_out ?? undefined,
+  vipLevel: r.vip_level ?? undefined,
+  preferences: r.preferences ?? undefined,
+  recurringRequests: r.recurring_requests ?? undefined,
+  previousPropertyIds: r.previous_property_ids ?? undefined,
+  notes: r.notes ?? undefined,
 });
 
 export const rowToStaff = (r: StaffRow): Staff => ({
@@ -69,6 +76,19 @@ export const rowToStaff = (r: StaffRow): Staff => ({
   workingHours: r.working_hours ?? undefined,
   languages: r.languages ?? undefined,
   assignedPropertyIds: r.assigned_property_ids ?? undefined,
+  workingDays: r.working_days ?? undefined,
+  shiftStart: r.shift_start ?? undefined,
+  shiftEnd: r.shift_end ?? undefined,
+  breakStart: r.break_start ?? undefined,
+  breakEnd: r.break_end ?? undefined,
+  fallbackManagerId: r.fallback_manager_id ?? undefined,
+  isManager: r.is_manager ?? undefined,
+  availabilityOverride: r.availability_override ?? undefined,
+  leaveUntil: r.leave_until ?? undefined,
+  lastKnownLat: r.last_known_lat ?? undefined,
+  lastKnownLng: r.last_known_lng ?? undefined,
+  lastLocationAt: r.last_location_at ?? undefined,
+  locationStatus: r.location_status ?? undefined,
 });
 
 /* configuration → the Settings domain object */
