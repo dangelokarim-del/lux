@@ -28,31 +28,56 @@ function hash01(s: string): number {
 }
 
 /**
- * Place every property in the unit square. If real lat/lng exist we normalize
- * them into a padded box (north = up); otherwise we synthesize a stable spot so
- * the map still reads for orgs without coordinates yet.
+ * Real Marbella geography, normalized to the map's unit square (y = 0 is north).
+ * Zone label anchors — where the place-names sit on the stylized map.
+ */
+export const MARBELLA_ZONES: { name: string; x: number; y: number }[] = [
+  { name: "La Zagaleta", x: 0.085, y: 0.10 },
+  { name: "Sierra Blanca", x: 0.69, y: 0.11 },
+  { name: "El Madroñal", x: 0.45, y: 0.51 },
+  { name: "Nueva Andalucía", x: 0.085, y: 0.43 },
+  { name: "Golden Mile", x: 0.82, y: 0.66 },
+  { name: "Puerto Banús", x: 0.20, y: 0.93 },
+  { name: "Marbella", x: 0.90, y: 0.72 },
+];
+
+/** where each named area drops its villa marker (pin ground-point) */
+export const MARBELLA_AREAS: Record<string, Pt> = {
+  "La Zagaleta": { x: 0.185, y: 0.27 },
+  "Sierra Blanca": { x: 0.55, y: 0.23 },
+  "El Madroñal": { x: 0.39, y: 0.42 },
+  "Nueva Andalucía": { x: 0.19, y: 0.58 },
+  "Golden Mile": { x: 0.74, y: 0.53 },
+  "Puerto Banús": { x: 0.35, y: 0.83 },
+};
+
+/**
+ * Place every property in the unit square. Marbella villas snap to their real
+ * neighbourhood so the map reads geographically; anything else falls back to
+ * normalized lat/lng, then to a stable hash. Villas, staff and routes all use
+ * this one space, so the fleet moves between the right places on the map.
  */
 export function layoutProperties(properties: Property[]): Map<string, Pt> {
   const out = new Map<string, Pt>();
-  const withGeo = properties.filter((p) => p.latitude != null && p.longitude != null);
-  const pad = 0.12;
-  if (withGeo.length >= 2) {
-    const lats = withGeo.map((p) => p.latitude!);
-    const lngs = withGeo.map((p) => p.longitude!);
-    const minLa = Math.min(...lats), maxLa = Math.max(...lats);
-    const minLo = Math.min(...lngs), maxLo = Math.max(...lngs);
-    const spanLa = maxLa - minLa || 1, spanLo = maxLo - minLo || 1;
-    const norm = (v: number, min: number, span: number) => pad + ((v - min) / span) * (1 - 2 * pad);
-    for (const p of properties) {
-      if (p.latitude != null && p.longitude != null) {
-        out.set(p.id, { x: norm(p.longitude, minLo, spanLo), y: 1 - norm(p.latitude, minLa, spanLa) });
-      } else {
-        out.set(p.id, { x: pad + hash01(p.id) * (1 - 2 * pad), y: pad + hash01(p.id + "y") * (1 - 2 * pad) });
+  for (const p of properties) {
+    const z = MARBELLA_AREAS[p.area];
+    if (z) out.set(p.id, { x: z.x + (hash01(p.id) - 0.5) * 0.012, y: z.y + (hash01(p.id + "y") - 0.5) * 0.012 });
+  }
+  const rest = properties.filter((p) => !out.has(p.id));
+  if (rest.length) {
+    const pad = 0.14;
+    const geo = rest.filter((p) => p.latitude != null && p.longitude != null);
+    if (geo.length >= 2) {
+      const lats = geo.map((p) => p.latitude!), lngs = geo.map((p) => p.longitude!);
+      const minLa = Math.min(...lats), maxLa = Math.max(...lats), minLo = Math.min(...lngs), maxLo = Math.max(...lngs);
+      const spanLa = maxLa - minLa || 1, spanLo = maxLo - minLo || 1;
+      const norm = (v: number, min: number, span: number) => pad + ((v - min) / span) * (1 - 2 * pad);
+      for (const p of rest) {
+        if (p.latitude != null && p.longitude != null) out.set(p.id, { x: norm(p.longitude, minLo, spanLo), y: 1 - norm(p.latitude, minLa, spanLa) });
+        else out.set(p.id, { x: pad + hash01(p.id) * (1 - 2 * pad), y: pad + hash01(p.id + "y") * (1 - 2 * pad) });
       }
-    }
-  } else {
-    for (const p of properties) {
-      out.set(p.id, { x: pad + hash01(p.id) * (1 - 2 * pad), y: pad + hash01(p.id + "y") * (1 - 2 * pad) });
+    } else {
+      for (const p of rest) out.set(p.id, { x: pad + hash01(p.id) * (1 - 2 * pad), y: pad + hash01(p.id + "y") * (1 - 2 * pad) });
     }
   }
   return out;
