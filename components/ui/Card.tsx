@@ -1,16 +1,35 @@
+"use client";
+
+import { useRef } from "react";
 import { cn } from "@/lib/utils";
 
 export function Card({
   hover = false,
   className,
   children,
+  onMouseMove,
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & { hover?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  // cursor-reactive spotlight — only when interactive, and only while hovered.
+  // Direct style writes (no React state) so there is zero re-render cost.
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (hover && ref.current) {
+      const r = ref.current.getBoundingClientRect();
+      ref.current.style.setProperty("--mx", `${e.clientX - r.left}px`);
+      ref.current.style.setProperty("--my", `${e.clientY - r.top}px`);
+    }
+    onMouseMove?.(e);
+  };
+
   return (
     <div
+      ref={ref}
+      onMouseMove={handleMove}
       className={cn(
-        "panel overflow-hidden shadow-[var(--shadow-card)]",
-        hover && "panel-hover",
+        "panel relative overflow-hidden shadow-[var(--shadow-card)]",
+        hover && "panel-hover card-spotlight",
         className
       )}
       {...props}
