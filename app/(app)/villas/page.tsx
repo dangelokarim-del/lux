@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Topbar } from "@/components/app/Topbar";
 import { Card, StatusPill } from "@/components/ui";
 import { Reveal } from "@/components/product/Reveal";
@@ -33,6 +34,7 @@ export default function VillasPage() {
             const hk = tones[v.ctx.housekeeping.tone];
             return (
               <Reveal key={v.id} index={i}>
+              <Link href={`/villas/${v.id}`} className="block focus-ring rounded-[var(--radius-card)]">
               <Card hover className="overflow-hidden">
                 <div className="relative h-24 overflow-hidden border-b border-line bg-bg-elev">
                   <div className="bg-grid absolute inset-0 opacity-50" />
@@ -84,6 +86,7 @@ export default function VillasPage() {
                   </div>
                 </div>
               </Card>
+              </Link>
               </Reveal>
             );
           })}

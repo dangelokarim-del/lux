@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  Radio,
   ListChecks,
   Building2,
   Users,
@@ -21,6 +22,7 @@ export interface NavItem {
 /** Single source of truth for primary navigation. Badges resolve to live counts. */
 export const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", shortLabel: "Home", icon: LayoutDashboard },
+  { href: "/live", label: "Live Operations", shortLabel: "Live", icon: Radio },
   { href: "/tasks", label: "Tasks", shortLabel: "Tasks", icon: ListChecks, badge: "open" },
   { href: "/villas", label: "Villas", shortLabel: "Villas", icon: Building2 },
   { href: "/team", label: "Team", shortLabel: "Team", icon: Users },

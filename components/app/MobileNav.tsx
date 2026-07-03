@@ -5,12 +5,16 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { navItems } from "./nav-items";
 
+// a curated set for the bottom bar — the full list lives in the sidebar
+const MOBILE_HREFS = ["/dashboard", "/live", "/tasks", "/requests", "/settings"];
+
 export function MobileNav() {
   const pathname = usePathname();
+  const items = navItems.filter((i) => MOBILE_HREFS.includes(i.href));
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-black/80 backdrop-blur-xl lg:hidden">
       <div className="mx-auto flex max-w-md items-stretch justify-between px-2 py-1.5">
-        {navItems.map((item) => {
+        {items.map((item) => {
           const active = pathname === item.href;
           const Icon = item.icon;
           return (
