@@ -16,6 +16,7 @@ import {
 import { useDatabase, useReady, useSettings, useTasks } from "@/lib/store/hooks";
 import { computeKpis, fmtDuration } from "@/lib/store/insights";
 import { useToast } from "./Toast";
+import { AiCommandCenter } from "./AiCommandCenter";
 import { TaskRow } from "./TaskRow";
 import { TaskDetail } from "./TaskDetail";
 import { WhatsAppSimulator } from "./WhatsAppSimulator";
@@ -147,6 +148,9 @@ export function OperationsDashboard() {
       </header>
 
       <div className="space-y-6 p-5 sm:p-7">
+        {/* AI Command Center — what should I do next? */}
+        <AiCommandCenter />
+
         {/* KPI strip */}
         {ready ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7">
