@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { navItems } from "./nav-items";
 
 // a curated set for the bottom bar — the full list lives in the sidebar
-const MOBILE_HREFS = ["/dashboard", "/live", "/tasks", "/requests", "/settings"];
+const MOBILE_HREFS = ["/dashboard", "/tasks", "/villas", "/requests", "/settings"];
 
 export function MobileNav() {
   const pathname = usePathname();
